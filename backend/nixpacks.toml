@@ -1,9 +1,6 @@
 [phases.setup]
 cmds = ["npm install"]
 
-[phases.build]
-cmds = ["echo 'Backend build complete'"]
-
 [start]
 cmd = "npm start"
 
