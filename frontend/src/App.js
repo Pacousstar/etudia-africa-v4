@@ -12,11 +12,12 @@ import ChatIA from './components/ChatIA';
 // =================================================================
 // 🔗 CONFIGURATION API STABLE
 // =================================================================
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://etudia-africa-backend.railway.app'
+const API_URL = process.env.REACT_APP_API_URL || 
+  (process.env.NODE_ENV === 'production'  
+  ? 'https://etudia-africa-v4-production.up.railway.app'
   : '';
 
-console.log('🔗 API_URL:', API_URL || 'PROXY LOCAL ACTIVÉ');
+console.log('🔗 API_URL configuré:', API_URL);
 
 function App() {
   // =================================================================
