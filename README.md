@@ -25,7 +25,6 @@
 - 🇫🇷 **Multilingue** - Français + langues locales
 - 📱 **Mobile-first** - Conçu pour smartphones
 - 🤖 **IA pédagogique** - Guidance sans donner les réponses
-
 ---
 
 ## ✨ Fonctionnalités v4.0
@@ -37,6 +36,15 @@
 - 🧠 **Mémoire totale** - L'IA se souvient de tous vos échanges
 - 📊 **Suivi progression** - Analytics de performance
 - 🎯 **Aide contextuelle** - Questions sur documents uploadés
+
+Assistant IA révolutionnaire avec modes d'apprentissage adaptatifs
+- 🧠 **Mémoire IA Personnalisée** : Adaptation automatique au style d'apprentissage
+- 🔁 **Mode Étape par Étape** : Guidage progressif avec format "📊 Étape X/4"
+- ✅ **Mode Solution Directe** : Résolution complète des exercices
+- 📸 **OCR Révolutionnaire** : Analyse documents avec Tesseract.js
+- 🎤 **Mode Audio** : Reconnaissance vocale + synthèse vocale
+- 🌙 **Mode Sombre** : Interface adaptable
+
 
 ### 👨‍🏫 Pour les Enseignants *(Prochainement)*
 - 📋 **Tableau de bord** - Suivi des étudiants
