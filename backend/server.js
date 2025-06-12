@@ -274,6 +274,11 @@ JSON requis:
   }
 }
 
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://etudia-africa-v4.vercel.app');
+  next();
+});
+
 // Middlewares
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
