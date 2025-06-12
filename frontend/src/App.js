@@ -111,7 +111,7 @@ function App() {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const response = await fetch('/health');
+        const response = await fetch('${API_URL}/health');
         if (response.ok) {
           const data = await response.json();
           setBackendStatus('online');
@@ -150,7 +150,7 @@ function App() {
       if (backendStatus !== 'online') return;
       
       try {
-        const response = await fetch('/api/stats');
+        const response = await fetch('${API_URL}/api/stats');
         if (response.ok) {
           const data = await response.json();
           setStats({
@@ -188,7 +188,7 @@ function App() {
     }
 
     try {
-      const response = await fetch('/api/students', {
+      const response = await fetch('${API_URL}/api/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -242,7 +242,7 @@ function App() {
     try {
       setMessage({ type: '', text: '' });
       
-      const response = await fetch('/api/students/login', {
+      const response = await fetch('${API_URL}/api/students/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim() }),
