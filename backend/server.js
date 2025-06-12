@@ -274,11 +274,6 @@ JSON requis:
   }
 }
 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://etudia-africa-v4.vercel.app');
-  next();
-});
-
 // Middlewares
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
@@ -290,6 +285,14 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Gestion preflight requests
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'https://etudia-africa-v4.vercel.app');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  res.status(200).send();
+});
 
 // Routes de base
 app.get('/', (req, res) => {
