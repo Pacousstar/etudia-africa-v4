@@ -906,8 +906,6 @@ app.get('/health', async (req, res) => {
       status: '🎓 ÉtudIA v4.0 RÉVOLUTIONNAIRE fonctionne !',
       version: '4.0.0-revolutionary',
       students_count: count,
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
       revolutionary_features: [
         '✅ IA à mémoire personnalisée activée',
         '✅ Profils d\'apprentissage automatiques',
