@@ -17,7 +17,7 @@ const API_URL = process.env.REACT_APP_API_URL ||
   ? 'https://etudia-africa-v4-production.up.railway.app'
   : '');
 
-console.log('🔗 API_URL configuré:', API_URL);
+console.log('🔗 API_URL:', API_URL || 'PROXY LOCAL ACTIVÉ');
 
 function App() {
   // =================================================================
