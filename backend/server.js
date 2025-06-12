@@ -277,10 +277,8 @@ JSON requis:
 // Middlewares
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://etudia-africa.vercel.app', 'https://etudia-v4.vercel.app']
-      'https://etudia-africa-v4-*.vercel.app', // Tous les previews
-      'https://ton-domaine-custom.com' // Si domaine custom
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
+    ? ['https://etudia-africa-v4.vercel.app', 'https://etudia-v4.vercel.app']
+    : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
