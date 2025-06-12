@@ -110,32 +110,25 @@ function App() {
   
   useEffect(() => {
     const checkBackend = async () => {
-      try {
-        const response = await fetch('${API_URL}/health');
-        if (response.ok) {
-          const data = await response.json();
-          setBackendStatus('online');
-          
-          // Message de succès seulement au premier démarrage
-          if (backendStatus !== 'online') {
-            showTemporaryMessage('🎉 ÉtudIA v4.0 est en ligne ! ✅');
-          }
-
-          // Mise à jour statut tokens si disponible
-          if (data.tokens_status) {
-            setStats(prev => ({ ...prev, tokens_status: data.tokens_status }));
-          }
-        } else {
-          setBackendStatus('offline');
-        }
-      } catch (error) {
-        setBackendStatus('offline');
-        if (backendStatus === 'online') {
-          showTemporaryMessage('❌ Serveur temporairement hors ligne', 'error', 5000);
-        }
-      }
-    };
-
+  console.log('🔍 Vérification backend...', API_URL);
+  try {
+    const response = await fetch(`${API_URL}/health`);
+    console.log('📡 Response status:', response.status, response.ok);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Data reçue:', data);
+      console.log('🔄 Ancien état:', backendStatus, '→ Nouveau: online');
+      setBackendStatus('online');
+    } else {
+      console.log('❌ Response not OK:', response.status);
+      setBackendStatus('offline');
+    }
+  } catch (error) {
+    console.log('💥 Erreur fetch:', error.message);
+    setBackendStatus('offline');
+  }
+};
     checkBackend();
     const interval = setInterval(checkBackend, 30000); // Vérification toutes les 30s
     return () => clearInterval(interval);
