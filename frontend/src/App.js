@@ -15,7 +15,7 @@ import ChatIA from './components/ChatIA';
 const API_URL = process.env.REACT_APP_API_URL || 
   (process.env.NODE_ENV === 'production'  
   ? 'https://etudia-africa-v4-production.up.railway.app'
-  : '';
+  : '');
 
 console.log('🔗 API_URL configuré:', API_URL);
 
