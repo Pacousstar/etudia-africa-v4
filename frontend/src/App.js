@@ -563,35 +563,45 @@ function App() {
             </form>
 
             {/* ⚡ SECTION CONNEXION RAPIDE */}
-            <div className="login-section">
-              <div className="login-header">
-                <h3 className="section-title">⚡ Connexion Rapide</h3>
-                <p className="section-subtitle">Déjà inscrit ? Connectez-vous pour accéder à ÉtudIA :</p>
-              </div>
-              <div className="quick-login">
-                <input
-                  type="email"
-                  placeholder="Votre email d'inscription"
-                  className="login-input"
-                  disabled={backendStatus !== 'online'}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && e.target.value && backendStatus === 'online') {
-                      handleLogin(e.target.value);
-                    }
-                  }}
-                />
-                <button
-                  onClick={(e) => {
-                    const email = e.target.previousSibling.value;
-                    if (email && backendStatus === 'online') handleLogin(email);
-                  }}
-                  className="login-button"
-                  disabled={backendStatus !== 'online'}
-                >
-                  {backendStatus === 'online' ? 'Se connecter' : 'Serveur indisponible'}
-                </button>
-              </div>
-            </div>
+            
+<div className="login-section">
+  <div className="login-header">
+    <h3 className="section-title">⚡ Connexion Rapide</h3>
+    <p className="section-subtitle">Déjà inscrit ? Connectez-vous pour accéder à ÉtudIA :</p>
+  </div>
+  <div className="quick-login">
+    <input
+      type="email"
+      placeholder="Votre email d'inscription"
+      className="login-input"
+      id="login-email-input"
+      disabled={backendStatus !== 'online'}
+      onKeyPress={(e) => {
+        if (e.key === 'Enter' && e.target.value && backendStatus === 'online') {
+          console.log('🚀 Tentative de connexion...'); // Debug
+          console.log('📧 Email:', e.target.value); // Debug
+          handleLogin(e.target.value);
+        }
+      }}
+    />
+    <button
+      onClick={() => {
+        const emailInput = document.getElementById('login-email-input');
+        const email = emailInput?.value;
+        console.log('🚀 Bouton cliqué - Email:', email); // Debug
+        if (email && backendStatus === 'online') {
+          handleLogin(email);
+        } else {
+          console.log('❌ Email vide ou serveur offline'); // Debug
+        }
+      }}
+      className="login-button"
+      disabled={backendStatus !== 'online'}
+    >
+      {backendStatus === 'online' ? 'Se connecter' : 'Serveur indisponible'}
+    </button>
+  </div>
+</div>
 
             {/* 🚀 GRILLE DES FONCTIONNALITÉS LLAMA 3.3 */}
             <div className="features-grid">
