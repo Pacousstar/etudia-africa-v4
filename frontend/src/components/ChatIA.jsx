@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const ChatIA = ({ student, apiUrl, documentContext = '' }) => {
+const ChatIA = ({ student, apiUrl, documentContext = '', allDocuments = [] }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -16,8 +16,14 @@ const ChatIA = ({ student, apiUrl, documentContext = '' }) => {
   const [isAudioMode, setIsAudioMode] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   
-  // 🔧 NOUVEAUX ÉTATS POUR CORRECTIONS
-  const [tokenUsage, setTokenUsage] = useState({ used: 0, remaining: 95000 });
+  // 🔧 CORRECTION 1: GESTION TOKENS CORRIGÉE
+  const [tokenUsage, setTokenUsage] = useState({ 
+    used_today: 0, 
+    remaining: 95000,
+    total_conversations: 0,
+    last_updated: Date.now()
+  });
+  
   const [connectionStatus, setConnectionStatus] = useState('online');
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
@@ -28,6 +34,22 @@ const ChatIA = ({ student, apiUrl, documentContext = '' }) => {
   // ✅ Récupération sécurisée du prénom
   const prenomEleve = student?.nom?.split(' ')[0] || student?.name?.split(' ')[0] || 'Élève';
   const classeEleve = student?.classe || student?.class_level || 'votre classe';
+
+  // 🔧 CORRECTION 2: FONCTION MISE À JOUR TOKENS
+  const updateTokenUsage = (newTokens, totalTokens = null) => {
+    setTokenUsage(prev => {
+      const updated = {
+        ...prev,
+        used_today: totalTokens !== null ? totalTokens : prev.used_today + newTokens,
+        remaining: totalTokens !== null ? 95000 - totalTokens : prev.remaining - newTokens,
+        total_conversations: prev.total_conversations + 1,
+        last_updated: Date.now()
+      };
+      
+      console.log('🔋 Tokens mis à jour:', updated);
+      return updated;
+    });
+  };
 
   // 🎤 INITIALISATION RECONNAISSANCE VOCALE
   useEffect(() => {
@@ -147,7 +169,7 @@ const ChatIA = ({ student, apiUrl, documentContext = '' }) => {
     return baseSuggestions;
   };
 
-  // ✅ FONCTION MESSAGE D'ACCUEIL RÉVOLUTIONNAIRE
+  // 🔧 CORRECTION 3: MESSAGE D'ACCUEIL CORRIGÉ
   const triggerWelcomeMessage = async () => {
     if (welcomeMessageSent) return;
     
@@ -186,12 +208,9 @@ const ChatIA = ({ student, apiUrl, documentContext = '' }) => {
         setLearningProfile(data.learning_profile);
         setConnectionStatus('online');
 
-        // 🔧 CORRECTION: Mise à jour tokens
-        if (data.tokens_remaining !== undefined) {
-          setTokenUsage({
-            used: 95000 - data.tokens_remaining,
-            remaining: data.tokens_remaining
-          });
+        // CORRECTION: Mise à jour tokens correcte
+        if (data.tokens_used) {
+          updateTokenUsage(data.tokens_used);
         }
       }
     } catch (error) {
@@ -235,7 +254,7 @@ Je suis ÉtudIA, ton tuteur IA révolutionnaire ! 🤖✨
     }
   }, [isLoading]);
 
-  // 🎯 FONCTION ENVOI MESSAGE RÉVOLUTIONNAIRE
+  // 🔧 CORRECTION 4: ENVOI MESSAGE CORRIGÉ
   const handleSendMessage = async (messageText = inputMessage, mode = chatMode) => {
     if (!messageText.trim() || isLoading) return;
 
@@ -295,12 +314,9 @@ Je suis ÉtudIA, ton tuteur IA révolutionnaire ! 🤖✨
         setTotalTokens(prev => prev + (data.tokens_used || 0));
         setConnectionStatus('online');
 
-        // 🔧 CORRECTION: Mise à jour tokens
-        if (data.tokens_remaining !== undefined) {
-          setTokenUsage({
-            used: 95000 - data.tokens_remaining,
-            remaining: data.tokens_remaining
-          });
+        // CORRECTION: Mise à jour tokens en temps réel
+        if (data.tokens_used) {
+          updateTokenUsage(data.tokens_used, totalTokens + (data.tokens_used || 0));
         }
 
         // Gérer progression étapes
@@ -308,7 +324,7 @@ Je suis ÉtudIA, ton tuteur IA révolutionnaire ! 🤖✨
           setCurrentStep(data.next_step.next);
         }
 
-        // 🔊 Synthèse vocale si mode audio ACTIVÉ
+        // Synthèse vocale si mode audio ACTIVÉ
         if (isAudioMode && data.response) {
           setTimeout(() => speakResponse(data.response), 500);
         }
@@ -520,19 +536,20 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
               )}
             </div>
             
-            {/* 🔧 COMPTEUR TOKENS CORRIGÉ */}
+            {/* 🔧 CORRECTION 5: AFFICHAGE TOKENS CORRIGÉ */}
             <div className="tokens-display">
               <div className="tokens-bar">
                 <div 
                   className="tokens-fill" 
                   style={{ 
-                    width: `${(tokenUsage.used / 95000) * 100}%`,
-                    backgroundColor: tokenUsage.used > 85000 ? '#EF4444' : '#32CD32'
+                    width: `${Math.min(100, (tokenUsage.used_today / 95000) * 100)}%`,
+                    backgroundColor: tokenUsage.used_today > 85000 ? '#EF4444' : 
+                                    tokenUsage.used_today > 50000 ? '#F59E0B' : '#32CD32'
                   }}
                 ></div>
               </div>
               <span className="tokens-text">
-                Tokens: {tokenUsage.used.toLocaleString()}/{(95000).toLocaleString()}
+                Tokens: {tokenUsage.used_today.toLocaleString()}/{(95000).toLocaleString()}
               </span>
               <div className="connection-status">
                 <div className={`status-dot ${connectionStatus}`}></div>
@@ -573,60 +590,60 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
         </div>
 
         {/* 🚀 BOUTONS RÉVOLUTIONNAIRES CORRIGÉS */}
-{chatMode === 'normal' && (
-  <div className="revolutionary-buttons">
-    <div className="mode-buttons-header">
-      <h3>🎯 Choisis ton mode d'apprentissage, {prenomEleve} !</h3>
-    </div>
-    
-    <div className="mode-buttons-grid">
-      <button
-        onClick={() => setChatMode('normal')}
-        className="mode-button normal active"
-        disabled={isLoading}
-      >
-        <div className="mode-icon">💬</div>
-        <div className="mode-content">
-          <div className="mode-title">Mode Normal</div>
-          <div className="mode-description">
-            Conversation équilibrée avec ÉtudIA - Ni trop guidé, ni trop direct
-          </div>
-          <div className="mode-benefit">⚖️ Équilibre parfait</div>
-        </div>
-      </button>
+        {chatMode === 'normal' && (
+          <div className="revolutionary-buttons">
+            <div className="mode-buttons-header">
+              <h3>🎯 Choisis ton mode d'apprentissage, {prenomEleve} !</h3>
+            </div>
+            
+            <div className="mode-buttons-grid">
+              <button
+                onClick={() => setChatMode('normal')}
+                className="mode-button normal active"
+                disabled={isLoading}
+              >
+                <div className="mode-icon">💬</div>
+                <div className="mode-content">
+                  <div className="mode-title">Mode Normal</div>
+                  <div className="mode-description">
+                    Conversation équilibrée avec ÉtudIA - Ni trop guidé, ni trop direct
+                  </div>
+                  <div className="mode-benefit">⚖️ Équilibre parfait</div>
+                </div>
+              </button>
 
-      <button
-        onClick={activateStepByStepMode}
-        className="mode-button step-by-step"
-        disabled={isLoading}
-      >
-        <div className="mode-icon">🔁</div>
-        <div className="mode-content">
-          <div className="mode-title">Explication Étape par Étape</div>
-          <div className="mode-description">
-            Je te guide progressivement à travers chaque étape de résolution
-          </div>
-          <div className="mode-benefit">✨ Compréhension garantie</div>
-        </div>
-      </button>
+              <button
+                onClick={activateStepByStepMode}
+                className="mode-button step-by-step"
+                disabled={isLoading}
+              >
+                <div className="mode-icon">🔁</div>
+                <div className="mode-content">
+                  <div className="mode-title">Explication Étape par Étape</div>
+                  <div className="mode-description">
+                    Je te guide progressivement à travers chaque étape de résolution
+                  </div>
+                  <div className="mode-benefit">✨ Compréhension garantie</div>
+                </div>
+              </button>
 
-      <button
-        onClick={activateDirectSolutionMode}
-        className="mode-button direct-solution"
-        disabled={isLoading}
-      >
-        <div className="mode-icon">✅</div>
-        <div className="mode-content">
-          <div className="mode-title">Solution Finale</div>
-          <div className="mode-description">
-            Je donne directement toutes les solutions complètes de tes exercices
+              <button
+                onClick={activateDirectSolutionMode}
+                className="mode-button direct-solution"
+                disabled={isLoading}
+              >
+                <div className="mode-icon">✅</div>
+                <div className="mode-content">
+                  <div className="mode-title">Solution Finale</div>
+                  <div className="mode-description">
+                    Je donne directement toutes les solutions complètes de tes exercices
+                  </div>
+                  <div className="mode-benefit">⚡ Résultats immédiats</div>
+                </div>
+              </button>
+            </div>
           </div>
-          <div className="mode-benefit">⚡ Résultats immédiats</div>
-        </div>
-      </button>
-    </div>
-  </div>
-)}
+        )}
 
         {/* Bouton retour au mode normal */}
         {chatMode !== 'normal' && (
@@ -734,7 +751,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
             </div>
           )}
 
-          {/* 🔧 ZONE SAISIE RÉVOLUTIONNAIRE CORRIGÉE */}
+          {/* 🔧 CORRECTION 6: ZONE SAISIE DARK MODE CORRIGÉE */}
           <div className="chat-input-wrapper revolutionary enhanced">
             <div className="input-container">
               <textarea
@@ -805,7 +822,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
               {!isRecording && isAudioMode && chatMode === 'normal' && (
                 <span className="hint audio">🎤 Mode Audio actif : Parle (🎙️) ou écris à ÉtudIA - Réponses vocales automatiques</span>
               )}
-              {tokenUsage.used > 85000 && (
+              {tokenUsage.used_today > 85000 && (
                 <span className="hint warning">⚠️ Attention : Limite tokens bientôt atteinte ({tokenUsage.remaining.toLocaleString()} restants)</span>
               )}
             </div>
@@ -865,7 +882,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
             </div>
           </div>
 
-          {/* 🔧 STATISTIQUES PERSONNELLES CORRIGÉES */}
+          {/* 🔧 CORRECTION 7: STATISTIQUES PERSONNELLES MISES À JOUR */}
           <div className="personal-stats">
             <h4>📊 Tes Statistiques, {prenomEleve}</h4>
             <div className="stats-grid">
@@ -874,27 +891,49 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
                 <span className="stat-label">Conversations</span>
               </div>
               <div className="stat-item">
-                <span className="stat-number">{tokenUsage.used.toLocaleString()}</span>
+                <span className="stat-number">{tokenUsage.used_today.toLocaleString()}</span>
                 <span className="stat-label">Tokens utilisés</span>
               </div>
               <div className="stat-item">
                 <span className="stat-number">
-                  {documentContext ? '1+' : '0'}
+                  {allDocuments?.length || (documentContext ? '1' : '0')}
                 </span>
                 <span className="stat-label">Documents analysés</span>
               </div>
               <div className="stat-item">
                 <span className="stat-number">
-                  {learningProfile?.level || 'N/A'}
+                  {learningProfile?.level || Math.min(5, Math.ceil(conversationCount / 10))}
                 </span>
                 <span className="stat-label">Niveau IA</span>
+              </div>
+            </div>
+            
+            {/* Graphique progression tokens */}
+            <div className="token-progress-chart">
+              <h5>🔋 Utilisation Tokens Aujourd'hui</h5>
+              <div className="progress-visualization">
+                <div className="progress-segment green" style={{ width: '60%' }}>
+                  <span>Zone optimale</span>
+                </div>
+                <div className="progress-segment yellow" style={{ width: '25%' }}>
+                  <span>Attention</span>
+                </div>
+                <div className="progress-segment red" style={{ width: '15%' }}>
+                  <span>Limite</span>
+                </div>
+              </div>
+              <div className="current-position" style={{ 
+                left: `${Math.min(100, (tokenUsage.used_today / 95000) * 100)}%` 
+              }}>
+                <div className="position-marker">📍</div>
+                <div className="position-label">{tokenUsage.used_today.toLocaleString()}</div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* 🔧 STYLES CSS RÉVOLUTIONNAIRES AMÉLIORÉS */}
+      {/* 🔧 CORRECTION 8 + 9 + 10: STYLES CSS RÉVOLUTIONNAIRES COMPLETS */}
       <style jsx>{`
         /* 🔧 CORRECTIONS VISUELLES PRINCIPALES */
         .chat-tab.dark-mode {
@@ -1049,6 +1088,146 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           50% { opacity: 0.5; }
         }
 
+        /* MODE SOMBRE POUR ZONE SAISIE - CORRECTION 6 */
+        .dark-mode .chat-input.enhanced {
+          background: rgba(31, 41, 55, 0.9) !important;
+          color: #F9FAFB !important;
+          border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .dark-mode .chat-input.enhanced:focus {
+          background: rgba(31, 41, 55, 0.95) !important;
+          border-color: var(--accent-blue) !important;
+          color: #F9FAFB !important;
+        }
+
+        .dark-mode .chat-input.enhanced::placeholder {
+          color: #9CA3AF !important;
+        }
+
+        .dark-mode .input-hints.enhanced {
+          background: rgba(31, 41, 55, 0.8) !important;
+          color: #D1D5DB !important;
+        }
+
+        .dark-mode .chat-input-wrapper.revolutionary.enhanced {
+          background: rgba(31, 41, 55, 0.9) !important;
+          border-color: var(--primary-orange) !important;
+        }
+
+        /* GRAPHIQUE PROGRESSION TOKENS - CORRECTION 8 */
+        .token-progress-chart {
+          margin-top: 2rem;
+          padding: 1.5rem;
+          background: rgba(255, 255, 255, 0.9);
+          border-radius: 1rem;
+          border: 2px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .token-progress-chart h5 {
+          text-align: center;
+          color: #6366F1;
+          margin-bottom: 1rem;
+          font-size: 1.1rem;
+          font-weight: 700;
+        }
+
+        .progress-visualization {
+          position: relative;
+          height: 40px;
+          border-radius: 20px;
+          overflow: hidden;
+          display: flex;
+          margin-bottom: 1rem;
+          box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-segment {
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: white;
+          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+          transition: all 0.3s ease;
+        }
+
+        .progress-segment:hover {
+          transform: scaleY(1.1);
+          z-index: 2;
+        }
+
+        .progress-segment.green {
+          background: linear-gradient(135deg, #32CD32, #4CAF50);
+        }
+
+        .progress-segment.yellow {
+          background: linear-gradient(135deg, #F59E0B, #FbbF24);
+        }
+
+        .progress-segment.red {
+          background: linear-gradient(135deg, #EF4444, #DC2626);
+        }
+
+        .current-position {
+          position: relative;
+          height: 60px;
+          pointer-events: none;
+        }
+
+        .position-marker {
+          position: absolute;
+          top: -50px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 1.5rem;
+          animation: bounce 2s infinite;
+        }
+
+        .position-label {
+          position: absolute;
+          top: -25px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #6366F1;
+          color: white;
+          padding: 0.25rem 0.75rem;
+          border-radius: 1rem;
+          font-size: 0.8rem;
+          font-weight: 600;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% {
+            transform: translateX(-50%) translateY(0);
+          }
+          40% {
+            transform: translateX(-50%) translateY(-5px);
+          }
+          60% {
+            transform: translateX(-50%) translateY(-2px);
+          }
+        }
+
+        /* MODE SOMBRE POUR NOUVELLES FONCTIONNALITÉS - CORRECTION 9 */
+        .dark-mode .token-progress-chart {
+          background: rgba(31, 41, 55, 0.9);
+          border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .dark-mode .token-progress-chart h5 {
+          color: #818CF8;
+        }
+
+        .dark-mode .position-label {
+          background: #4F46E5;
+        }
+
+        /* TOUS LES AUTRES STYLES RÉVOLUTIONNAIRES */
         .revolutionary-buttons {
           margin: 1.5rem 0;
           padding: 2rem;
@@ -1173,7 +1352,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           display: inline-block;
         }
 
-        /* 🔧 ZONE MESSAGES AMÉLIORÉE */
+        /* ZONE MESSAGES AMÉLIORÉE */
         .chat-messages.enhanced {
           max-height: 500px;
           overflow-y: auto;
@@ -1307,7 +1486,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           font-weight: 500;
         }
 
-        /* 🔧 ANIMATION CHARGEMENT AMÉLIORÉE */
+        /* ANIMATION CHARGEMENT AMÉLIORÉE */
         .ai-thinking {
           display: flex;
           align-items: center;
@@ -1352,7 +1531,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           font-style: italic;
         }
 
-        /* 🔧 ZONE SAISIE RÉVOLUTIONNAIRE CORRIGÉE */
+        /* ZONE SAISIE RÉVOLUTIONNAIRE CORRIGÉE */
         .chat-input-wrapper.revolutionary.enhanced {
           background: white;
           border-radius: 1.5rem;
@@ -1399,7 +1578,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           background: rgba(255, 140, 0, 0.05);
         }
 
-        /* 🔧 BOUTON VOCAL AMÉLIORÉ */
+        /* BOUTON VOCAL AMÉLIORÉ */
         .voice-button {
           background: linear-gradient(135deg, #F59E0B, #D97706);
           border: none;
@@ -1473,7 +1652,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           font-size: 1.1rem;
         }
 
-        /* 🔧 CONSEILS AMÉLIORÉS */
+        /* CONSEILS AMÉLIORÉS */
         .input-hints.enhanced {
           padding: 1rem 1.5rem;
           background: rgba(255, 140, 0, 0.05);
@@ -1507,7 +1686,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           font-weight: 600;
         }
 
-        /* 🔧 CONTRÔLES CHAT AMÉLIORÉS */
+        /* CONTRÔLES CHAT AMÉLIORÉS */
         .chat-header.revolutionary {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
@@ -1566,7 +1745,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
         }
 
-        /* 🔧 FEATURES SHOWCASE AMÉLIORÉ */
+        /* FEATURES SHOWCASE AMÉLIORÉ */
         .features-showcase {
           margin-top: 2rem;
           padding: 2.5rem;
@@ -1676,7 +1855,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           font-size: 0.9rem;
         }
 
-        /* 🔧 STATISTIQUES PERSONNELLES CORRIGÉES */
+        /* STATISTIQUES PERSONNELLES CORRIGÉES */
         .personal-stats {
           margin-top: 2.5rem;
           padding: 2rem;
@@ -1727,7 +1906,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           font-weight: 500;
         }
 
-        /* 🔧 MODE SOMBRE AMÉLIORÉ */
+        /* MODE SOMBRE AMÉLIORÉ */
         .dark-mode .student-profile-header {
           background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(99, 102, 241, 0.2));
           border-color: rgba(16, 185, 129, 0.4);
@@ -1789,29 +1968,6 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           color: #FEF3C7;
         }
 
-        .dark-mode .chat-input-wrapper.revolutionary.enhanced {
-          background: #374151;
-          border-color: #FF8C00;
-        }
-
-        .dark-mode .chat-input.enhanced {
-          background: transparent;
-          color: #F9FAFB;
-        }
-
-        .dark-mode .chat-input.enhanced::placeholder {
-          color: #9CA3AF;
-        }
-
-        .dark-mode .input-buttons {
-          background: rgba(255, 140, 0, 0.1);
-        }
-
-        .dark-mode .input-hints.enhanced {
-          background: rgba(255, 140, 0, 0.1);
-          color: #D1D5DB;
-        }
-
         .dark-mode .features-showcase {
           background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.1));
           border-color: rgba(99, 102, 241, 0.3);
@@ -1853,7 +2009,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           color: #D1D5DB;
         }
 
-        /* 🔧 RESPONSIVE AMÉLIORÉ */
+        /* RESPONSIVE POUR TOKENS - CORRECTION 10 */
         @media (max-width: 768px) {
           .student-profile-header {
             flex-direction: column;
@@ -1896,6 +2052,19 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
 
           .stats-grid {
             grid-template-columns: repeat(2, 1fr);
+          }
+
+          .progress-segment span {
+            font-size: 0.7rem;
+          }
+          
+          .position-label {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+          }
+          
+          .token-progress-chart {
+            padding: 1rem;
           }
         }
 
@@ -1949,9 +2118,21 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           .stats-grid {
             grid-template-columns: 1fr;
           }
+
+          .progress-visualization {
+            height: 30px;
+          }
+          
+          .progress-segment span {
+            display: none;
+          }
+          
+          .position-marker {
+            font-size: 1.2rem;
+          }
         }
 
-        /* 🔧 ANIMATIONS SUPPLÉMENTAIRES */
+        /* ANIMATIONS SUPPLÉMENTAIRES */
         .mode-reset {
           display: flex;
           justify-content: center;
@@ -1982,7 +2163,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
         }
 
-        /* 🔧 AMÉLIORATIONS SUGGESTIONS */
+        /* AMÉLIORATIONS SUGGESTIONS */
         .suggestions-container {
           margin-bottom: 1.5rem;
           padding: 1.5rem;
