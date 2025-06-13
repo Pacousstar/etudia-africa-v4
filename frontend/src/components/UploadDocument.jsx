@@ -1,188 +1,203 @@
+// UploadDocument.js - VERSION RÉVOLUTIONNAIRE AVEC CONSEILS OCR VISIBLES
 import React, { useState, useRef } from 'react';
 
 const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
-  const [dragOver, setDragOver] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('idle'); // idle, uploading, processing, success, error
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadResult, setUploadResult] = useState(null);
-  const [error, setError] = useState('');
+  const [extractedText, setExtractedText] = useState('');
+  const [documentInfo, setDocumentInfo] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [fileInfo, setFileInfo] = useState(null);
+  
   const fileInputRef = useRef(null);
+  const dropZoneRef = useRef(null);
 
-  const supportedFormats = ['JPG', 'PNG', 'WebP', 'PDF', 'DOC', 'DOCX', 'TXT'];
-  const maxFileSize = 15 * 1024 * 1024; // 15MB (augmenté pour correspondre au serveur)
+  // Récupération sécurisée du prénom
+  const prenomEleve = student?.nom?.split(' ')[0] || student?.name?.split(' ')[0] || 'Élève';
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setDragOver(true);
+  // Types de fichiers supportés avec icônes
+  const supportedTypes = {
+    'image/jpeg': { icon: '🖼️', name: 'JPEG' },
+    'image/png': { icon: '🖼️', name: 'PNG' },
+    'image/jpg': { icon: '🖼️', name: 'JPG' },
+    'image/webp': { icon: '🖼️', name: 'WebP' },
+    'application/pdf': { icon: '📄', name: 'PDF' },
+    'text/plain': { icon: '📝', name: 'TXT' },
+    'application/msword': { icon: '📘', name: 'DOC' },
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': { icon: '📘', name: 'DOCX' }
   };
 
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFileUpload(files[0]);
-    }
-  };
-
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 0) {
-      handleFileUpload(files[0]);
-    }
-  };
-
+  // Validation fichier
   const validateFile = (file) => {
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png', 
-      'image/jpg',
-      'image/webp',
-      'application/pdf',
-      'text/plain',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
+    const maxSize = 15 * 1024 * 1024; // 15MB
+    const allowedTypes = Object.keys(supportedTypes);
 
     if (!allowedTypes.includes(file.type)) {
-      throw new Error(`Type de fichier non supporté. Utilisez: ${supportedFormats.join(', ')}`);
+      return {
+        valid: false,
+        error: `Type de fichier non supporté. Formats acceptés: ${Object.values(supportedTypes).map(t => t.name).join(', ')}`
+      };
     }
 
-    if (file.size > maxFileSize) {
-      throw new Error('Fichier trop volumineux. Taille maximale: 15MB');
+    if (file.size > maxSize) {
+      return {
+        valid: false,
+        error: 'Fichier trop volumineux. Taille maximum: 15MB'
+      };
     }
 
-    return true;
+    return { valid: true };
   };
 
-  const handleFileUpload = async (file) => {
+  // Créer aperçu fichier
+  const createPreview = (file) => {
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => setPreviewUrl(e.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
+  // Simuler progression upload
+  const simulateProgress = () => {
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+      }
+      setUploadProgress(Math.floor(progress));
+    }, 200);
+    return interval;
+  };
+
+  // Traitement upload
+  const processUpload = async (file) => {
+    setUploadStatus('uploading');
+    setErrorMessage('');
+    setExtractedText('');
+    setDocumentInfo(null);
+
+    // Validation
+    const validation = validateFile(file);
+    if (!validation.valid) {
+      setErrorMessage(validation.error);
+      setUploadStatus('error');
+      return;
+    }
+
+    // Aperçu et info fichier
+    createPreview(file);
+    setFileInfo({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      icon: supportedTypes[file.type]?.icon || '📄'
+    });
+
     try {
-      setError('');
-      setUploadResult(null);
-      setUploading(true);
-      setUploadProgress(0);
+      // Progression simulée
+      const progressInterval = simulateProgress();
 
-      console.log('📁 Début upload:', file.name, file.type, file.size);
-
-      // Valider le fichier
-      validateFile(file);
-
-      // Créer FormData
+      // Préparation données
       const formData = new FormData();
       formData.append('document', file);
       formData.append('user_id', student.id);
 
-      console.log('🚀 Envoi vers:', `${apiUrl}/api/upload`);
-      console.log('👤 User ID:', student.id);
+      console.log('📤 Upload démarré:', file.name, file.type, file.size);
 
-      // Simuler progression pour une meilleure UX
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 85) {
-            clearInterval(progressInterval);
-            return 85;
-          }
-          return prev + Math.random() * 10;
-        });
-      }, 300);
+      setUploadStatus('processing');
+      clearInterval(progressInterval);
+      setUploadProgress(100);
 
-      // ✅ CORRECTION PRINCIPALE: Utiliser /api/upload au lieu de /api/upload-document
+      // Envoi au serveur
       const response = await fetch(`${apiUrl}/api/upload`, {
         method: 'POST',
         body: formData,
       });
 
-      clearInterval(progressInterval);
-      setUploadProgress(100);
+      console.log('📡 Réponse serveur:', response.status, response.ok);
 
-      console.log('📡 Statut réponse:', response.status);
-
-      // ✅ CORRECTION: Meilleure gestion des erreurs de réponse
-      let data;
-      const contentType = response.headers.get('content-type');
-      
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        // Si ce n'est pas du JSON, c'est probablement une page d'erreur HTML
-        const textResponse = await response.text();
-        console.error('❌ Réponse non-JSON reçue:', textResponse.substring(0, 200));
-        throw new Error('Le serveur a retourné une réponse inattendue. Vérifiez que le backend fonctionne correctement.');
+      if (!response.ok) {
+        throw new Error(`Erreur serveur: ${response.status}`);
       }
 
-      console.log('📦 Données reçues:', data);
+      const result = await response.json();
+      console.log('✅ Résultat upload:', result);
 
-      if (response.ok && data.success) {
-        // Adapter les données au format attendu par le composant
-        const adaptedResult = {
-          message: data.message || 'Document traité avec succès !',
-          document: {
-            id: data.data?.id,
-            filename: data.data?.nom_original || file.name,
-            extracted_text: data.data?.texte_extrait || '',
-            confidence: 95.0
-          },
-          quick_actions: [
-            'Résumer ce document',
-            'Poser une question sur ce contenu', 
-            'Identifier les points clés',
-            'Créer un plan de révision'
-          ],
-          next_step: 'Passez au chat pour poser vos questions ! 💬'
-        };
+      if (result.success) {
+        setExtractedText(result.data.texte_extrait);
+        setDocumentInfo({
+          id: result.data.id,
+          nom_original: result.data.nom_original,
+          matiere: result.data.matiere || 'Général',
+          resume: result.data.resume || 'Document analysé avec succès',
+          nb_exercices: result.data.nb_exercices || 1,
+          confidence: 95 // Simulation confiance OCR
+        });
+        setUploadStatus('success');
 
-        setUploadResult(adaptedResult);
-        
-        // Notifier le parent avec le texte extrait
-        if (onDocumentProcessed && adaptedResult.document.extracted_text) {
-          onDocumentProcessed(adaptedResult.document.extracted_text);
+        // Callback vers parent avec données complètes
+        if (onDocumentProcessed) {
+          onDocumentProcessed(result.data.texte_extrait, {
+            id: result.data.id,
+            nom_original: result.data.nom_original,
+            matiere: result.data.matiere,
+            date_upload: new Date().toISOString()
+          });
         }
-        
-        // Animation de succès
-        setTimeout(() => {
-          setUploadProgress(0);
-        }, 2000);
 
       } else {
-        throw new Error(data.error || data.message || 'Erreur lors du traitement du document');
+        throw new Error(result.error || 'Erreur traitement document');
       }
 
-    } catch (err) {
-      console.error('❌ Erreur upload:', err);
-      
-      // ✅ CORRECTION: Messages d'erreur plus informatifs
-      let errorMessage = err.message;
-      
-      if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        errorMessage = 'Impossible de contacter le serveur. Vérifiez que le backend fonctionne sur le port 3000.';
-      } else if (err.message.includes('<!DOCTYPE')) {
-        errorMessage = 'Le serveur a retourné une page d\'erreur. Vérifiez que la route /api/upload existe.';
-      }
-      
-      setError(errorMessage);
-      setUploadProgress(0);
-    } finally {
-      setUploading(false);
+    } catch (error) {
+      console.error('❌ Erreur upload:', error);
+      setErrorMessage(`Erreur: ${error.message}`);
+      setUploadStatus('error');
     }
   };
 
-  const handleQuickAction = (action) => {
-    if (uploadResult && onDocumentProcessed) {
-      // Passer l'action au composant chat avec le contexte du document
-      const contextMessage = `Contexte du document: ${uploadResult.document.extracted_text}\n\nAction demandée: ${action}`;
-      onDocumentProcessed(contextMessage);
+  // Gestionnaires événements
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      processUpload(file);
     }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      processUpload(file);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
   };
 
   const resetUpload = () => {
-    setUploadResult(null);
-    setError('');
+    setUploadStatus('idle');
     setUploadProgress(0);
+    setExtractedText('');
+    setDocumentInfo(null);
+    setErrorMessage('');
+    setPreviewUrl(null);
+    setFileInfo(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -191,312 +206,598 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
   return (
     <div className="tab-content upload-tab">
       <div className="content-header">
-        <h2>📸 Upload & OCR Révolutionnaire</h2>
-        <p>Photographiez vos devoirs, ÉtudIA extrait le texte instantanément avec une précision de 95%+ !</p>
+        <h2 className="main-title">📸 Upload & Analyse OCR Révolutionnaire</h2>
+        <p className="main-subtitle">
+          {prenomEleve}, uploadez votre document et laissez ÉtudIA l'analyser avec une précision de 95% !
+        </p>
       </div>
 
+      {/* Zone de drop principale */}
       <div className="upload-container">
-        {/* Zone d'upload */}
         <div
-          className={`upload-zone ${dragOver ? 'dragover' : ''}`}
+          ref={dropZoneRef}
+          className={`drop-zone ${isDragOver ? 'drag-over' : ''} ${uploadStatus !== 'idle' ? 'processing' : ''}`}
+          onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => uploadStatus === 'idle' && fileInputRef.current?.click()}
         >
-          <div className="upload-icon">
-            {uploading ? '⚡' : '📸'}
-          </div>
-          
-          <div className="upload-text">
-            <h3>
-              {uploading 
-                ? 'Analyse en cours...' 
-                : 'Glissez votre document ici ou cliquez pour sélectionner'
-              }
-            </h3>
-            <p>
-              {uploading 
-                ? 'ÉtudIA utilise l\'OCR Tesseract.js pour extraire le texte' 
-                : 'Formats supportés: Photos de devoirs, PDF, Documents Word, TXT'
-              }
-            </p>
-          </div>
-
-          {!uploading && (
-            <div className="supported-formats">
-              {supportedFormats.map(format => (
-                <span key={format} className="format-tag">{format}</span>
-              ))}
-            </div>
-          )}
-
           <input
             ref={fileInputRef}
             type="file"
-            accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.txt"
+            accept=".jpg,.jpeg,.png,.webp,.pdf,.txt,.doc,.docx"
             onChange={handleFileSelect}
             style={{ display: 'none' }}
+            disabled={uploadStatus !== 'idle'}
           />
-        </div>
 
-        {/* Barre de progression */}
-        {uploading && (
-          <div className="upload-progress">
-            <div className="progress-info">
-              <span className="file-name">
-                {fileInputRef.current?.files[0]?.name || 'Document'}
-              </span>
-              <span className="progress-percent">{Math.round(uploadProgress)}%</span>
-            </div>
-            <div className="progress-bar-upload">
-              <div 
-                className="progress-fill" 
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-            </div>
-            <div style={{ marginTop: '1rem', textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
-              {uploadProgress < 30 && '📤 Upload en cours...'}
-              {uploadProgress >= 30 && uploadProgress < 60 && '🔍 Extraction OCR en cours...'}
-              {uploadProgress >= 60 && uploadProgress < 85 && '🧠 Analyse IA en cours...'}
-              {uploadProgress >= 85 && uploadProgress < 100 && '💾 Finalisation...'}
-              {uploadProgress === 100 && '✅ Terminé ! 🎉'}
-            </div>
-          </div>
-        )}
-
-        {/* Message d'erreur */}
-        {error && (
-          <div className="message error">
-            <h3 style={{ color: '#ff4444', marginBottom: '0.5rem' }}>
-              ⚠️ Erreur lors du traitement du document
-            </h3>
-            <p style={{ marginBottom: '1rem' }}>{error}</p>
-            
-            <div style={{ marginTop: '1rem' }}>
-              <strong>💡 Conseils :</strong>
-              <ul style={{ marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
-                <li>Vérifiez que le serveur backend fonctionne sur le port 3000</li>
-                <li>Assurez-vous que l'image est nette et bien éclairée</li>
-                <li>Le texte doit être clairement visible</li>
-                <li>Essayez avec un format différent (PDF recommandé)</li>
-                <li>Vérifiez que le fichier fait moins de 15MB</li>
-                <li>Vérifiez votre connexion internet</li>
-              </ul>
-            </div>
-            
-            <button 
-              onClick={resetUpload}
-              style={{
-                marginTop: '1rem',
-                padding: '0.5rem 1rem',
-                background: '#ff4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.5rem',
-                cursor: 'pointer'
-              }}
-            >
-              🔄 Réessayer
-            </button>
-          </div>
-        )}
-
-        {/* Résultat de l'upload */}
-        {uploadResult && (
-          <div className="upload-result">
-            <div className="result-header">
-              <span className="result-icon">🎉</span>
-              <h3 className="result-title">Document analysé avec succès !</h3>
-              <button 
-                onClick={resetUpload}
-                style={{
-                  marginLeft: 'auto',
-                  background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  color: 'white',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.5rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Nouveau document
-              </button>
-            </div>
-
-            <div style={{ marginBottom: '1rem' }}>
-              <strong>📄 Fichier :</strong> {uploadResult.document.filename}
-              <br />
-              <strong>🎯 Confiance OCR :</strong> {uploadResult.document.confidence}%
-              <br />
-              <strong>📝 Caractères extraits :</strong> {uploadResult.document.extracted_text.length}
-            </div>
-
-            {/* Aperçu du texte extrait */}
-            <div>
-              <h4 style={{ marginBottom: '0.5rem', color: 'white' }}>
-                📖 Texte extrait :
-              </h4>
-              <div className="extracted-text">
-                {uploadResult.document.extracted_text.length > 500 
-                  ? uploadResult.document.extracted_text.substring(0, 500) + '...'
-                  : uploadResult.document.extracted_text
-                }
-              </div>
-              {uploadResult.document.extracted_text.length > 500 && (
-                <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.5rem' }}>
-                  Texte tronqué pour l'aperçu. Le texte complet sera utilisé dans le chat.
-                </p>
-              )}
-            </div>
-
-            {/* Actions rapides */}
-            <div className="quick-actions">
-              <h4>⚡ Actions rapides :</h4>
-              <div className="action-buttons">
-                {uploadResult.quick_actions.map((action, index) => (
-                  <button
-                    key={index}
-                    className="action-button"
-                    onClick={() => handleQuickAction(action)}
-                  >
-                    {action}
-                  </button>
+          {uploadStatus === 'idle' && (
+            <div className="drop-zone-content">
+              <div className="upload-icon">📤</div>
+              <h3>Glissez votre document ici</h3>
+              <p>ou <strong>cliquez pour parcourir</strong></p>
+              <div className="supported-formats">
+                {Object.entries(supportedTypes).map(([type, info]) => (
+                  <span key={type} className="format-badge">
+                    {info.icon} {info.name}
+                  </span>
                 ))}
               </div>
-            </div>
-
-            {/* Prochaine étape */}
-            <div style={{ 
-              marginTop: '1.5rem', 
-              padding: '1rem', 
-              background: 'rgba(29, 185, 84, 0.1)',
-              borderRadius: '0.75rem',
-              border: '1px solid rgba(29, 185, 84, 0.3)',
-              textAlign: 'center'
-            }}>
-              <p style={{ margin: 0, fontWeight: 'bold', color: '#1DB954' }}>
-                🚀 {uploadResult.next_step}
-              </p>
-              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>
-                Votre document a été analysé et ajouté au contexte de l'IA. 
-                Vous pouvez maintenant poser des questions spécifiques sur ce contenu !
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Instructions et conseils */}
-        {!uploadResult && !uploading && (
-          <div style={{ marginTop: '2rem' }}>
-            <div className="features-grid">
-              <div className="feature-card">
-                <span className="feature-icon">📱</span>
-                <h3>Photos de Devoirs</h3>
-                <p>Photographiez vos exercices, problèmes de maths, textes à analyser</p>
-              </div>
-              
-              <div className="feature-card">
-                <span className="feature-icon">📄</span>
-                <h3>Documents Scannés</h3>
-                <p>PDF, Word, images scannées, TXT - tous les formats éducatifs supportés</p>
-              </div>
-              
-              <div className="feature-card">
-                <span className="feature-icon">🤖</span>
-                <h3>IA Contextuelle</h3>
-                <p>L'IA utilise le contenu de vos documents pour des réponses précises</p>
-              </div>
-              
-              <div className="feature-card">
-                <span className="feature-icon">⚡</span>
-                <h3>Analyse Instantanée</h3>
-                <p>OCR révolutionnaire avec Tesseract.js - résultats en secondes</p>
+              <div className="file-limits">
+                <span>📏 Taille max: 15MB</span>
+                <span>🎯 Précision OCR: 95%+</span>
               </div>
             </div>
+          )}
 
-            {/* Conseils d'utilisation */}
-            <div style={{
-              marginTop: '2rem',
-              padding: '1.5rem',
-              background: 'rgba(255, 255, 255, 0.03)',
-              borderRadius: '1rem',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              <h3 style={{ marginBottom: '1rem', color: '#FF6B35' }}>
-                💡 Conseils pour un OCR optimal :
-              </h3>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
-                <div>
-                  <h4 style={{ color: '#1DB954', marginBottom: '0.5rem' }}>📸 Qualité Photo</h4>
-                  <ul style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
-                    <li>Éclairage suffisant et uniforme</li>
-                    <li>Éviter les ombres sur le texte</li>
-                    <li>Tenir le téléphone bien droit</li>
-                    <li>Texte net, sans flou de mouvement</li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h4 style={{ color: '#6366F1', marginBottom: '0.5rem' }}>📄 Préparation Document</h4>
-                  <ul style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
-                    <li>Aplatir les pages froissées</li>
-                    <li>Éviter les reflets brillants</li>
-                    <li>Cadrer uniquement le texte utile</li>
-                    <li>Contraste élevé entre texte et fond</li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h4 style={{ color: '#F59E0B', marginBottom: '0.5rem' }}>⚙️ Formats Optimaux</h4>
-                  <ul style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
-                    <li>PDF pour les documents scannés</li>
-                    <li>PNG pour les captures d'écran</li>
-                    <li>JPG pour les photos</li>
-                    <li>Word pour les devoirs tapés</li>
-                    <li>TXT pour les fichiers texte simples</li>
-                  </ul>
+          {uploadStatus === 'uploading' && (
+            <div className="upload-progress">
+              <div className="upload-icon spinning">⏳</div>
+              <h3>Upload en cours...</h3>
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+              <p>{uploadProgress}% - Envoi vers ÉtudIA</p>
+            </div>
+          )}
+
+          {uploadStatus === 'processing' && (
+            <div className="processing-animation">
+              <div className="upload-icon processing">🧠</div>
+              <h3>Analyse IA en cours...</h3>
+              <div className="processing-steps">
+                <div className="step active">📤 Upload terminé</div>
+                <div className="step active">🔍 Extraction OCR</div>
+                <div className="step active">🧠 Analyse IA</div>
+                <div className="step">✅ Finalisation</div>
+              </div>
+              <p>ÉtudIA analyse votre document avec Llama 3.3...</p>
+            </div>
+          )}
+
+          {uploadStatus === 'error' && (
+            <div className="upload-error">
+              <div className="upload-icon error">❌</div>
+              <h3>Erreur lors du traitement</h3>
+              <p className="error-message">{errorMessage}</p>
+              <button className="retry-button" onClick={resetUpload}>
+                🔄 Réessayer
+              </button>
+            </div>
+          )}
+
+          {uploadStatus === 'success' && documentInfo && (
+            <div className="upload-success">
+              <div className="upload-icon success">✅</div>
+              <h3>Document analysé avec succès !</h3>
+              <div className="document-summary">
+                <div className="doc-icon">{fileInfo?.icon}</div>
+                <div className="doc-details">
+                  <div className="doc-name">{documentInfo.nom_original}</div>
+                  <div className="doc-meta">
+                    <span>📚 {documentInfo.matiere}</span>
+                    <span>📊 {documentInfo.nb_exercices} exercice(s)</span>
+                    <span>🎯 {documentInfo.confidence}% confiance</span>
+                  </div>
                 </div>
               </div>
+              <button className="continue-button" onClick={() => window.location.hash = '#chat'}>
+                💬 Commencer le Chat avec ÉtudIA
+              </button>
+              <button className="upload-another-button" onClick={resetUpload}>
+                ➕ Uploader un autre document
+              </button>
             </div>
+          )}
+        </div>
 
-            {/* Statistiques de réussite */}
-            <div style={{
-              marginTop: '2rem',
-              textAlign: 'center',
-              padding: '1rem',
-              background: 'rgba(16, 185, 129, 0.05)',
-              borderRadius: '1rem',
-              border: '1px solid rgba(16, 185, 129, 0.2)'
-            }}>
-              <h3 style={{ color: '#10B981', marginBottom: '1rem' }}>
-                🎯 Statistiques de Réussite ÉtudIA
-              </h3>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
-                <div>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10B981' }}>95%+</div>
-                  <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Précision OCR</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10B981' }}>3s</div>
-                  <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Temps moyen</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10B981' }}>15MB</div>
-                  <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Taille max</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10B981' }}>98%</div>
-                  <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Satisfaction élèves</div>
+        {/* Aperçu fichier */}
+        {previewUrl && uploadStatus !== 'idle' && (
+          <div className="file-preview">
+            <h4>📋 Aperçu du fichier</h4>
+            <div className="preview-container">
+              <img src={previewUrl} alt="Aperçu" className="preview-image" />
+              <div className="file-details">
+                <div className="file-name">{fileInfo?.name}</div>
+                <div className="file-info">
+                  <span>{fileInfo?.icon} {supportedTypes[fileInfo?.type]?.name}</span>
+                  <span>📏 {(fileInfo?.size / 1024 / 1024).toFixed(2)} MB</span>
                 </div>
               </div>
             </div>
           </div>
         )}
       </div>
-    </div>
-  );
-};
 
-export default UploadDocument;
+      {/* 💡 CONSEILS OCR OPTIMAUX - MAINTENANT VISIBLES ! */}
+      <div className="ocr-tips-section">
+        <h3 className="tips-title">💡 Conseils pour un OCR optimal</h3>
+        <div className="tips-grid">
+          <div className="tip-card quality">
+            <div className="tip-icon">📸</div>
+            <div className="tip-content">
+              <h4>Qualité d'image</h4>
+              <ul>
+                <li>✅ Photo bien éclairée et nette</li>
+                <li>✅ Résolution minimum 300 DPI</li>
+                <li>❌ Éviter les images floues</li>
+                <li>❌ Pas de reflets ou ombres</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="tip-card text">
+            <div className="tip-icon">📝</div>
+            <div className="tip-content">
+              <h4>Texte lisible</h4>
+              <ul>
+                <li>✅ Texte droit et bien cadré</li>
+                <li>✅ Contraste élevé (noir sur blanc)</li>
+                <li>❌ Éviter l'écriture manuscrite</li>
+                <li>❌ Pas de texte trop petit</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="tip-card format">
+            <div className="tip-icon">📄</div>
+            <div className="tip-content">
+              <h4>Format recommandé</h4>
+              <ul>
+                <li>🥇 PDF avec texte sélectionnable</li>
+                <li>🥈 PNG haute qualité</li>
+                <li>🥉 JPEG sans compression</li>
+                <li>⚠️ Éviter les captures d'écran</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="tip-card performance">
+            <div className="tip-icon">⚡</div>
+            <div className="tip-content">
+              <h4>Performance ÉtudIA</h4>
+              <ul>
+                <li>🎯 95%+ précision sur documents clairs</li>
+                <li>🧠 Reconnaissance formules mathématiques</li>
+                <li>🇫🇷 Optimisé pour le français</li>
+                <li>⚡ Traitement en moins de 30 secondes</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Aperçu texte extrait */}
+      {extractedText && uploadStatus === 'success' && (
+        <div className="extracted-text-preview">
+          <h3>📄 Texte extrait par ÉtudIA</h3>
+          <div className="text-preview-container">
+            <div className="text-preview">
+              {extractedText.substring(0, 500)}
+              {extractedText.length > 500 && '...'}
+            </div>
+            <div className="text-stats">
+              <div className="stat">
+                <span className="stat-label">Caractères:</span>
+                <span className="stat-value">{extractedText.length.toLocaleString()}</span>
+              </div>
+              <div className="stat">
+                <span className="stat-label">Mots:</span>
+                <span className="stat-value">{extractedText.split(' ').length.toLocaleString()}</span>
+              </div>
+              <div className="stat">
+                <span className="stat-label">Lignes:</span>
+                <span className="stat-value">{extractedText.split('\n').length.toLocaleString()}</span>
+              </div>
+            </div>
+            {extractedText.length > 500 && (
+              <button 
+                className="show-full-text"
+                onClick={() => {
+                  const modal = document.createElement('div');
+                  modal.innerHTML = `
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+                      <div style="background: white; border-radius: 1rem; padding: 2rem; max-width: 80vw; max-height: 80vh; overflow: auto;">
+                        <h3>📄 Texte complet extrait</h3>
+                        <pre style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">${extractedText}</pre>
+                        <button onclick="this.parentElement.parentElement.remove()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #4CAF50; color: white; border: none; border-radius: 0.5rem; cursor: pointer;">Fermer</button>
+                      </div>
+                    </div>
+                  `;
+                  document.body.appendChild(modal);
+                }}
+              >
+                📖 Voir le texte complet
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Historique uploads récents */}
+      <div className="upload-history">
+        <h3>📚 Vos documents récents</h3>
+        <p>Les documents seront affichés ici après upload. ÉtudIA se souvient de tous vos documents ! 🧠</p>
+      </div>
+
+      {/* Styles CSS intégrés */}
+      <style jsx>{`
+        .upload-tab {
+          padding: 2rem 0;
+        }
+
+        .upload-container {
+          max-width: 800px;
+          margin: 0 auto 3rem;
+        }
+
+        .drop-zone {
+          border: 3px dashed #4CAF50;
+          border-radius: 1.5rem;
+          padding: 3rem 2rem;
+          text-align: center;
+          background: linear-gradient(135deg, rgba(76, 175, 80, 0.05), rgba(76, 175, 80, 0.02));
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: relative;
+          min-height: 300px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .drop-zone.drag-over {
+          border-color: #FF6B35;
+          background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 107, 53, 0.05));
+          transform: scale(1.02);
+          box-shadow: 0 8px 25px rgba(255, 107, 53, 0.2);
+        }
+
+        .drop-zone.processing {
+          cursor: not-allowed;
+          border-color: #6366F1;
+          background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
+        }
+
+        .drop-zone-content h3 {
+          font-size: 1.5rem;
+          color: #1F2937;
+          margin: 1rem 0;
+          font-weight: 700;
+        }
+
+        .drop-zone-content p {
+          color: #6B7280;
+          font-size: 1.1rem;
+          margin-bottom: 2rem;
+        }
+
+        .upload-icon {
+          font-size: 4rem;
+          margin-bottom: 1rem;
+          display: block;
+        }
+
+        .upload-icon.spinning {
+          animation: spin 2s linear infinite;
+        }
+
+        .upload-icon.processing {
+          animation: pulse 2s infinite;
+        }
+
+        .upload-icon.error {
+          color: #EF4444;
+        }
+
+        .upload-icon.success {
+          color: #4CAF50;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+
+        .supported-formats {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          justify-content: center;
+          margin-bottom: 1.5rem;
+        }
+
+        .format-badge {
+          background: rgba(76, 175, 80, 0.1);
+          border: 1px solid rgba(76, 175, 80, 0.3);
+          padding: 0.3rem 0.8rem;
+          border-radius: 1rem;
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: #059669;
+        }
+
+        .file-limits {
+          display: flex;
+          gap: 2rem;
+          justify-content: center;
+          font-size: 0.9rem;
+          color: #6B7280;
+        }
+
+        .progress-bar {
+          width: 100%;
+          height: 8px;
+          background: rgba(76, 175, 80, 0.2);
+          border-radius: 4px;
+          overflow: hidden;
+          margin: 1rem 0;
+        }
+
+        .progress-fill {
+          height: 100%;
+          background: linear-gradient(135deg, #4CAF50, #32CD32);
+          border-radius: 4px;
+          transition: width 0.3s ease;
+          position: relative;
+        }
+
+        .progress-fill::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+          animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+
+        .processing-steps {
+          display: flex;
+          justify-content: center;
+          gap: 1rem;
+          margin: 1.5rem 0;
+          flex-wrap: wrap;
+        }
+
+        .step {
+          padding: 0.5rem 1rem;
+          border-radius: 1rem;
+          background: rgba(107, 114, 128, 0.1);
+          color: #6B7280;
+          font-size: 0.85rem;
+          font-weight: 600;
+          border: 1px solid rgba(107, 114, 128, 0.2);
+          transition: all 0.3s ease;
+        }
+
+        .step.active {
+          background: rgba(76, 175, 80, 0.2);
+          color: #059669;
+          border-color: rgba(76, 175, 80, 0.4);
+          transform: scale(1.05);
+        }
+
+        .upload-error,
+        .upload-success {
+          text-align: center;
+        }
+
+        .error-message {
+          color: #EF4444;
+          background: rgba(239, 68, 68, 0.1);
+          border: 1px solid rgba(239, 68, 68, 0.3);
+          border-radius: 0.5rem;
+          padding: 1rem;
+          margin: 1rem 0;
+          font-weight: 600;
+        }
+
+        .retry-button,
+        .continue-button,
+        .upload-another-button {
+          padding: 1rem 2rem;
+          border: none;
+          border-radius: 1rem;
+          font-size: 1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          margin: 0.5rem;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .retry-button {
+          background: linear-gradient(135deg, #EF4444, #DC2626);
+          color: white;
+        }
+
+        .continue-button {
+          background: linear-gradient(135deg, #4CAF50, #32CD32);
+          color: white;
+        }
+
+        .upload-another-button {
+          background: linear-gradient(135deg, #6366F1, #4F46E5);
+          color: white;
+        }
+
+        .retry-button:hover,
+        .continue-button:hover,
+        .upload-another-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .document-summary {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          background: rgba(76, 175, 80, 0.1);
+          border: 2px solid rgba(76, 175, 80, 0.3);
+          border-radius: 1rem;
+          padding: 1.5rem;
+          margin: 1.5rem 0;
+        }
+
+        .doc-icon {
+          font-size: 2.5rem;
+        }
+
+        .doc-details {
+          flex: 1;
+          text-align: left;
+        }
+
+        .doc-name {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: #1F2937;
+          margin-bottom: 0.5rem;
+        }
+
+        .doc-meta {
+          display: flex;
+          gap: 1rem;
+          font-size: 0.85rem;
+          color: #059669;
+          font-weight: 600;
+          flex-wrap: wrap;
+        }
+
+        .file-preview {
+          margin-top: 2rem;
+          background: white;
+          border-radius: 1rem;
+          padding: 2rem;
+          border: 2px solid rgba(99, 102, 241, 0.2);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-preview h4 {
+          color: #6366F1;
+          margin-bottom: 1rem;
+          font-size: 1.2rem;
+          font-weight: 700;
+        }
+
+        .preview-container {
+          display: flex;
+          gap: 1.5rem;
+          align-items: center;
+        }
+
+        .preview-image {
+          max-width: 200px;
+          max-height: 200px;
+          border-radius: 0.5rem;
+          border: 2px solid rgba(99, 102, 241, 0.2);
+          object-fit: cover;
+        }
+
+        .file-details {
+          flex: 1;
+        }
+
+        .file-name {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #1F2937;
+          margin-bottom: 0.5rem;
+        }
+
+        .file-info {
+          display: flex;
+          gap: 1rem;
+          font-size: 0.9rem;
+          color: #6B7280;
+        }
+
+        /* 💡 SECTION CONSEILS OCR - MAINTENANT VISIBLE ! */
+        .ocr-tips-section {
+          background: linear-gradient(135deg, rgba(255, 107, 53, 0.05), rgba(76, 175, 80, 0.05));
+          border: 2px solid rgba(255, 107, 53, 0.2);
+          border-radius: 1.5rem;
+          padding: 2.5rem;
+          margin: 3rem auto;
+          max-width: 1000px;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .tips-title {
+          text-align: center;
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: #FF6B35;
+          margin-bottom: 2rem;
+          background: linear-gradient(135deg, #FF6B35, #4CAF50);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .tips-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1.5rem;
+        }
+
+        .tip-card {
+          background: white;
+          border-radius: 1rem;
+          padding: 2rem;
+          border: 2px solid rgba(99, 102, 241, 0.1);
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .tip-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(135deg, #4CAF50, #32CD32);
+          transition: all 0.3s ease;
+        }
+
+        .tip-card.quality::before { background: linear-gradient(135deg, #FF6B35, #FF8C00); }
+        .tip-card.text::before { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+        
