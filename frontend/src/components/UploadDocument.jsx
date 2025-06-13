@@ -1,8 +1,8 @@
-// UploadDocument.js - VERSION RÉVOLUTIONNAIRE AVEC CONSEILS OCR VISIBLES
+// UploadDocument.js - VERSION FINALE COMPLÈTE ET VÉRIFIÉE
 import React, { useState, useRef } from 'react';
 
 const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
-  const [uploadStatus, setUploadStatus] = useState('idle'); // idle, uploading, processing, success, error
+  const [uploadStatus, setUploadStatus] = useState('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [extractedText, setExtractedText] = useState('');
   const [documentInfo, setDocumentInfo] = useState(null);
@@ -14,10 +14,8 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
   const fileInputRef = useRef(null);
   const dropZoneRef = useRef(null);
 
-  // Récupération sécurisée du prénom
   const prenomEleve = student?.nom?.split(' ')[0] || student?.name?.split(' ')[0] || 'Élève';
 
-  // Types de fichiers supportés avec icônes
   const supportedTypes = {
     'image/jpeg': { icon: '🖼️', name: 'JPEG' },
     'image/png': { icon: '🖼️', name: 'PNG' },
@@ -29,9 +27,8 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': { icon: '📘', name: 'DOCX' }
   };
 
-  // Validation fichier
   const validateFile = (file) => {
-    const maxSize = 15 * 1024 * 1024; // 15MB
+    const maxSize = 15 * 1024 * 1024;
     const allowedTypes = Object.keys(supportedTypes);
 
     if (!allowedTypes.includes(file.type)) {
@@ -51,7 +48,6 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
     return { valid: true };
   };
 
-  // Créer aperçu fichier
   const createPreview = (file) => {
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -62,7 +58,6 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
     }
   };
 
-  // Simuler progression upload
   const simulateProgress = () => {
     let progress = 0;
     const interval = setInterval(() => {
@@ -76,14 +71,12 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
     return interval;
   };
 
-  // Traitement upload
   const processUpload = async (file) => {
     setUploadStatus('uploading');
     setErrorMessage('');
     setExtractedText('');
     setDocumentInfo(null);
 
-    // Validation
     const validation = validateFile(file);
     if (!validation.valid) {
       setErrorMessage(validation.error);
@@ -91,7 +84,6 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
       return;
     }
 
-    // Aperçu et info fichier
     createPreview(file);
     setFileInfo({
       name: file.name,
@@ -101,10 +93,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
     });
 
     try {
-      // Progression simulée
       const progressInterval = simulateProgress();
-
-      // Préparation données
       const formData = new FormData();
       formData.append('document', file);
       formData.append('user_id', student.id);
@@ -115,7 +104,6 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      // Envoi au serveur
       const response = await fetch(`${apiUrl}/api/upload`, {
         method: 'POST',
         body: formData,
@@ -138,11 +126,10 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
           matiere: result.data.matiere || 'Général',
           resume: result.data.resume || 'Document analysé avec succès',
           nb_exercices: result.data.nb_exercices || 1,
-          confidence: 95 // Simulation confiance OCR
+          confidence: 95
         });
         setUploadStatus('success');
 
-        // Callback vers parent avec données complètes
         if (onDocumentProcessed) {
           onDocumentProcessed(result.data.texte_extrait, {
             id: result.data.id,
@@ -163,7 +150,6 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
     }
   };
 
-  // Gestionnaires événements
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -332,7 +318,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
         )}
       </div>
 
-      {/* 💡 CONSEILS OCR OPTIMAUX - MAINTENANT VISIBLES ! */}
+      {/* 💡 CONSEILS OCR OPTIMAUX - MAINTENANT COMPLÈTEMENT VISIBLES ! */}
       <div className="ocr-tips-section">
         <h3 className="tips-title">💡 Conseils pour un OCR optimal</h3>
         <div className="tips-grid">
@@ -443,7 +429,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
         <p>Les documents seront affichés ici après upload. ÉtudIA se souvient de tous vos documents ! 🧠</p>
       </div>
 
-      {/* Styles CSS intégrés */}
+      {/* STYLES CSS COMPLETS */}
       <style jsx>{`
         .upload-tab {
           padding: 2rem 0;
@@ -747,7 +733,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
           color: #6B7280;
         }
 
-        /* 💡 SECTION CONSEILS OCR - MAINTENANT VISIBLE ! */
+        /* 💡 SECTION CONSEILS OCR - COMPLÈTEMENT VISIBLE ! */
         .ocr-tips-section {
           background: linear-gradient(135deg, rgba(255, 107, 53, 0.05), rgba(76, 175, 80, 0.05));
           border: 2px solid rgba(255, 107, 53, 0.2);
@@ -798,6 +784,477 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
           transition: all 0.3s ease;
         }
 
-        .tip-card.quality::before { background: linear-gradient(135deg, #FF6B35, #FF8C00); }
-        .tip-card.text::before { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+        .tip-card.quality::before { 
+          background: linear-gradient(135deg, #FF6B35, #FF8C00); 
+        }
         
+        .tip-card.text::before { 
+          background: linear-gradient(135deg, #6366F1, #4F46E5); 
+        }
+        
+        .tip-card.format::before { 
+          background: linear-gradient(135deg, #F59E0B, #FbbF24); 
+        }
+        
+        .tip-card.performance::before { 
+          background: linear-gradient(135deg, #10B981, #059669); 
+        }
+
+        .tip-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+          border-color: rgba(255, 107, 53, 0.4);
+        }
+
+        .tip-card:hover::before {
+          height: 6px;
+        }
+
+        .tip-icon {
+          font-size: 2.5rem;
+          text-align: center;
+          margin-bottom: 1rem;
+          display: block;
+        }
+
+        .tip-content h4 {
+          font-size: 1.2rem;
+          font-weight: 700;
+          color: #1F2937;
+          margin-bottom: 1rem;
+          text-align: center;
+        }
+
+        .tip-content ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .tip-content li {
+          padding: 0.5rem 0;
+          font-size: 0.95rem;
+          line-height: 1.5;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+          transition: all 0.2s ease;
+        }
+
+        .tip-content li:last-child {
+          border-bottom: none;
+        }
+
+        .tip-content li:hover {
+          background: rgba(76, 175, 80, 0.05);
+          padding-left: 0.5rem;
+          border-radius: 0.25rem;
+        }
+
+        /* Aperçu texte extrait */
+        .extracted-text-preview {
+          background: white;
+          border-radius: 1.5rem;
+          padding: 2rem;
+          margin: 3rem auto;
+          max-width: 1000px;
+          border: 2px solid rgba(76, 175, 80, 0.2);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .extracted-text-preview h3 {
+          color: #4CAF50;
+          font-size: 1.3rem;
+          font-weight: 700;
+          margin-bottom: 1.5rem;
+          text-align: center;
+        }
+
+        .text-preview-container {
+          background: #F9FAFB;
+          border-radius: 1rem;
+          padding: 2rem;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .text-preview {
+          font-family: 'Courier New', monospace;
+          font-size: 0.9rem;
+          line-height: 1.6;
+          color: #374151;
+          background: white;
+          padding: 1.5rem;
+          border-radius: 0.5rem;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          margin-bottom: 1.5rem;
+          white-space: pre-wrap;
+          max-height: 300px;
+          overflow-y: auto;
+        }
+
+        .text-stats {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+          gap: 1rem;
+          margin-bottom: 1rem;
+        }
+
+        .stat {
+          background: white;
+          padding: 1rem;
+          border-radius: 0.75rem;
+          text-align: center;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+          display: block;
+          font-size: 0.8rem;
+          color: #6B7280;
+          font-weight: 600;
+          margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+          display: block;
+          font-size: 1.2rem;
+          font-weight: 700;
+          color: #4CAF50;
+        }
+
+        .show-full-text {
+          background: linear-gradient(135deg, #6366F1, #4F46E5);
+          color: white;
+          border: none;
+          padding: 0.75rem 1.5rem;
+          border-radius: 0.75rem;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .show-full-text:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Historique uploads */
+        .upload-history {
+          background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(99, 102, 241, 0.02));
+          border: 2px solid rgba(99, 102, 241, 0.2);
+          border-radius: 1.5rem;
+          padding: 2rem;
+          margin: 3rem auto;
+          max-width: 1000px;
+          text-align: center;
+        }
+
+        .upload-history h3 {
+          color: #6366F1;
+          font-size: 1.3rem;
+          font-weight: 700;
+          margin-bottom: 1rem;
+        }
+
+        .upload-history p {
+          color: #6B7280;
+          font-size: 1rem;
+          line-height: 1.6;
+        }
+
+        /* 📱 RESPONSIVE MOBILE PARFAIT */
+        @media (max-width: 1024px) {
+          .tips-grid {
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          }
+        }
+
+        @media (max-width: 768px) {
+          .upload-tab {
+            padding: 1rem 0;
+          }
+
+          .drop-zone {
+            padding: 2rem 1rem;
+            min-height: 250px;
+          }
+
+          .upload-icon {
+            font-size: 3rem;
+          }
+
+          .drop-zone-content h3 {
+            font-size: 1.2rem;
+          }
+
+          .supported-formats {
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .file-limits {
+            flex-direction: column;
+            gap: 0.5rem;
+          }
+
+          .processing-steps {
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .preview-container {
+            flex-direction: column;
+            text-align: center;
+          }
+
+          .preview-image {
+            max-width: 150px;
+            max-height: 150px;
+          }
+
+          .tips-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .tip-card {
+            padding: 1.5rem;
+          }
+
+          .text-stats {
+            grid-template-columns: 1fr;
+          }
+
+          .doc-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+          }
+
+          .document-summary {
+            flex-direction: column;
+            text-align: center;
+          }
+
+          .continue-button,
+          .upload-another-button,
+          .retry-button {
+            width: 100%;
+            margin: 0.5rem 0;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .ocr-tips-section {
+            padding: 1.5rem;
+            margin: 2rem 0.5rem;
+          }
+
+          .extracted-text-preview {
+            padding: 1.5rem;
+            margin: 2rem 0.5rem;
+          }
+
+          .upload-history {
+            padding: 1.5rem;
+            margin: 2rem 0.5rem;
+          }
+
+          .drop-zone {
+            padding: 1.5rem 1rem;
+            min-height: 200px;
+          }
+
+          .upload-icon {
+            font-size: 2.5rem;
+          }
+
+          .continue-button,
+          .upload-another-button,
+          .retry-button {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            margin: 0.25rem 0;
+          }
+
+          .tip-icon {
+            font-size: 2rem;
+          }
+
+          .tip-content h4 {
+            font-size: 1rem;
+          }
+
+          .tip-content li {
+            font-size: 0.85rem;
+          }
+
+          .text-preview {
+            font-size: 0.8rem;
+            padding: 1rem;
+          }
+
+          .file-limits {
+            font-size: 0.8rem;
+          }
+
+          .supported-formats {
+            gap: 0.25rem;
+          }
+
+          .format-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+          }
+        }
+
+        /* 🌙 MODE SOMBRE COMPLET */
+        .dark-mode .drop-zone {
+          background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
+          border-color: #4CAF50;
+        }
+
+        .dark-mode .drop-zone.drag-over {
+          background: linear-gradient(135deg, rgba(255, 107, 53, 0.15), rgba(255, 107, 53, 0.08));
+          border-color: #FF8C00;
+        }
+
+        .dark-mode .drop-zone-content h3,
+        .dark-mode .tip-content h4,
+        .dark-mode .extracted-text-preview h3,
+        .dark-mode .upload-history h3 {
+          color: #F9FAFB;
+        }
+
+        .dark-mode .drop-zone-content p,
+        .dark-mode .upload-history p {
+          color: #D1D5DB;
+        }
+
+        .dark-mode .tip-card,
+        .dark-mode .file-preview,
+        .dark-mode .extracted-text-preview,
+        .dark-mode .document-summary {
+          background: #374151;
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .dark-mode .text-preview {
+          background: #2D3748;
+          color: #F7FAFC;
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .dark-mode .stat {
+          background: #2D3748;
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .dark-mode .doc-name,
+        .dark-mode .file-name {
+          color: #F9FAFB;
+        }
+
+        .dark-mode .text-preview-container {
+          background: #2D3748;
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .dark-mode .ocr-tips-section,
+        .dark-mode .upload-history {
+          background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(76, 175, 80, 0.1));
+          border-color: rgba(255, 107, 53, 0.4);
+        }
+
+        .dark-mode .format-badge {
+          background: rgba(76, 175, 80, 0.2);
+          border-color: rgba(76, 175, 80, 0.5);
+          color: #34D399;
+        }
+
+        .dark-mode .step {
+          background: rgba(31, 41, 55, 0.8);
+          color: #D1D5DB;
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .dark-mode .step.active {
+          background: rgba(76, 175, 80, 0.3);
+          color: #34D399;
+          border-color: rgba(76, 175, 80, 0.6);
+        }
+
+        .dark-mode .error-message {
+          background: rgba(239, 68, 68, 0.2);
+          border-color: rgba(239, 68, 68, 0.5);
+          color: #FCA5A5;
+        }
+
+        /* ✨ ANIMATIONS SUPPLÉMENTAIRES */
+        @keyframes uploadSuccess {
+          0% { transform: scale(0.8); opacity: 0; }
+          50% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+
+        .upload-success {
+          animation: uploadSuccess 0.6s ease-out;
+        }
+
+        @keyframes errorShake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+
+        .upload-error {
+          animation: errorShake 0.5s ease-out;
+        }
+
+        /* 🎯 OPTIMISATIONS PERFORMANCE */
+        .drop-zone,
+        .tip-card,
+        .continue-button,
+        .upload-another-button,
+        .retry-button {
+          will-change: transform, box-shadow;
+        }
+
+        .progress-fill {
+          will-change: width;
+        }
+
+        .upload-icon.spinning {
+          will-change: transform;
+        }
+
+        /* 📏 SCROLLBAR PERSONNALISÉ */
+        .text-preview::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .text-preview::-webkit-scrollbar-track {
+          background: #F3F4F6;
+          border-radius: 4px;
+        }
+
+        .text-preview::-webkit-scrollbar-thumb {
+          background: #4CAF50;
+          border-radius: 4px;
+        }
+
+        .text-preview::-webkit-scrollbar-thumb:hover {
+          background: #32CD32;
+        }
+
+        .dark-mode .text-preview::-webkit-scrollbar-track {
+          background: #1F2937;
+        }
+
+        .dark-mode .text-preview::-webkit-scrollbar-thumb {
+          background: #34D399;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default UploadDocument;
