@@ -277,15 +277,20 @@ JSON requis:
 // Middlewares
 
 // Configuration CORS universelle
+// 1. CORS en PREMIER
 app.use(cors({
-  origin: true, // Accepte toutes les origines temporairement
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   optionsSuccessStatus: 200
 }));
 
-// Headers manuels supplémentaires
+// 2. PARSING JSON après CORS
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// 3. Headers manuels en DERNIER
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
@@ -297,6 +302,7 @@ app.use((req, res, next) => {
   }
   next();
 });
+
 
 // Routes de base
 app.get('/', (req, res) => {
