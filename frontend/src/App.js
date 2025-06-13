@@ -1,17 +1,10 @@
-  // 🎓 ÉtudIA v4.0 - APP.JS AVEC LLAMA 3.3 ET DESIGN ORANGE/VERT
-// =================================================================
-// APPLICATION PRINCIPALE AVEC LOGO DYNAMIQUE ET COULEURS OPTIMISÉES
-// Alimenté par Llama 3.3-70b-versatile pour une précision supérieure
-// =================================================================
-
+// App.js - VERSION UX/UI RÉVOLUTIONNAIRE AVEC RESPONSIVE PARFAIT
 import React, { useState, useEffect } from 'react';
-import './App.css'; // 🎨 STYLES EXTERNALISÉS
+import './App.css';
 import UploadDocument from './components/UploadDocument';
 import ChatIA from './components/ChatIA';
 
-// =================================================================
-// 🔗 CONFIGURATION API STABLE
-// =================================================================
+// Configuration API
 const API_URL = process.env.REACT_APP_API_URL || 
   (process.env.NODE_ENV === 'production'  
   ? 'https://etudia-africa-v4-production.up.railway.app'
@@ -20,15 +13,13 @@ const API_URL = process.env.REACT_APP_API_URL ||
 console.log('🔗 API_URL:', API_URL || 'PROXY LOCAL ACTIVÉ');
 
 function App() {
-  // =================================================================
-  // 🎯 ÉTATS PRINCIPAUX DE L'APPLICATION
-  // =================================================================
-  
-  // États navigation et utilisateur
+  // États principaux
   const [activeTab, setActiveTab] = useState('inscription');
   const [student, setStudent] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [documentContext, setDocumentContext] = useState('');
+  const [allDocuments, setAllDocuments] = useState([]); // NOUVEAU: Tous les documents
+  const [selectedDocumentId, setSelectedDocumentId] = useState(null); // NOUVEAU: Document sélectionné
   
   // États serveur et connexion
   const [backendStatus, setBackendStatus] = useState('checking');
@@ -40,14 +31,16 @@ function App() {
     tokens_status: { used_today: 0, remaining: 95000 }
   });
   
-  // États messages et notifications
+  // États UI/UX
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [connectionMessage, setConnectionMessage] = useState({
     show: false,
     text: '',
     type: 'success'
   });
 
-  // États formulaire d'inscription
+  // États formulaire
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -57,11 +50,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  // =================================================================
-  // 📚 DONNÉES STATIQUES POUR FORMULAIRES
-  // =================================================================
-  
-  // Liste des écoles ivoiriennes
+  // Données statiques
   const schools = [
     'Lycée Classique d\'Abidjan',
     'Lycée Technique d\'Abidjan',
@@ -75,17 +64,12 @@ function App() {
     'Autre'
   ];
 
-  // Niveaux scolaires supportés
   const classLevels = [
     '6ème', '5ème', '4ème', '3ème',
     'Seconde', 'Première', 'Terminale'
   ];
 
-  // =================================================================
-  // 🛠️ FONCTIONS UTILITAIRES
-  // =================================================================
-  
-  // Afficher message temporaire avec animation
+  // Fonctions utilitaires
   const showTemporaryMessage = (text, type = 'success', duration = 10000) => {
     setConnectionMessage({ show: true, text, type });
     setTimeout(() => {
@@ -93,294 +77,318 @@ function App() {
     }, duration);
   };
 
-  // Obtenir le numéro d'étape selon l'onglet
   const getStepNumber = (tabId) => {
     const steps = { 'inscription': 1, 'upload': 2, 'chat': 3 };
     return steps[tabId] || 1;
   };
 
-  // Gérer les changements dans les champs de formulaire
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // =================================================================
-// 🔍 VÉRIFICATION STATUT SERVEUR LLAMA 3.3 + PWA
-// =================================================================
+  // NOUVEAU: Fonction déconnexion
+  const handleLogout = () => {
+    setStudent(null);
+    setCurrentStep(1);
+    setActiveTab('inscription');
+    setDocumentContext('');
+    setAllDocuments([]);
+    setSelectedDocumentId(null);
+    setFormData({
+      name: '',
+      email: '',
+      class_level: '',
+      school: ''
+    });
+    showTemporaryMessage('👋 Déconnexion réussie ! À bientôt sur ÉtudIA !', 'info');
+  };
 
-useEffect(() => {
-  const checkBackend = async () => {
-    console.log('🔍 Vérification backend...', API_URL);
+  // NOUVEAU: Charger tous les documents de l'utilisateur
+  const loadUserDocuments = async (userId) => {
     try {
-      const response = await fetch(`${API_URL}/health`);
-      console.log('📡 Response status:', response.status, response.ok);
-      
+      const response = await fetch(`${API_URL}/api/documents/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Data reçue:', data);
-        console.log('🔄 Ancien état:', backendStatus, '→ Nouveau: online');
+        setAllDocuments(data.documents || []);
+        if (data.documents && data.documents.length > 0) {
+          const latestDoc = data.documents[0];
+          setSelectedDocumentId(latestDoc.id);
+          setDocumentContext(latestDoc.texte_extrait);
+        }
+      }
+    } catch (error) {
+      console.warn('📄 Erreur chargement documents:', error);
+    }
+  };
+
+  // NOUVEAU: Changer de document actif
+  const switchDocument = (documentId) => {
+    const selectedDoc = allDocuments.find(doc => doc.id === documentId);
+    if (selectedDoc) {
+      setSelectedDocumentId(documentId);
+      setDocumentContext(selectedDoc.texte_extrait);
+      showTemporaryMessage(`📄 Document "${selectedDoc.nom_original}" sélectionné !`, 'success');
+    }
+  };
+
+  // Vérification statut serveur + PWA
+  useEffect(() => {
+    const checkBackend = async () => {
+      console.log('🔍 Vérification backend...', API_URL);
+      try {
+        const response = await fetch(`${API_URL}/health`);
+        console.log('📡 Response status:', response.status, response.ok);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Data reçue:', data);
+          console.log('🔄 Ancien état:', backendStatus, '→ Nouveau: online');
+          setBackendStatus('online');
+          
+          if (backendStatus !== 'online') {
+            showTemporaryMessage('🎉 ÉtudIA v4.0 est en ligne ! ✅');
+          }
+
+          if (data.tokens_status) {
+            setStats(prev => ({ ...prev, tokens_status: data.tokens_status }));
+          }
+        } else {
+          console.log('❌ Response not OK:', response.status);
+          setBackendStatus('offline');
+        }
+      } catch (error) {
+        console.log('💥 Erreur fetch:', error.message);
+        setBackendStatus('offline');
+        if (backendStatus === 'online') {
+          showTemporaryMessage('❌ Serveur temporairement hors ligne', 'error', 5000);
+        }
+      }
+    };
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('✅ PWA: Service Worker ÉtudIA enregistré');
+          })
+          .catch(error => {
+            console.log('❌ PWA: Erreur Service Worker:', error);
+          });
+      });
+    }
+
+    // Détection installation PWA
+    let installPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      installPrompt = e;
+      console.log('📱 PWA: ÉtudIA peut être installé !');
+      showTemporaryMessage('📱 Installez ÉtudIA sur votre téléphone ! Menu → Installer', 'success', 8000);
+    });
+
+    window.addEventListener('appinstalled', () => {
+      console.log('🎉 PWA: ÉtudIA installé avec succès !');
+      showTemporaryMessage('🎉 ÉtudIA installé ! Trouvez l\'app sur votre écran d\'accueil', 'success');
+    });
+
+    checkBackend();
+    const interval = setInterval(checkBackend, 30000);
+    return () => clearInterval(interval);
+  }, [backendStatus]);
+
+  // Récupération statistiques
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (backendStatus !== 'online') return;
+      
+      try {
+        console.log('📊 Récupération stats...');
+        const response = await fetch(`${API_URL}/api/stats`);
+        console.log('📡 Stats response:', response.status, response.ok);
+        
+        if (response.ok) {
+          const responseText = await response.text();
+          console.log('📄 Stats raw:', responseText);
+          
+          const data = JSON.parse(responseText);
+          console.log('📊 Stats parsed:', data);
+          
+          setStats({
+            students: data.students || 0,
+            documents: data.documents || 0,
+            chats: data.chats || 0,
+            active_students_7days: data.active_students_7days || 0,
+            tokens_status: data.tokens_status || { used_today: 0, remaining: 95000 }
+          });
+          
+          console.log('✅ Stats mises à jour:', {
+            students: data.students,
+            documents: data.documents,
+            chats: data.chats
+          });
+        }
+      } catch (error) {
+        console.warn('📊 Erreur récupération stats:', error.message);
+      }
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 60000);
+    return () => clearInterval(interval);
+  }, [backendStatus, API_URL]);
+
+  // Charger documents utilisateur après connexion
+  useEffect(() => {
+    if (student?.id) {
+      loadUserDocuments(student.id);
+    }
+  }, [student]);
+
+  // Gestion inscription
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setMessage({ type: '', text: '' });
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.class_level) {
+      setMessage({ type: 'error', text: 'Veuillez remplir tous les champs obligatoires' });
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      console.log('🚀 Tentative inscription...', formData);
+      
+      const response = await fetch(`${API_URL}/api/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      
+      console.log('📡 Response status:', response.status, response.ok);
+      
+      const responseText = await response.text();
+      console.log('📄 Response raw:', responseText);
+      
+      if (!responseText.trim()) {
+        throw new Error('Réponse serveur vide');
+      }
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ Erreur parsing JSON:', parseError);
+        throw new Error('Réponse serveur invalide');
+      }
+      
+      console.log('📊 Data parsed:', data);
+
+      if (response.ok) {
+        setStudent(data.student);
+        setMessage({ type: 'success', text: data.message });
+        setCurrentStep(2);
         setBackendStatus('online');
         
-        // Message de succès seulement au premier démarrage
-        if (backendStatus !== 'online') {
-          showTemporaryMessage('🎉 ÉtudIA v4.0 est en ligne ! ✅');
-        }
-
-        // Mise à jour statut tokens si disponible
-        if (data.tokens_status) {
-          setStats(prev => ({ ...prev, tokens_status: data.tokens_status }));
-        }
+        showTemporaryMessage(`🎉 Bienvenue ${data.student.nom} ! Inscription réussie avec ÉtudIA !`);
+        setTimeout(() => setActiveTab('upload'), 2000);
       } else {
-        console.log('❌ Response not OK:', response.status);
-        setBackendStatus('offline');
+        if (data.error === 'EMAIL_EXISTS') {
+          setMessage({ 
+            type: 'error', 
+            text: '📧 Cet email est déjà inscrit ! Utilisez la connexion rapide ci-dessous.' 
+          });
+        } else {
+          setMessage({ 
+            type: 'error', 
+            text: data.message || data.error || `Erreur serveur: ${response.status}`
+          });
+        }
       }
     } catch (error) {
-      console.log('💥 Erreur fetch:', error.message);
-      setBackendStatus('offline');
-      if (backendStatus === 'online') {
-        showTemporaryMessage('❌ Serveur temporairement hors ligne', 'error', 5000);
-      }
+      console.error('💥 Erreur inscription:', error);
+      setMessage({ 
+        type: 'error', 
+        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // 📱 PWA SERVICE WORKER
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(registration => {
-          console.log('✅ PWA: Service Worker ÉtudIA enregistré');
-        })
-        .catch(error => {
-          console.log('❌ PWA: Erreur Service Worker:', error);
-        });
-    });
-  }
-
-  // 📱 DÉTECTION INSTALLATION PWA
-  let installPrompt;
-  
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    installPrompt = e;
-    console.log('📱 PWA: ÉtudIA peut être installé !');
-    
-    // Message utilisateur
-    showTemporaryMessage('📱 Installez ÉtudIA sur votre téléphone ! Menu → Installer', 'success', 8000);
-  });
-
-  window.addEventListener('appinstalled', () => {
-    console.log('🎉 PWA: ÉtudIA installé avec succès !');
-    showTemporaryMessage('🎉 ÉtudIA installé ! Trouvez l\'app sur votre écran d\'accueil', 'success');
-  });
-
-  checkBackend();
-  const interval = setInterval(checkBackend, 30000); // Vérification toutes les 30s
-  return () => clearInterval(interval);
-}, [backendStatus]);
-
-  // =================================================================
-  // 📊 RÉCUPÉRATION STATISTIQUES EN TEMPS RÉEL
-  // =================================================================
-  
-  // Trouvez cette fonction et remplacez-la :
-useEffect(() => {
-  const fetchStats = async () => {
-    if (backendStatus !== 'online') return;
-    
-    try {
-      console.log('📊 Récupération stats...');
-      const response = await fetch(`${API_URL}/api/stats`);
-      console.log('📡 Stats response:', response.status, response.ok);
-      
-      if (response.ok) {
-        const responseText = await response.text();
-        console.log('📄 Stats raw:', responseText);
-        
-        const data = JSON.parse(responseText);
-        console.log('📊 Stats parsed:', data);
-        
-        setStats({
-          students: data.students || 0,
-          documents: data.documents || 0,
-          chats: data.chats || 0,
-          active_students_7days: data.active_students_7days || 0,
-          tokens_status: data.tokens_status || { used_today: 0, remaining: 95000 }
-        });
-        
-        console.log('✅ Stats mises à jour:', {
-          students: data.students,
-          documents: data.documents,
-          chats: data.chats
-        });
-      }
-    } catch (error) {
-      console.warn('📊 Erreur récupération stats:', error.message);
-    }
-  };
-
-  fetchStats();
-  const interval = setInterval(fetchStats, 60000); // Toutes les minutes
-  return () => clearInterval(interval);
-}, [backendStatus, API_URL]); // Ajout API_URL dans dépendances
-
-  // =================================================================
-  // 📝 GESTION INSCRIPTION ÉLÈVE
-  // =================================================================
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setMessage({ type: '', text: '' });
-
-  // Validation côté client
-  if (!formData.name.trim() || !formData.email.trim() || !formData.class_level) {
-    setMessage({ type: 'error', text: 'Veuillez remplir tous les champs obligatoires' });
-    setIsSubmitting(false);
-    return;
-  }
-
-  try {
-    console.log('🚀 Tentative inscription...', formData);
-    
-    const response = await fetch(`${API_URL}/api/students`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    });
-    
-    console.log('📡 Response status:', response.status, response.ok);
-    
-    // Récupérer le texte brut AVANT de parser
-    const responseText = await response.text();
-    console.log('📄 Response raw:', responseText);
-    
-    // Vérifier si la réponse est vide
-    if (!responseText.trim()) {
-      throw new Error('Réponse serveur vide');
-    }
-    
-    // Essayer de parser en JSON
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('❌ Erreur parsing JSON:', parseError);
-      throw new Error('Réponse serveur invalide');
-    }
-    
-    console.log('📊 Data parsed:', data);
-
-    if (response.ok) {
-      setStudent(data.student);
-      setMessage({ type: 'success', text: data.message });
-      setCurrentStep(2);
-      setBackendStatus('online');
-      
-      showTemporaryMessage(`🎉 Bienvenue ${data.student.nom} ! Inscription réussie avec ÉtudIA !`);
-      
-      // Transition automatique vers upload
-      setTimeout(() => setActiveTab('upload'), 2000);
-    } else {
-      if (data.error === 'EMAIL_EXISTS') {
-        setMessage({ 
-          type: 'error', 
-          text: '📧 Cet email est déjà inscrit ! Utilisez la connexion rapide ci-dessous.' 
-        });
-      } else {
-        setMessage({ 
-          type: 'error', 
-          text: data.message || data.error || `Erreur serveur: ${response.status}`
-        });
-      }
-    }
-  } catch (error) {
-    console.error('💥 Erreur inscription:', error);
-    setMessage({ 
-      type: 'error', 
-      text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
-    });
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-  // =================================================================
-  // 🚀 CONNEXION RAPIDE ÉLÈVE EXISTANT
-  // =================================================================
-  
+  // Connexion rapide
   const handleLogin = async (email) => {
-  if (!email?.trim()) {
-    setMessage({ type: 'error', text: 'Veuillez saisir votre email' });
-    return;
-  }
-
-  try {
-    setMessage({ type: '', text: '' });
-    
-    // 🔍 LOGS DEBUG
-    console.log('🚀 Tentative de connexion...');
-    console.log('📧 Email:', email.trim());
-    console.log('🔗 URL:', `${API_URL}/api/students/login`);
-    console.log('🌐 API_URL:', API_URL);
-    
-    const response = await fetch(`${API_URL}/api/students/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim() }),
-    });
-
-    console.log('📡 Response status:', response.status);
-    console.log('📡 Response OK:', response.ok);
-    
-    // Récupérer le texte brut AVANT de parser
-    const responseText = await response.text();
-    console.log('📄 Response raw:', responseText.substring(0, 200));
-    
-    // Essayer de parser en JSON
-    const data = JSON.parse(responseText);
-    console.log('📊 Data parsed:', data);
-
-    if (response.ok) {
-      setStudent(data.student);
-      setMessage({ type: 'success', text: data.message });
-      setCurrentStep(2);
-      setActiveTab('upload');
-      setBackendStatus('online');
-      
-      showTemporaryMessage(`🎉 Connexion réussie ! Bonjour ${data.student.nom} !`);
-    } else {
-      if (response.status === 404) {
-        setMessage({ 
-          type: 'error', 
-          text: '🔍 Email non trouvé. Inscrivez-vous d\'abord avec le formulaire ci-dessus.' 
-        });
-      } else {
-        setMessage({ type: 'error', text: data.error || data.message });
-      }
+    if (!email?.trim()) {
+      setMessage({ type: 'error', text: 'Veuillez saisir votre email' });
+      return;
     }
-  } catch (error) {
-    console.log('💥 Erreur catch:', error);
-    setMessage({ 
-      type: 'error', 
-      text: 'Erreur de connexion au serveur. Réessayez dans quelques instants.' 
-    });
-  }
-};
 
-  // =================================================================
-  // 📄 GESTION DOCUMENTS UPLOADÉS
-  // =================================================================
-  
-  const handleDocumentProcessed = (extractedText) => {
+    try {
+      console.log('🚀 Tentative connexion...', email);
+      
+      const response = await fetch(`${API_URL}/api/students/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      console.log('📡 Response status:', response.status, response.ok);
+      
+      const responseText = await response.text();
+      console.log('📄 Response raw:', responseText);
+      
+      if (!responseText.trim()) {
+        throw new Error('Réponse serveur vide');
+      }
+      
+      const data = JSON.parse(responseText);
+      console.log('📊 Data parsed:', data);
+
+      if (response.ok) {
+        setStudent(data.student);
+        setMessage({ type: 'success', text: data.message });
+        setCurrentStep(2);
+        setActiveTab('upload');
+        setBackendStatus('online');
+        
+        showTemporaryMessage(`🎉 Connexion réussie ! Bonjour ${data.student.nom} !`);
+      } else {
+        if (response.status === 404) {
+          setMessage({ 
+            type: 'error', 
+            text: '🔍 Email non trouvé. Inscrivez-vous d\'abord avec le formulaire ci-dessus.' 
+          });
+        } else {
+          setMessage({ type: 'error', text: data.error || data.message });
+        }
+      }
+    } catch (error) {
+      console.error('💥 Erreur connexion:', error);
+      setMessage({ 
+        type: 'error', 
+        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
+      });
+    }
+  };
+
+  // Gestion documents
+  const handleDocumentProcessed = (extractedText, documentData) => {
     setDocumentContext(extractedText);
     setCurrentStep(3);
+    
+    // Ajouter le nouveau document à la liste
+    if (documentData) {
+      setAllDocuments(prev => [documentData, ...prev]);
+      setSelectedDocumentId(documentData.id);
+    }
+    
     showTemporaryMessage('📄 Document analysé avec ÉtudIA ! Passons au chat IA !');
     setTimeout(() => setActiveTab('chat'), 1500);
   };
 
-  // =================================================================
-  // 🎯 COMPOSANT BOUTON NAVIGATION
-  // =================================================================
-  
+  // Composant bouton navigation
   const TabButton = ({ id, label, icon, isActive, onClick, disabled = false }) => (
     <button
       className={`tab-button ${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
@@ -395,31 +403,36 @@ useEffect(() => {
     </button>
   );
 
-  // =================================================================
-  // 🎨 RENDU PRINCIPAL DE L'APPLICATION
-  // =================================================================
-  
   return (
-    <div className="app">
-      {/* Message flottant temporaire avec animations */}
+    <div className={`app ${isDarkMode ? 'dark-mode' : ''}`}>
+      {/* Message flottant */}
       {connectionMessage.show && (
         <div className={`floating-message ${connectionMessage.type}`}>
           {connectionMessage.text}
         </div>
       )}
 
-      {/* 🎨 HEADER RÉVOLUTIONNAIRE AVEC LOGO DYNAMIQUE */}
-      <header className="app-header">
+      {/* HEADER RÉVOLUTIONNAIRE RESPONSIVE */}
+      <header className="app-header revolutionary">
         <div className="cosmic-background"></div>
-        <div className="header-content">
-          {/* Section logo avec animation */}
+        
+        {/* Menu mobile toggle */}
+        <button 
+          className="mobile-menu-toggle"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? '✕' : '☰'}
+        </button>
+
+        <div className={`header-content ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+          {/* Section logo */}
           <div className="logo-section">
             <h1 className="app-title">
               <span className="title-etud">Étud</span>
               <span className="title-ia">IA</span>
               <span className="title-version">4.0</span>
             </h1>
-            <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Aficaine !</p>
+            <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
             <div className="made-in-ci">
               <span className="flag">🇨🇮</span>
               <span>Made with ❤️ in Côte d'Ivoire by @Pacousstar</span>
@@ -430,7 +443,33 @@ useEffect(() => {
             </div>
           </div>
           
-          {/* Section statistiques temps réel */}
+          {/* Section contrôles utilisateur */}
+          {student && (
+            <div className="user-controls">
+              <div className="user-info">
+                <span className="user-welcome">👋 Salut {student.nom?.split(' ')[0]} !</span>
+                <span className="user-class">🎓 {student.classe}</span>
+              </div>
+              <div className="control-buttons">
+                <button 
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  className={`control-btn ${isDarkMode ? 'active' : ''}`}
+                  title="Mode sombre"
+                >
+                  {isDarkMode ? '☀️' : '🌙'}
+                </button>
+                <button 
+                  onClick={handleLogout}
+                  className="control-btn logout"
+                  title="Déconnexion"
+                >
+                  🚪 Déconnexion
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Section statistiques */}
           <div className="stats-section">
             <div className="stat-item">
               <span className="stat-number">{stats.students.toLocaleString()}+</span>
@@ -446,8 +485,8 @@ useEffect(() => {
             </div>
             <div className="stat-item">
               <span className="stat-number">
-                {stats.tokens_status.remaining > 85000 ? '🟢' : 
-                 stats.tokens_status.remaining > 50000 ? '🟡' : '🔴'}
+                {stats.tokens_status?.remaining > 85000 ? '🟢' : 
+                 stats.tokens_status?.remaining > 50000 ? '🟡' : '🔴'}
               </span>
               <span className="stat-label">ÉtudIA Status</span>
             </div>
@@ -467,14 +506,57 @@ useEffect(() => {
             </div>
             {backendStatus === 'online' && stats.tokens_status && (
               <div className="tokens-info">
-                <span>Tokens: {stats.tokens_status.remaining.toLocaleString()}/95k</span>
+                <div className="tokens-bar">
+                  <div 
+                    className="tokens-fill" 
+                    style={{ 
+                      width: `${((stats.tokens_status.used_today || 0) / 95000) * 100}%`,
+                      backgroundColor: (stats.tokens_status.used_today || 0) > 85000 ? '#EF4444' : '#32CD32'
+                    }}
+                  ></div>
+                </div>
+                <span className="tokens-text">
+                  Tokens: {(stats.tokens_status.used_today || 0).toLocaleString()}/95k
+                </span>
               </div>
             )}
           </div>
         </div>
       </header>
 
-      {/* 📊 BARRE DE PROGRESSION INTERACTIVE */}
+      {/* NOUVEAU: Sélecteur de documents */}
+      {student && allDocuments.length > 1 && (
+        <div className="document-selector">
+          <h3>📄 Vos Documents Analysés</h3>
+          <div className="documents-grid">
+            {allDocuments.map((doc) => (
+              <button
+                key={doc.id}
+                className={`document-card ${selectedDocumentId === doc.id ? 'active' : ''}`}
+                onClick={() => switchDocument(doc.id)}
+              >
+                <div className="doc-icon">📄</div>
+                <div className="doc-info">
+                  <div className="doc-name">{doc.nom_original}</div>
+                  <div className="doc-meta">
+                    <span>{doc.matiere || 'Général'}</span>
+                    <span>{new Date(doc.date_upload).toLocaleDateString('fr-FR')}</span>
+                  </div>
+                </div>
+                {selectedDocumentId === doc.id && <div className="doc-active">✓</div>}
+              </button>
+            ))}
+          </div>
+          <button 
+            className="add-document-btn"
+            onClick={() => setActiveTab('upload')}
+          >
+            ➕ Charger un autre document
+          </button>
+        </div>
+      )}
+
+      {/* Barre de progression */}
       <div className="progress-container">
         <div className="progress-bar">
           <div 
@@ -498,7 +580,7 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* 🧭 NAVIGATION ONGLETS */}
+      {/* Navigation onglets */}
       <nav className="tab-navigation">
         <TabButton
           id="inscription"
@@ -525,9 +607,9 @@ useEffect(() => {
         />
       </nav>
 
-      {/* 📱 CONTENU PRINCIPAL */}
-      <main className="main-content">
-        {/* 📝 ONGLET INSCRIPTION */}
+      {/* CONTENU PRINCIPAL AVEC NOUVEAU BACKGROUND */}
+      <main className="main-content enhanced">
+        {/* Onglet inscription */}
         {activeTab === 'inscription' && (
           <div className="tab-content inscription-tab">
             <div className="content-header">
@@ -536,7 +618,6 @@ useEffect(() => {
                 Inscrivez-vous en moins de 2 minutes et bénéficiez des performances de ÉtudIA
               </p>
               
-              {/* Alerte serveur si problème */}
               {backendStatus !== 'online' && (
                 <div className="server-warning">
                   {backendStatus === 'checking' ? (
@@ -548,7 +629,6 @@ useEffect(() => {
               )}
             </div>
 
-            {/* Messages d'état */}
             {message.text && (
               <div className={`message ${message.type}`}>
                 <strong>{message.type === 'error' ? '❌ ' : '✅ '}</strong>
@@ -556,7 +636,7 @@ useEffect(() => {
               </div>
             )}
 
-            {/* 📋 FORMULAIRE D'INSCRIPTION */}
+            {/* Formulaire d'inscription */}
             <form onSubmit={handleSubmit} className="inscription-form">
               <div className="form-group">
                 <label htmlFor="name" className="form-label">Nom complet *</label>
@@ -643,48 +723,42 @@ useEffect(() => {
               </button>
             </form>
 
-            {/* ⚡ SECTION CONNEXION RAPIDE */}
-            
-<div className="login-section">
-  <div className="login-header">
-    <h3 className="section-title">⚡ Connexion Rapide</h3>
-    <p className="section-subtitle">Déjà inscrit ? Connectez-vous pour accéder à ÉtudIA :</p>
-  </div>
-  <div className="quick-login">
-    <input
-      type="email"
-      placeholder="Votre email d'inscription"
-      className="login-input"
-      id="login-email-input"
-      disabled={backendStatus !== 'online'}
-      onKeyPress={(e) => {
-        if (e.key === 'Enter' && e.target.value && backendStatus === 'online') {
-          console.log('🚀 Tentative de connexion...'); // Debug
-          console.log('📧 Email:', e.target.value); // Debug
-          handleLogin(e.target.value);
-        }
-      }}
-    />
-    <button
-      onClick={() => {
-        const emailInput = document.getElementById('login-email-input');
-        const email = emailInput?.value;
-        console.log('🚀 Bouton cliqué - Email:', email); // Debug
-        if (email && backendStatus === 'online') {
-          handleLogin(email);
-        } else {
-          console.log('❌ Email vide ou serveur offline'); // Debug
-        }
-      }}
-      className="login-button"
-      disabled={backendStatus !== 'online'}
-    >
-      {backendStatus === 'online' ? 'Se connecter' : 'Serveur indisponible'}
-    </button>
-  </div>
-</div>
+            {/* Section connexion rapide */}
+            <div className="login-section">
+              <div className="login-header">
+                <h3 className="section-title">⚡ Connexion Rapide</h3>
+                <p className="section-subtitle">Déjà inscrit ? Connectez-vous pour accéder à ÉtudIA :</p>
+              </div>
+              <div className="quick-login">
+                <input
+                  type="email"
+                  placeholder="Votre email d'inscription"
+                  className="login-input"
+                  id="login-email-input"
+                  disabled={backendStatus !== 'online'}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && e.target.value && backendStatus === 'online') {
+                      handleLogin(e.target.value);
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const emailInput = document.getElementById('login-email-input');
+                    const email = emailInput?.value;
+                    if (email && backendStatus === 'online') {
+                      handleLogin(email);
+                    }
+                  }}
+                  className="login-button"
+                  disabled={backendStatus !== 'online'}
+                >
+                  {backendStatus === 'online' ? 'Se connecter' : 'Serveur indisponible'}
+                </button>
+              </div>
+            </div>
 
-            {/* 🚀 GRILLE DES FONCTIONNALITÉS LLAMA 3.3 */}
+            {/* Grille des fonctionnalités */}
             <div className="features-grid">
               <div className="feature-card memory">
                 <span className="feature-icon">🧠</span>
@@ -729,8 +803,8 @@ useEffect(() => {
                   Gestion automatique des limites avec fallback seamless 
                 </p>
                 <div className="feature-status">
-                  {stats.tokens_status.remaining > 85000 ? '🟢 Optimal' : 
-                   stats.tokens_status.remaining > 50000 ? '🟡 Modéré' : '🔴 Limité'}
+                  {stats.tokens_status?.remaining > 85000 ? '🟢 Optimal' : 
+                   stats.tokens_status?.remaining > 50000 ? '🟡 Modéré' : '🔴 Limité'}
                 </div>
               </div>
               
@@ -744,7 +818,7 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* 🦙 SECTION AMÉLIORATIONS LlAMA 3.3 */}
+            {/* Section améliorations LlAMA 3.3 */}
             <div className="llama-improvements-section">
               <h3 className="section-title">🦙 Pourquoi LlAMA 3.3 de ÉtudIA change tout ?</h3>
               <div className="improvements-grid">
@@ -798,7 +872,7 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* 💬 TÉMOIGNAGES ÉLÈVES */}
+            {/* Témoignages élèves */}
             <div className="testimonials-section">
               <h3 className="section-title">💬 Ce que disent nos élèves sur ÉtudIA</h3>
               <div className="testimonials-grid">
@@ -819,7 +893,7 @@ useEffect(() => {
           </div>
         )}
 
-        {/* 📸 ONGLET UPLOAD DOCUMENTS */}
+        {/* Onglet upload documents */}
         {activeTab === 'upload' && student && (
           <UploadDocument
             student={student}
@@ -828,17 +902,19 @@ useEffect(() => {
           />
         )}
 
-        {/* 🦙 ONGLET CHAT ÉtudIA */}
+        {/* Onglet chat ÉtudIA */}
         {activeTab === 'chat' && student && (
           <ChatIA
             student={student}
             apiUrl={API_URL}
             documentContext={documentContext}
+            allDocuments={allDocuments}
+            selectedDocumentId={selectedDocumentId}
           />
         )}
       </main>
 
-      {/* 🦶 FOOTER */}
+      {/* Footer */}
       <footer className="app-footer">
         <div className="footer-content">
           <div className="footer-main">
@@ -850,7 +926,7 @@ useEffect(() => {
             <span>🚀 {stats.students.toLocaleString()}+ élèves</span>
             <span>📚 {stats.documents.toLocaleString()}+ documents</span>
             <span>💬 {stats.chats.toLocaleString()}+ conversations</span>
-            <span>🦙 LlAMA 3.3 {stats.tokens_status.remaining > 85000 ? 'optimal' : 'actif'}</span>
+            <span>🦙 LlAMA 3.3 {stats.tokens_status?.remaining > 85000 ? 'optimal' : 'actif'}</span>
           </div>
           
           <div className="footer-tech">
@@ -859,8 +935,72 @@ useEffect(() => {
           </div>
         </div>
       </footer>
-    </div>
-  );
-}
 
-export default App;
+      {/* STYLES CSS RÉVOLUTIONNAIRES RESPONSIVE */}
+      <style jsx>{`
+        /* =================================================================
+           🎨 VARIABLES CSS POUR COHÉRENCE DES COULEURS
+           ================================================================= */
+        :root {
+          --primary-orange: #FF6B35;
+          --primary-green: #4CAF50;
+          --secondary-orange: #FF8C00;
+          --secondary-green: #32CD32;
+          --accent-blue: #6366F1;
+          --text-dark: #1F2937;
+          --text-light: #6B7280;
+          --bg-light: #F9FAFB;
+          --bg-white: #FFFFFF;
+          --border-light: rgba(99, 102, 241, 0.1);
+          --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.1);
+          --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.15);
+          --gradient-orange: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
+          --gradient-green: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+          --gradient-cosmic: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /* =================================================================
+           🌙 VARIABLES MODE SOMBRE
+           ================================================================= */
+        .dark-mode {
+          --bg-light: #1F2937;
+          --bg-white: #374151;
+          --text-dark: #F9FAFB;
+          --text-light: #D1D5DB;
+          --border-light: rgba(99, 102, 241, 0.3);
+        }
+
+        /* =================================================================
+           📱 RESET ET BASE MOBILE-FIRST
+           ================================================================= */
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        .app {
+          min-height: 100vh;
+          background: linear-gradient(135deg, var(--bg-light), var(--bg-white));
+          color: var(--text-dark);
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          transition: all 0.3s ease;
+          overflow-x: hidden;
+        }
+
+        /* =================================================================
+           🎯 HEADER RÉVOLUTIONNAIRE RESPONSIVE
+           ================================================================= */
+        .app-header.revolutionary {
+          background: var(--gradient-cosmic);
+          color: white;
+          padding: 1rem;
+          position: relative;
+          overflow: hidden;
+          min-height: 120px;
+        }
+
+        .cosmic-background {
+          position: absolute;
+          top: 0;
+          left: 0
