@@ -383,31 +383,44 @@ app.post('/api/students', async (req, res) => {
 
 app.post('/api/students/login', async (req, res) => {
   try {
+    console.log('🔥 ROUTE LOGIN APPELÉE !');
+    console.log('📧 Body reçu:', req.body);
+    
     const { email } = req.body;
+    console.log('📧 Email extrait:', email);
     
     if (!email) {
+      console.log('❌ Email manquant');
       return res.status(400).json({ error: 'Email requis' });
     }
 
+    console.log('🔍 Recherche dans Supabase...');
     const { data: student, error } = await supabase
       .from('eleves')
       .select('*')
       .eq('email', email.toLowerCase().trim())
       .single();
 
+    console.log('📊 Résultat Supabase:', { student: !!student, error: error?.message });
+
     if (error || !student) {
+      console.log('❌ Élève non trouvé');
       return res.status(404).json({ error: 'Élève non trouvé' });
     }
 
+    console.log('✅ Élève trouvé:', student.nom);
+    
     // Mettre à jour le profil lors de la connexion
     MemoryManager.updateStudentProfile(student.id).catch(console.error);
 
     res.json({ message: 'Connexion réussie ! 🎉', student });
 
   } catch (error) {
+    console.error('💥 ERREUR ROUTE LOGIN:', error);
     res.status(500).json({ error: 'Erreur connexion' });
   }
 });
+
 
 // Upload documents (amélioré)
 app.post('/api/upload', upload.single('document'), async (req, res) => {
