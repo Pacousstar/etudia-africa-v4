@@ -573,45 +573,60 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
         </div>
 
         {/* 🚀 BOUTONS RÉVOLUTIONNAIRES CORRIGÉS */}
-        {chatMode === 'normal' && (
-          <div className="revolutionary-buttons">
-            <div className="mode-buttons-header">
-              <h3>🎯 Choisis ton mode d'apprentissage, {prenomEleve} !</h3>
-            </div>
-            
-            <div className="mode-buttons-grid">
-              <button
-                onClick={activateStepByStepMode}
-                className="mode-button step-by-step"
-                disabled={isLoading}
-              >
-                <div className="mode-icon">🔁</div>
-                <div className="mode-content">
-                  <div className="mode-title">Explication Étape par Étape</div>
-                  <div className="mode-description">
-                    Je te guide progressivement à travers chaque étape de résolution
-                  </div>
-                  <div className="mode-benefit">✨ Compréhension garantie</div>
-                </div>
-              </button>
-
-              <button
-                onClick={activateDirectSolutionMode}
-                className="mode-button direct-solution"
-                disabled={isLoading}
-              >
-                <div className="mode-icon">✅</div>
-                <div className="mode-content">
-                  <div className="mode-title">Solution Finale</div>
-                  <div className="mode-description">
-                    Je donne directement toutes les solutions complètes de tes exercices
-                  </div>
-                  <div className="mode-benefit">⚡ Résultats immédiats</div>
-                </div>
-              </button>
-            </div>
+{chatMode === 'normal' && (
+  <div className="revolutionary-buttons">
+    <div className="mode-buttons-header">
+      <h3>🎯 Choisis ton mode d'apprentissage, {prenomEleve} !</h3>
+    </div>
+    
+    <div className="mode-buttons-grid">
+      <button
+        onClick={() => setChatMode('normal')}
+        className="mode-button normal active"
+        disabled={isLoading}
+      >
+        <div className="mode-icon">💬</div>
+        <div className="mode-content">
+          <div className="mode-title">Mode Normal</div>
+          <div className="mode-description">
+            Conversation équilibrée avec ÉtudIA - Ni trop guidé, ni trop direct
           </div>
-        )}
+          <div className="mode-benefit">⚖️ Équilibre parfait</div>
+        </div>
+      </button>
+
+      <button
+        onClick={activateStepByStepMode}
+        className="mode-button step-by-step"
+        disabled={isLoading}
+      >
+        <div className="mode-icon">🔁</div>
+        <div className="mode-content">
+          <div className="mode-title">Explication Étape par Étape</div>
+          <div className="mode-description">
+            Je te guide progressivement à travers chaque étape de résolution
+          </div>
+          <div className="mode-benefit">✨ Compréhension garantie</div>
+        </div>
+      </button>
+
+      <button
+        onClick={activateDirectSolutionMode}
+        className="mode-button direct-solution"
+        disabled={isLoading}
+      >
+        <div className="mode-icon">✅</div>
+        <div className="mode-content">
+          <div className="mode-title">Solution Finale</div>
+          <div className="mode-description">
+            Je donne directement toutes les solutions complètes de tes exercices
+          </div>
+          <div className="mode-benefit">⚡ Résultats immédiats</div>
+        </div>
+      </button>
+    </div>
+  </div>
+)}
 
         {/* Bouton retour au mode normal */}
         {chatMode !== 'normal' && (
