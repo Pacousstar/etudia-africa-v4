@@ -105,34 +105,78 @@ function App() {
   };
 
   // =================================================================
-  // 🔍 VÉRIFICATION STATUT SERVEUR LLAMA 3.3
-  // =================================================================
-  
-  useEffect(() => {
-    const checkBackend = async () => {
-  console.log('🔍 Vérification backend...', API_URL);
-  try {
-    const response = await fetch(`${API_URL}/health`);
-    console.log('📡 Response status:', response.status, response.ok);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('✅ Data reçue:', data);
-      console.log('🔄 Ancien état:', backendStatus, '→ Nouveau: online');
-      setBackendStatus('online');
-    } else {
-      console.log('❌ Response not OK:', response.status);
+// 🔍 VÉRIFICATION STATUT SERVEUR LLAMA 3.3 + PWA
+// =================================================================
+
+useEffect(() => {
+  const checkBackend = async () => {
+    console.log('🔍 Vérification backend...', API_URL);
+    try {
+      const response = await fetch(`${API_URL}/health`);
+      console.log('📡 Response status:', response.status, response.ok);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Data reçue:', data);
+        console.log('🔄 Ancien état:', backendStatus, '→ Nouveau: online');
+        setBackendStatus('online');
+        
+        // Message de succès seulement au premier démarrage
+        if (backendStatus !== 'online') {
+          showTemporaryMessage('🎉 ÉtudIA v4.0 est en ligne ! ✅');
+        }
+
+        // Mise à jour statut tokens si disponible
+        if (data.tokens_status) {
+          setStats(prev => ({ ...prev, tokens_status: data.tokens_status }));
+        }
+      } else {
+        console.log('❌ Response not OK:', response.status);
+        setBackendStatus('offline');
+      }
+    } catch (error) {
+      console.log('💥 Erreur fetch:', error.message);
       setBackendStatus('offline');
+      if (backendStatus === 'online') {
+        showTemporaryMessage('❌ Serveur temporairement hors ligne', 'error', 5000);
+      }
     }
-  } catch (error) {
-    console.log('💥 Erreur fetch:', error.message);
-    setBackendStatus('offline');
+  };
+
+  // 📱 PWA SERVICE WORKER
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('✅ PWA: Service Worker ÉtudIA enregistré');
+        })
+        .catch(error => {
+          console.log('❌ PWA: Erreur Service Worker:', error);
+        });
+    });
   }
-};
-    checkBackend();
-    const interval = setInterval(checkBackend, 30000); // Vérification toutes les 30s
-    return () => clearInterval(interval);
-  }, [backendStatus]);
+
+  // 📱 DÉTECTION INSTALLATION PWA
+  let installPrompt;
+  
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    installPrompt = e;
+    console.log('📱 PWA: ÉtudIA peut être installé !');
+    
+    // Message utilisateur
+    showTemporaryMessage('📱 Installez ÉtudIA sur votre téléphone ! Menu → Installer', 'success', 8000);
+  });
+
+  window.addEventListener('appinstalled', () => {
+    console.log('🎉 PWA: ÉtudIA installé avec succès !');
+    showTemporaryMessage('🎉 ÉtudIA installé ! Trouvez l\'app sur votre écran d\'accueil', 'success');
+  });
+
+  checkBackend();
+  const interval = setInterval(checkBackend, 30000); // Vérification toutes les 30s
+  return () => clearInterval(interval);
+}, [backendStatus]);
 
   // =================================================================
   // 📊 RÉCUPÉRATION STATISTIQUES EN TEMPS RÉEL
