@@ -227,47 +227,63 @@ function App() {
   // =================================================================
   
   const handleLogin = async (email) => {
-    if (!email?.trim()) {
-      setMessage({ type: 'error', text: 'Veuillez saisir votre email' });
-      return;
-    }
+  if (!email?.trim()) {
+    setMessage({ type: 'error', text: 'Veuillez saisir votre email' });
+    return;
+  }
 
-    try {
-      setMessage({ type: '', text: '' });
+  try {
+    setMessage({ type: '', text: '' });
+    
+    // 🔍 LOGS DEBUG
+    console.log('🚀 Tentative de connexion...');
+    console.log('📧 Email:', email.trim());
+    console.log('🔗 URL:', `${API_URL}/api/students/login`);
+    console.log('🌐 API_URL:', API_URL);
+    
+    const response = await fetch(`${API_URL}/api/students/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim() }),
+    });
+
+    console.log('📡 Response status:', response.status);
+    console.log('📡 Response OK:', response.ok);
+    
+    // Récupérer le texte brut AVANT de parser
+    const responseText = await response.text();
+    console.log('📄 Response raw:', responseText.substring(0, 200));
+    
+    // Essayer de parser en JSON
+    const data = JSON.parse(responseText);
+    console.log('📊 Data parsed:', data);
+
+    if (response.ok) {
+      setStudent(data.student);
+      setMessage({ type: 'success', text: data.message });
+      setCurrentStep(2);
+      setActiveTab('upload');
+      setBackendStatus('online');
       
-      const response = await fetch('${API_URL}/api/students/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setStudent(data.student);
-        setMessage({ type: 'success', text: data.message });
-        setCurrentStep(2);
-        setActiveTab('upload');
-        setBackendStatus('online');
-        
-        showTemporaryMessage(`🎉 Connexion réussie ! Bonjour ${data.student.nom} !`);
+      showTemporaryMessage(`🎉 Connexion réussie ! Bonjour ${data.student.nom} !`);
+    } else {
+      if (response.status === 404) {
+        setMessage({ 
+          type: 'error', 
+          text: '🔍 Email non trouvé. Inscrivez-vous d\'abord avec le formulaire ci-dessus.' 
+        });
       } else {
-        if (response.status === 404) {
-          setMessage({ 
-            type: 'error', 
-            text: '🔍 Email non trouvé. Inscrivez-vous d\'abord avec le formulaire ci-dessus.' 
-          });
-        } else {
-          setMessage({ type: 'error', text: data.error || data.message });
-        }
+        setMessage({ type: 'error', text: data.error || data.message });
       }
-    } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: 'Erreur de connexion au serveur. Réessayez dans quelques instants.' 
-      });
     }
-  };
+  } catch (error) {
+    console.log('💥 Erreur catch:', error);
+    setMessage({ 
+      type: 'error', 
+      text: 'Erreur de connexion au serveur. Réessayez dans quelques instants.' 
+    });
+  }
+};
 
   // =================================================================
   // 📄 GESTION DOCUMENTS UPLOADÉS
