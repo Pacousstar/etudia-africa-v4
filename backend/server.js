@@ -275,23 +275,27 @@ JSON requis:
 }
 
 // Middlewares
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://etudia-africa-v4.vercel.app', 'https://etudia-v4.vercel.app']
-    : ['http://localhost:3000', 'http://localhost:3001'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Gestion preflight requests
-app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', 'https://etudia-africa-v4.vercel.app');
+// Configuration CORS universelle
+app.use(cors({
+  origin: true, // Accepte toutes les origines temporairement
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  optionsSuccessStatus: 200
+}));
+
+// Headers manuels supplémentaires
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  res.status(200).send();
+  
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  next();
 });
 
 // Routes de base
