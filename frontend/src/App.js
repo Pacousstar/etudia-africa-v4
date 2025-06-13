@@ -138,31 +138,46 @@ function App() {
   // 📊 RÉCUPÉRATION STATISTIQUES EN TEMPS RÉEL
   // =================================================================
   
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (backendStatus !== 'online') return;
+  // Trouvez cette fonction et remplacez-la :
+useEffect(() => {
+  const fetchStats = async () => {
+    if (backendStatus !== 'online') return;
+    
+    try {
+      console.log('📊 Récupération stats...');
+      const response = await fetch(`${API_URL}/api/stats`);
+      console.log('📡 Stats response:', response.status, response.ok);
       
-      try {
-        const response = await fetch('${API_URL}/api/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setStats({
-            students: data.students || 0,
-            documents: data.documents || 0,
-            chats: data.chats || 0,
-            active_students_7days: data.active_students_7days || 0,
-            tokens_status: data.tokens_status || { used_today: 0, remaining: 95000 }
-          });
-        }
-      } catch (error) {
-        console.warn('📊 Erreur récupération stats:', error.message);
+      if (response.ok) {
+        const responseText = await response.text();
+        console.log('📄 Stats raw:', responseText);
+        
+        const data = JSON.parse(responseText);
+        console.log('📊 Stats parsed:', data);
+        
+        setStats({
+          students: data.students || 0,
+          documents: data.documents || 0,
+          chats: data.chats || 0,
+          active_students_7days: data.active_students_7days || 0,
+          tokens_status: data.tokens_status || { used_today: 0, remaining: 95000 }
+        });
+        
+        console.log('✅ Stats mises à jour:', {
+          students: data.students,
+          documents: data.documents,
+          chats: data.chats
+        });
       }
-    };
+    } catch (error) {
+      console.warn('📊 Erreur récupération stats:', error.message);
+    }
+  };
 
-    fetchStats();
-    const interval = setInterval(fetchStats, 300000); // Actualisation toutes les 5 minutes
-    return () => clearInterval(interval);
-  }, [backendStatus]);
+  fetchStats();
+  const interval = setInterval(fetchStats, 60000); // Toutes les minutes
+  return () => clearInterval(interval);
+}, [backendStatus, API_URL]); // Ajout API_URL dans dépendances
 
   // =================================================================
   // 📝 GESTION INSCRIPTION ÉLÈVE
