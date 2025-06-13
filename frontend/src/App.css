@@ -3325,3 +3325,22 @@ outline-offset: 2px;
   100% { transform: scale(1); opacity: 1; }
 }
 
+.mode-button.normal {
+  border-color: #6366F1;
+}
+
+.mode-button.normal::before {
+  background: linear-gradient(135deg, #6366F1, #4F46E5);
+}
+
+.mode-button.normal:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
+  border-color: #4F46E5;
+}
+
+.mode-button.normal.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.1));
+  border-color: #4F46E5;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+}
