@@ -167,60 +167,82 @@ function App() {
   // =================================================================
   // 📝 GESTION INSCRIPTION ÉLÈVE
   // =================================================================
-  
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setMessage({ type: '', text: '' });
+  e.preventDefault();
+  setIsSubmitting(true);
+  setMessage({ type: '', text: '' });
 
-    // Validation côté client
-    if (!formData.name.trim() || !formData.email.trim() || !formData.class_level) {
-      setMessage({ type: 'error', text: 'Veuillez remplir tous les champs obligatoires' });
-      setIsSubmitting(false);
-      return;
+  // Validation côté client
+  if (!formData.name.trim() || !formData.email.trim() || !formData.class_level) {
+    setMessage({ type: 'error', text: 'Veuillez remplir tous les champs obligatoires' });
+    setIsSubmitting(false);
+    return;
+  }
+
+  try {
+    console.log('🚀 Tentative inscription...', formData);
+    
+    const response = await fetch(`${API_URL}/api/students`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+    
+    console.log('📡 Response status:', response.status, response.ok);
+    
+    // Récupérer le texte brut AVANT de parser
+    const responseText = await response.text();
+    console.log('📄 Response raw:', responseText);
+    
+    // Vérifier si la réponse est vide
+    if (!responseText.trim()) {
+      throw new Error('Réponse serveur vide');
     }
-
+    
+    // Essayer de parser en JSON
+    let data;
     try {
-      const response = await fetch('${API_URL}/api/students', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      
-      const data = await response.json();
-
-      if (response.ok) {
-        setStudent(data.student);
-        setMessage({ type: 'success', text: data.message });
-        setCurrentStep(2);
-        setBackendStatus('online');
-        
-        showTemporaryMessage(`🎉 Bienvenue ${data.student.nom} ! Inscription réussie avec LLAMA 3.3 !`);
-        
-        // Transition automatique vers upload
-        setTimeout(() => setActiveTab('upload'), 2000);
-      } else {
-        if (data.error === 'EMAIL_EXISTS') {
-          setMessage({ 
-            type: 'error', 
-            text: '📧 Cet email est déjà inscrit ! Utilisez la connexion rapide ci-dessous.' 
-          });
-        } else {
-          setMessage({ 
-            type: 'error', 
-            text: data.message || data.error || `Erreur serveur: ${response.status}`
-          });
-        }
-      }
-    } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: `Erreur de connexion: ${error.message}. Vérifiez votre connexion internet.`
-      });
-    } finally {
-      setIsSubmitting(false);
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('❌ Erreur parsing JSON:', parseError);
+      throw new Error('Réponse serveur invalide');
     }
-  };
+    
+    console.log('📊 Data parsed:', data);
+
+    if (response.ok) {
+      setStudent(data.student);
+      setMessage({ type: 'success', text: data.message });
+      setCurrentStep(2);
+      setBackendStatus('online');
+      
+      showTemporaryMessage(`🎉 Bienvenue ${data.student.nom} ! Inscription réussie avec ÉtudIA !`);
+      
+      // Transition automatique vers upload
+      setTimeout(() => setActiveTab('upload'), 2000);
+    } else {
+      if (data.error === 'EMAIL_EXISTS') {
+        setMessage({ 
+          type: 'error', 
+          text: '📧 Cet email est déjà inscrit ! Utilisez la connexion rapide ci-dessous.' 
+        });
+      } else {
+        setMessage({ 
+          type: 'error', 
+          text: data.message || data.error || `Erreur serveur: ${response.status}`
+        });
+      }
+    }
+  } catch (error) {
+    console.error('💥 Erreur inscription:', error);
+    setMessage({ 
+      type: 'error', 
+      text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // =================================================================
   // 🚀 CONNEXION RAPIDE ÉLÈVE EXISTANT
