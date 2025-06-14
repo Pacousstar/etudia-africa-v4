@@ -1,4 +1,4 @@
-// UploadDocument.js - VERSION FINALE COMPLÈTE ET VÉRIFIÉE
+// UploadDocument.js - VERSION FINALE COMPLÈTE ET CORRIGÉE
 import React, { useState, useRef } from 'react';
 
 const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
@@ -318,7 +318,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
         )}
       </div>
 
-      {/* 💡 CONSEILS OCR OPTIMAUX - MAINTENANT COMPLÈTEMENT VISIBLES ! */}
+      {/* 💡 CONSEILS OCR OPTIMAUX - SECTION CORRIGÉE ! */}
       <div className="ocr-tips-section">
         <h3 className="tips-title">💡 Conseils pour un OCR optimal</h3>
         <div className="tips-grid">
@@ -360,7 +360,19 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
               </ul>
             </div>
           </div>
-          
+
+          {/* 🔧 CORRECTION: Ajout de la 4ème carte manquante */}
+          <div className="tip-card performance">
+            <div className="tip-icon">⚡</div>
+            <div className="tip-content">
+              <h4>Performance OCR</h4>
+              <ul>
+                <li>✅ Documents scannés en 300+ DPI</li>
+                <li>✅ Fond blanc uniforme</li>
+                <li>❌ Éviter les filigranes</li>
+                <li>❌ Pas de texte sur images</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
