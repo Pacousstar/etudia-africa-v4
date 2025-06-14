@@ -28,7 +28,7 @@ function App() {
     documents: 0, 
     chats: 0,
     active_students_7days: 0,
-    tokens_status: { used_today: 0, remaining: 95000 }
+    
   });
   
   // États UI/UX
@@ -184,7 +184,7 @@ function App() {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       installPrompt = e;
-      console.log('📱 PWA: ÉtudIA peut être installé !');
+      console.log('📱 PWA: ÉtudIA peut être installée !');
       showTemporaryMessage('📱 Installez ÉtudIA sur votre téléphone ! Menu → Installer', 'success', 8000);
     });
 
@@ -433,14 +433,7 @@ function App() {
               <span className="title-version">4.0</span>
             </h1>
             <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
-            <div className="made-in-ci">
-              <span className="flag">🇨🇮</span>
-              <span>Made with ❤️ in Côte d'Ivoire by @Pacousstar</span>
-            </div>
-            <div className="llama-badge">
-              <span className="llama-icon">🦙</span>
-              <span>Powered by Llama 3.3-70b-versatile</span>
-            </div>
+            
           </div>
           
           {/* Section contrôles utilisateur */}
@@ -613,7 +606,7 @@ function App() {
         {activeTab === 'inscription' && (
           <div className="tab-content inscription-tab">
             <div className="content-header">
-              <h2 className="main-title">🎓 Rejoignez la Révolution Éducative ÉtudIA !</h2>
+              <h2 className="main-title">🎓 Rejoignez la Révolution Éducative Africaine !</h2>
               <p className="main-subtitle">
                 Inscrivez-vous en moins de 2 minutes et bénéficiez des performances de ÉtudIA
               </p>
@@ -716,7 +709,7 @@ function App() {
                     Inscription en cours...
                   </>
                 ) : backendStatus !== 'online' ? (
-                  <>⏳ Attente serveur LLAMA 3.3...</>
+                  <>⏳ Attente serveur EtudIA...</>
                 ) : (
                   <>🚀 Rejoindre ÉtudIA </>
                 )}
@@ -764,7 +757,7 @@ function App() {
                 <span className="feature-icon">🧠</span>
                 <h3 className="feature-title">IA ÉtudIA Personnalisée</h3>
                 <p className="feature-description">
-                  Mémoire avancée avec +25% de précision mathématique et +30% de compréhension française
+                  Mémoire avancée avec précision en mathématique et compréhension française
                 </p>
                 <div className="feature-status status-active">✅ Actif</div>
               </div>
@@ -782,7 +775,7 @@ function App() {
                 <span className="feature-icon">✅</span>
                 <h3 className="feature-title">Mode Solution Directe</h3>
                 <p className="feature-description">
-                  Solutions complètes instantanées avec +20% de vitesse et de satisfaction avec ÉtudIA
+                  Solutions complètes instantanées avec ÉtudIA
                 </p>
                 <div className="feature-status status-active">✅ Accéléré</div>
               </div>
@@ -820,7 +813,7 @@ function App() {
 
             {/* Section améliorations LlAMA 3.3 */}
             <div className="llama-improvements-section">
-              <h3 className="section-title">🦙 Pourquoi LlAMA 3.3 de ÉtudIA change tout ?</h3>
+              <h3 className="section-title">🦙 Pourquoi ÉtudIA change tout ?</h3>
               <div className="improvements-grid">
                 <div className="improvement-item">
                   <span className="improvement-icon">📊</span>
@@ -846,18 +839,7 @@ function App() {
                   </div>
                 </div>
                 
-                <div className="improvement-item">
-                  <span className="improvement-icon">⚡</span>
-                  <div className="improvement-content">
-                    <h4>Vitesse Réponses</h4>
-                    <div className="improvement-stats">
-                      <span className="old-value">Avant: 2.3s</span>
-                      <span className="arrow">→</span>
-                      <span className="new-value">Maintenant: 1.8s (+20%)</span>
-                    </div>
-                  </div>
-                </div>
-                
+                            
                 <div className="improvement-item">
                   <span className="improvement-icon">🧠</span>
                   <div className="improvement-content">
@@ -918,8 +900,8 @@ function App() {
       <footer className="app-footer">
         <div className="footer-content">
           <div className="footer-main">
-            <p>&copy; 2025 ÉtudIA v4.0 - Révolutionnons l'éducation africaine ! 🌍</p>
-            <p>Développé avec ❤️ par <strong>@Pacousstar</strong> - Côte d'Ivoire</p>
+            <p>&copy; 2025 ÉtudIA v4.0 - Révolutionnons l'éducation Africaine ! 🌍</p>
+            <p>Développé avec ❤️ par <strong>@Pacousstar</strong></p>
           </div>
           
           <div className="footer-stats">
@@ -930,7 +912,7 @@ function App() {
           </div>
           
           <div className="footer-tech">
-            <span>Powered by: React.js • Node.js • LlAMA 3.3 • Supabase</span>
+            
             <span>Status: {backendStatus === 'online' ? '🟢 En ligne' : '🔴 Maintenance'}</span>
           </div>
         </div>
