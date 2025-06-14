@@ -178,11 +178,11 @@ ${documentContent}
 
 RÈGLES PÉDAGOGIQUES STRICTES:
 1. Utilise TOUJOURS "${prenomExact}" dans tes réponses
-2. MÉTHODE OBLIGATOIRE pour exercices: "📊 Étape 1/4", "📊 Étape 2/4", etc.
+2. MÉTHODE OBLIGATOIRE uniquement pour exercices mode explication étape par étape: "📊 Étape 1/4", "📊 Étape 2/4", etc.
 3. Ne donne JAMAIS la solution directe - guide étape par étape
 4. Pose une question après chaque étape pour vérifier la compréhension
 5. Adapte ton style selon le profil de ${prenomExact}
-6. Utilise des exemples du contexte ivoirien
+6. Utilise des exemples du contexte Africain
 7. Maximum 200 mots par réponse
 8. Encourage à chaque étape: "Bravo ${prenomExact} !"
 9. À la fin d'un exercice: "🎉 Excellent ${prenomExact} ! Exercice terminé !"
@@ -202,6 +202,7 @@ MODE SPÉCIAL: ÉTAPE PAR ÉTAPE ACTIVÉ
 - Pose UNE question précise pour cette étape
 - Attends la réponse avant de passer à l'étape suivante
 - Ne donne AUCUNE solution finale, juste guide cette étape
+- Signale toujours lorsque c'est la fin d'un exercice
 
 CONCENTRE-TOI UNIQUEMENT SUR L'ÉTAPE ${currentStep}/${totalSteps} !`;
   },
@@ -212,10 +213,11 @@ CONCENTRE-TOI UNIQUEMENT SUR L'ÉTAPE ${currentStep}/${totalSteps} !`;
 
 MODE SPÉCIAL: SOLUTION DIRECTE ACTIVÉ
 - Analyse TOUS les exercices du document
-- Donne les solutions complètes et détaillées
+- Donne les solutions complètes et détaillées par exercices 
 - Formate proprement avec numérotation
 - Explique brièvement chaque réponse
 - Reste pédagogique même en donnant les solutions
+- Signale toujours lorsque c'est la fin d'un exercice
 
 FOURNIS TOUTES LES SOLUTIONS MAINTENANT !`;
   }
@@ -313,7 +315,7 @@ app.get('/', (req, res) => {
       "🧠 IA à mémoire personnalisée",
       "📊 Mode étape par étape structuré", 
       "✅ Mode solution directe",
-      "🎤 Support audio (prochainement)",
+      "🎤 Support audio actif",
       "📈 Suivi des progrès",
       "🎯 Adaptation automatique au profil élève"
     ]
@@ -944,7 +946,7 @@ app.get('/health', async (req, res) => {
         '✅ Mode solution directe disponible',
         '✅ Analytics avancées intégrées',
         '✅ Adaptation temps réel au profil élève',
-        '🎤 Mode audio en préparation'
+        '🎤 Mode audio actif'
       ],
       ai_intelligence: 'Silicon Valley Level 🚀',
       made_in: '🇨🇮 Côte d\'Ivoire avec ❤️'
@@ -975,13 +977,11 @@ app.listen(PORT, () => {
    ✅ Prompts personnalisés par profil
    ✅ Adaptation température IA selon élève
    ✅ Tracking progression multi-dimensionnel
-   
-🎤 PROCHAINEMENT:
-   🔊 Mode audio avec reconnaissance vocale
+   🎤 Mode audio avec reconnaissance vocale
    🌙 Mode dark interface
    📱 App mobile progressive
    
-🌍 MISSION: Révolutionner l'éducation africaine !
+🌍 MISSION: Révolutionner l'éducation Africaine !
 🇨🇮 Made with ❤️ in Côte d'Ivoire by @Pacousstar
    
 🏆 NIVEAU: SILICON VALLEY REVOLUTIONARY !
