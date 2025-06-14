@@ -766,7 +766,7 @@ function App() {
                 <p className="feature-description">
                   Mémoire avancée avec +25% de précision mathématique et +30% de compréhension française
                 </p>
-                <div className="feature-status status-active">✅ Actif </div>
+                <div className="feature-status status-active">✅ Actif</div>
               </div>
               
               <div className="feature-card step-mode">
@@ -775,7 +775,7 @@ function App() {
                 <p className="feature-description">
                   Guidage progressif "📊 Étape 1/4" optimisé par la logique améliorée de ÉtudIA
                 </p>
-                <div className="feature-status status-active">✅ Optimisé </div>
+                <div className="feature-status status-active">✅ Optimisé</div>
               </div>
               
               <div className="feature-card direct-mode">
@@ -784,7 +784,7 @@ function App() {
                 <p className="feature-description">
                   Solutions complètes instantanées avec +20% de vitesse et de satisfaction avec ÉtudIA
                 </p>
-                <div className="feature-status status-active">✅ Accéléré </div>
+                <div className="feature-status status-active">✅ Accéléré</div>
               </div>
               
               <div className="feature-card ocr">
@@ -793,7 +793,7 @@ function App() {
                 <p className="feature-description">
                   Extraction texte 95% de précision analysée par ÉtudIA
                 </p>
-                <div className="feature-status status-active">✅ Analysé </div>
+                <div className="feature-status status-active">✅ Analysé</div>
               </div>
               
               <div className="feature-card protection">
@@ -935,72 +935,8 @@ function App() {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
 
-      {/* STYLES CSS RÉVOLUTIONNAIRES RESPONSIVE */}
-      <style jsx>{`
-        /* =================================================================
-           🎨 VARIABLES CSS POUR COHÉRENCE DES COULEURS
-           ================================================================= */
-        :root {
-          --primary-orange: #FF6B35;
-          --primary-green: #4CAF50;
-          --secondary-orange: #FF8C00;
-          --secondary-green: #32CD32;
-          --accent-blue: #6366F1;
-          --text-dark: #1F2937;
-          --text-light: #6B7280;
-          --bg-light: #F9FAFB;
-          --bg-white: #FFFFFF;
-          --border-light: rgba(99, 102, 241, 0.1);
-          --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.1);
-          --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.15);
-          --gradient-orange: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
-          --gradient-green: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
-          --gradient-cosmic: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        /* =================================================================
-           🌙 VARIABLES MODE SOMBRE
-           ================================================================= */
-        .dark-mode {
-          --bg-light: #1F2937;
-          --bg-white: #374151;
-          --text-dark: #F9FAFB;
-          --text-light: #D1D5DB;
-          --border-light: rgba(99, 102, 241, 0.3);
-        }
-
-        /* =================================================================
-           📱 RESET ET BASE MOBILE-FIRST
-           ================================================================= */
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-
-        .app {
-          min-height: 100vh;
-          background: linear-gradient(135deg, var(--bg-light), var(--bg-white));
-          color: var(--text-dark);
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          transition: all 0.3s ease;
-          overflow-x: hidden;
-        }
-
-        /* =================================================================
-           🎯 HEADER RÉVOLUTIONNAIRE RESPONSIVE
-           ================================================================= */
-        .app-header.revolutionary {
-          background: var(--gradient-cosmic);
-          color: white;
-          padding: 1rem;
-          position: relative;
-          overflow: hidden;
-          min-height: 120px;
-        }
-
-        .cosmic-background {
-          position: absolute;
-          top: 0;
-          left: 0
+export default App;
