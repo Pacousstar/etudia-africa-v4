@@ -856,18 +856,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
                 <span className="mode-badge direct">✅ Solution Directe</span>
               </div>
             </div>
-            
-            <div className="feature-card adaptive">
-              <span className="feature-icon">📈</span>
-              <h4>Adaptation Intelligente</h4>
-              <p>L'IA s'adapte à ton niveau ({classeEleve}) et à tes difficultés</p>
-              {learningProfile?.difficulties?.length > 0 && (
-                <div className="difficulties-info">
-                  Focus: {learningProfile.difficulties.join(', ')}
-                </div>
-              )}
-            </div>
-            
+                        
             <div className="feature-card audio">
               <span className="feature-icon">🎤</span>
               <h4>Mode Audio Fonctionnel</h4>
