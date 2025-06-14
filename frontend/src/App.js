@@ -1,4 +1,4 @@
-// App.js - VERSION UX/UI RÉVOLUTIONNAIRE AVEC RESPONSIVE PARFAIT
+// App.js - VERSION UX/UI RÉVOLUTIONNAIRE AVEC RESPONSIVE PARFAIT + AMÉLIORATIONS
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import UploadDocument from './components/UploadDocument';
@@ -29,6 +29,14 @@ function App() {
     chats: 0,
     active_students_7days: 0,
     tokens_status: { used_today: 0, remaining: 95000 }
+  });
+  
+  // 🔋 NOUVEAUX ÉTATS POUR STATISTIQUES UTILISATEUR
+  const [userStats, setUserStats] = useState({
+    conversations: 0,
+    documents: 0,
+    tokens_used: 0,
+    level: 1
   });
   
   // États UI/UX
@@ -69,10 +77,10 @@ function App() {
     'Seconde', 'Première', 'Terminale'
   ];
 
-  // 🔧 INJECTION STYLES CSS POUR FORMULAIRE ORANGE + BOUTON NORMAL BLEU
+  // 🔧 INJECTION STYLES CSS POUR FORMULAIRE CENTRÉ + COMPTEURS ORANGE
   useEffect(() => {
     const additionalStyles = `
-      /* 🟠 FORMULAIRE D'INSCRIPTION AVEC FOND ORANGE ET EFFETS */
+      /* 🟠 FORMULAIRE D'INSCRIPTION CENTRÉ */
       .inscription-form {
         background: linear-gradient(135deg, #FF6B35, #FF8C00);
         padding: 2.5rem;
@@ -80,8 +88,165 @@ function App() {
         box-shadow: 0 12px 35px rgba(255, 107, 53, 0.3);
         position: relative;
         overflow: hidden;
-        margin: 2rem 0;
+        margin: 2rem auto; /* 📐 CENTRAGE AJOUTÉ */
+        max-width: 600px; /* 📐 LARGEUR LIMITÉE POUR CENTRAGE */
         animation: formSlideIn 0.6s ease-out;
+      }
+
+      /* 🟠 COMPTEURS HEADER EN ORANGE + VISIBILITÉ */
+      .stats-section .stat-number {
+        color: #FF8C00 !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+        font-weight: 900 !important;
+        font-size: 1.1rem !important;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .stats-section .stat-label {
+        color: rgba(255, 255, 255, 0.95) !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+        font-weight: 600 !important;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        margin-top: 0.25rem;
+      }
+
+      .stats-section .stat-item {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 140, 0, 0.3);
+        border-radius: 0.75rem;
+        padding: 0.75rem;
+        backdrop-filter: blur(5px);
+      }
+
+      /* 🗑️ BOUTON SUPPRESSION DOCUMENTS */
+      .document-card {
+        position: relative;
+      }
+
+      .document-delete-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: #EF4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        z-index: 10;
+      }
+
+      .document-card:hover .document-delete-btn {
+        opacity: 1;
+      }
+
+      .document-delete-btn:hover {
+        background: #DC2626;
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+      }
+
+      /* 🔋 GRAPHIQUE TOKENS UTILISATEUR */
+      .user-tokens-display {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(79, 70, 229, 0.05));
+        border: 2px solid rgba(99, 102, 241, 0.2);
+        border-radius: 1rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .user-tokens-display::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(99, 102, 241, 0.05) 25%, transparent 25%);
+        background-size: 10px 10px;
+        opacity: 0.3;
+      }
+
+      .tokens-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+        position: relative;
+        z-index: 2;
+      }
+
+      .tokens-title {
+        font-weight: 700;
+        color: #4F46E5;
+        font-size: 1.1rem;
+      }
+
+      .tokens-value {
+        background: rgba(99, 102, 241, 0.1);
+        color: #4F46E5;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      .tokens-progress-container {
+        position: relative;
+        height: 8px;
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+        z-index: 2;
+      }
+
+      .tokens-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #32CD32, #FFD700, #FF6B35);
+        border-radius: 4px;
+        transition: width 0.8s ease;
+        position: relative;
+      }
+
+      .tokens-progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: tokensShimmer 2s infinite;
+      }
+
+      @keyframes tokensShimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+
+      .tokens-details {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        color: #6B7280;
+        position: relative;
+        z-index: 2;
       }
 
       .inscription-form::before {
@@ -276,7 +441,8 @@ function App() {
       @media (max-width: 768px) {
         .inscription-form {
           padding: 2rem;
-          margin: 1.5rem 0;
+          margin: 1.5rem auto;
+          max-width: 95%;
         }
 
         .inscription-form .form-input,
@@ -295,6 +461,8 @@ function App() {
         .inscription-form {
           padding: 1.5rem;
           border-radius: 1rem;
+          margin: 1rem auto;
+          max-width: 90%;
         }
 
         .inscription-form .form-group {
@@ -340,6 +508,64 @@ function App() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // 🗑️ FONCTION SUPPRESSION DOCUMENT
+  const handleDeleteDocument = async (documentId, documentName) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${documentName}" ?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/documents/${documentId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        // Mettre à jour la liste locale
+        setAllDocuments(prev => prev.filter(doc => doc.id !== documentId));
+        
+        // Si c'était le document sélectionné, sélectionner le suivant
+        if (selectedDocumentId === documentId) {
+          const remainingDocs = allDocuments.filter(doc => doc.id !== documentId);
+          if (remainingDocs.length > 0) {
+            setSelectedDocumentId(remainingDocs[0].id);
+            setDocumentContext(remainingDocs[0].texte_extrait);
+          } else {
+            setSelectedDocumentId(null);
+            setDocumentContext('');
+          }
+        }
+
+        showTemporaryMessage(`🗑️ Document "${documentName}" supprimé avec succès !`, 'success');
+      } else {
+        showTemporaryMessage('❌ Erreur lors de la suppression', 'error');
+      }
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+      showTemporaryMessage('❌ Erreur technique lors de la suppression', 'error');
+    }
+  };
+
+  // 📊 FONCTION MISE À JOUR STATISTIQUES UTILISATEUR
+  const updateUserStats = async (userId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/student/profile/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUserStats({
+            conversations: data.statistics.total_conversations || 0,
+            documents: data.statistics.documents_uploaded || 0,
+            tokens_used: data.statistics.total_tokens_used || 0,
+            level: data.learning_profile.level || 1
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('Erreur récupération stats utilisateur:', error);
+    }
+  };
+
   // 🔧 CORRECTION: Fonction déconnexion avec bon message
   const handleLogout = () => {
     setStudent(null);
@@ -348,6 +574,7 @@ function App() {
     setDocumentContext('');
     setAllDocuments([]);
     setSelectedDocumentId(null);
+    setUserStats({ conversations: 0, documents: 0, tokens_used: 0, level: 1 });
     setFormData({
       name: '',
       email: '',
@@ -475,7 +702,8 @@ function App() {
             documents: data.documents || 0,
             chats: data.chats || 0,
             active_students_7days: data.active_students_7days || 0,
-            });
+            tokens_status: data.tokens_status || { used_today: 0, remaining: 95000 }
+          });
           
           console.log('✅ Stats mises à jour:', {
             students: data.students,
@@ -493,10 +721,11 @@ function App() {
     return () => clearInterval(interval);
   }, [backendStatus, API_URL]);
 
-  // Charger documents utilisateur après connexion
+  // Charger documents utilisateur après connexion + stats utilisateur
   useEffect(() => {
     if (student?.id) {
       loadUserDocuments(student.id);
+      updateUserStats(student.id);
     }
   }, [student]);
 
@@ -638,6 +867,11 @@ function App() {
       setSelectedDocumentId(documentData.id);
     }
     
+    // Mettre à jour les statistiques utilisateur
+    if (student?.id) {
+      updateUserStats(student.id);
+    }
+    
     showTemporaryMessage('📄 Document analysé avec ÉtudIA ! Passons au chat IA !');
     setTimeout(() => setActiveTab('chat'), 1500);
   };
@@ -719,7 +953,7 @@ function App() {
             </div>
           )}
           
-          {/* Section statistiques */}
+          {/* Section statistiques AVEC STYLE ORANGE AMÉLIORÉ */}
           <div className="stats-section">
             <div className="stat-item">
               <span className="stat-number">{stats.students.toLocaleString()}+</span>
@@ -774,8 +1008,31 @@ function App() {
         </div>
       </header>
 
-      {/* Sélecteur de documents */}
-      {student && allDocuments.length > 1 && (
+      {/* 🔋 AFFICHAGE STATISTIQUES UTILISATEUR */}
+      {student && (
+        <div className="user-tokens-display">
+          <div className="tokens-header">
+            <h3 className="tokens-title">🔋 Utilisation Tokens Aujourd'hui</h3>
+            <span className="tokens-value">{userStats.tokens_used.toLocaleString()} tokens</span>
+          </div>
+          <div className="tokens-progress-container">
+            <div 
+              className="tokens-progress-fill"
+              style={{ 
+                width: `${Math.min(100, (userStats.tokens_used / 1000) * 100)}%` 
+              }}
+            ></div>
+          </div>
+          <div className="tokens-details">
+            <span>📊 {userStats.conversations} conversations</span>
+            <span>📄 {userStats.documents} documents</span>
+            <span>🎯 Niveau {userStats.level}/5</span>
+          </div>
+        </div>
+      )}
+
+      {/* Sélecteur de documents AVEC BOUTON SUPPRESSION */}
+      {student && allDocuments.length > 0 && (
         <div className="document-selector">
           <h3>📄 Vos Documents Analysés</h3>
           <div className="documents-grid">
@@ -785,6 +1042,18 @@ function App() {
                 className={`document-card ${selectedDocumentId === doc.id ? 'active' : ''}`}
                 onClick={() => switchDocument(doc.id)}
               >
+                {/* 🗑️ BOUTON SUPPRESSION */}
+                <button
+                  className="document-delete-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteDocument(doc.id, doc.nom_original);
+                  }}
+                  title={`Supprimer "${doc.nom_original}"`}
+                >
+                  🗑️
+                </button>
+                
                 <div className="doc-icon">📄</div>
                 <div className="doc-info">
                   <div className="doc-name">{doc.nom_original}</div>
@@ -886,7 +1155,7 @@ function App() {
               </div>
             )}
 
-            {/* 🟠 FORMULAIRE D'INSCRIPTION AVEC FOND ORANGE ET EFFETS */}
+            {/* 🟠 FORMULAIRE D'INSCRIPTION CENTRÉ */}
             <form onSubmit={handleSubmit} className="inscription-form">
               <div className="form-header">
                 <h3 style={{ color: 'white', textAlign: 'center', marginBottom: '1rem', fontSize: '1.3rem', fontWeight: '800' }}>
