@@ -194,7 +194,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
       <div className="content-header">
         <h2 className="main-title">📸 Upload & Analyse OCR Révolutionnaire</h2>
         <p className="main-subtitle">
-          {prenomEleve}, uploadez votre document et laissez ÉtudIA l'analyser avec une précision de 95% !
+          {prenomEleve}, uploadez votre document et laissez ÉtudIA l'analyser pour vous !
         </p>
       </div>
 
@@ -219,7 +219,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
 
           {uploadStatus === 'idle' && (
             <div className="drop-zone-content">
-              <div className="upload-icon">📤</div>
+              <div className="upload-icon">📸</div>
               <h3>Glissez votre document ici</h3>
               <p>ou <strong>cliquez pour parcourir</strong></p>
               <div className="supported-formats">
@@ -360,18 +360,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
               </ul>
             </div>
           </div>
-
-          <div className="tip-card performance">
-            <div className="tip-icon">⚡</div>
-            <div className="tip-content">
-              <h4>Performance ÉtudIA</h4>
-              <ul>
-                <li>🎯 95%+ précision sur documents clairs</li>
-                <li>🧠 Reconnaissance formules mathématiques</li>
-                <li>🇫🇷 Optimisé pour le français</li>
-                <li>⚡ Traitement en moins de 30 secondes</li>
-              </ul>
-            </div>
+          
           </div>
         </div>
       </div>
