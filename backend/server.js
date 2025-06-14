@@ -317,7 +317,8 @@ app.get('/', (req, res) => {
       "✅ Mode solution directe",
       "🎤 Support audio actif",
       "📈 Suivi des progrès",
-      "🎯 Adaptation automatique au profil élève"
+      "🎯 Adaptation automatique au profil élève",
+      "🗑️ Suppression documents avec Cloudinary cleanup"
     ]
   });
 });
@@ -542,6 +543,81 @@ app.get('/api/documents/:userId', async (req, res) => {
     res.json({ success: true, documents: data, count: data.length });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 🗑️ NOUVELLE ROUTE SUPPRESSION DOCUMENT
+app.delete('/api/documents/:documentId', async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    
+    console.log(`🗑️ Suppression document ID: ${documentId}`);
+    
+    // 1. Récupérer les informations du document avant suppression
+    const { data: document, error: fetchError } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('id', documentId)
+      .single();
+
+    if (fetchError || !document) {
+      console.log('❌ Document non trouvé:', fetchError?.message);
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Document non trouvé' 
+      });
+    }
+
+    console.log(`📄 Document trouvé: ${document.nom_original}`);
+
+    // 2. Supprimer de Cloudinary si l'ID existe
+    if (document.id_public_cloudinary && document.id_public_cloudinary !== 'url_non_disponible') {
+      try {
+        const cloudinaryResult = await cloudinary.uploader.destroy(document.id_public_cloudinary);
+        console.log('☁️ Cloudinary suppression:', cloudinaryResult);
+      } catch (cloudinaryError) {
+        console.warn('⚠️ Erreur Cloudinary (non bloquante):', cloudinaryError.message);
+        // Ne pas bloquer si Cloudinary échoue
+      }
+    }
+
+    // 3. Supprimer de la base de données Supabase
+    const { error: deleteError } = await supabase
+      .from('documents')
+      .delete()
+      .eq('id', documentId);
+
+    if (deleteError) {
+      console.error('❌ Erreur suppression base:', deleteError.message);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Erreur suppression base de données' 
+      });
+    }
+
+    // 4. Mettre à jour le profil utilisateur
+    if (document.eleve_id) {
+      MemoryManager.updateStudentProfile(document.eleve_id).catch(console.error);
+    }
+
+    console.log(`✅ Document "${document.nom_original}" supprimé avec succès !`);
+
+    res.json({
+      success: true,
+      message: `Document "${document.nom_original}" supprimé avec succès !`,
+      deleted_document: {
+        id: document.id,
+        nom_original: document.nom_original,
+        matiere: document.matiere
+      }
+    });
+
+  } catch (error) {
+    console.error('💥 Erreur suppression document:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Erreur technique lors de la suppression' 
+    });
   }
 });
 
@@ -908,18 +984,37 @@ app.get('/api/stats', async (req, res) => {
 
     const uniqueActiveStudents = new Set(activeStudents?.map(conv => conv.eleve_id) || []).size;
 
+    // 🔋 CALCUL TOKENS AUJOURD'HUI
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const { data: todayConversations } = await supabase
+      .from('historique_conversations')
+      .select('tokens_utilises')
+      .gte('date_creation', today.toISOString());
+
+    const tokensUsedToday = todayConversations?.reduce((sum, conv) => sum + (conv.tokens_utilises || 0), 0) || 0;
+    const tokensRemaining = Math.max(0, 95000 - tokensUsedToday);
+
     res.json({
       students: studentsResult.count || 0,
       documents: documentsResult.count || 0,
       chats: chatsResult.count || 0,
       active_students_7days: uniqueActiveStudents,
+      tokens_status: {
+        used_today: tokensUsedToday,
+        remaining: tokensRemaining,
+        total_daily_limit: 95000,
+        percentage_used: Math.round((tokensUsedToday / 95000) * 100)
+      },
       success_rate: 99,
       ai_features: [
         'Mémoire personnalisée',
         'Adaptation automatique',
         'Mode étape par étape',
         'Solution directe',
-        'Profils d\'apprentissage'
+        'Profils d\'apprentissage',
+        'Suppression documents'
       ],
       timestamp: new Date().toISOString(),
       version: '4.0.0-revolutionary'
@@ -946,6 +1041,7 @@ app.get('/health', async (req, res) => {
         '✅ Mode solution directe disponible',
         '✅ Analytics avancées intégrées',
         '✅ Adaptation temps réel au profil élève',
+        '✅ Suppression documents avec Cloudinary cleanup',
         '🎤 Mode audio actif'
       ],
       ai_intelligence: 'Silicon Valley Level 🚀',
@@ -970,6 +1066,7 @@ app.listen(PORT, () => {
    🎯 Adaptation automatique profil élève - ACTIF
    📈 Analytics avancées - ACTIF
    🔄 Mise à jour profil temps réel - ACTIF
+   🗑️ Suppression documents + Cloudinary - ACTIF
    
 🎯 INTELLIGENCE ARTIFICIELLE:
    ✅ Mémorisation styles d'apprentissage
