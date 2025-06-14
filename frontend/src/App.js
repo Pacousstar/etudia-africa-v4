@@ -18,8 +18,8 @@ function App() {
   const [student, setStudent] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [documentContext, setDocumentContext] = useState('');
-  const [allDocuments, setAllDocuments] = useState([]); // NOUVEAU: Tous les documents
-  const [selectedDocumentId, setSelectedDocumentId] = useState(null); // NOUVEAU: Document sélectionné
+  const [allDocuments, setAllDocuments] = useState([]);
+  const [selectedDocumentId, setSelectedDocumentId] = useState(null);
   
   // États serveur et connexion
   const [backendStatus, setBackendStatus] = useState('checking');
@@ -28,7 +28,7 @@ function App() {
     documents: 0, 
     chats: 0,
     active_students_7days: 0,
-    
+    tokens_status: { used_today: 0, remaining: 95000 }
   });
   
   // États UI/UX
@@ -69,6 +69,260 @@ function App() {
     'Seconde', 'Première', 'Terminale'
   ];
 
+  // 🔧 INJECTION STYLES CSS POUR FORMULAIRE ORANGE + BOUTON NORMAL BLEU
+  useEffect(() => {
+    const additionalStyles = `
+      /* 🟠 FORMULAIRE D'INSCRIPTION AVEC FOND ORANGE ET EFFETS */
+      .inscription-form {
+        background: linear-gradient(135deg, #FF6B35, #FF8C00);
+        padding: 2.5rem;
+        border-radius: 1.5rem;
+        box-shadow: 0 12px 35px rgba(255, 107, 53, 0.3);
+        position: relative;
+        overflow: hidden;
+        margin: 2rem 0;
+        animation: formSlideIn 0.6s ease-out;
+      }
+
+      .inscription-form::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.1) 75%),
+                    linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.1) 75%);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+        opacity: 0.3;
+        pointer-events: none;
+      }
+
+      .inscription-form .form-group {
+        position: relative;
+        margin-bottom: 2rem;
+        z-index: 2;
+      }
+
+      .inscription-form .form-label {
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+        display: block;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      /* 🎯 EFFETS SUR LES CHAMPS DE SAISIE */
+      .inscription-form .form-input,
+      .inscription-form .form-select {
+        width: 100%;
+        padding: 1.25rem 1.5rem;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.95);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 3;
+      }
+
+      .inscription-form .form-input:focus,
+      .inscription-form .form-select:focus {
+        outline: none;
+        border-color: #FFF;
+        background: #FFF;
+        transform: translateY(-3px);
+        box-shadow: 
+          0 8px 25px rgba(0, 0, 0, 0.2),
+          0 0 0 4px rgba(255, 255, 255, 0.5),
+          inset 0 2px 5px rgba(255, 107, 53, 0.1);
+        border-width: 4px;
+        animation: fieldFocus 0.3s ease-out;
+      }
+
+      .inscription-form .form-input:hover,
+      .inscription-form .form-select:hover {
+        border-color: rgba(255, 255, 255, 0.6);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .inscription-form .form-input::placeholder {
+        color: #999;
+        font-style: italic;
+        transition: all 0.3s ease;
+      }
+
+      .inscription-form .form-input:focus::placeholder {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+
+      /* 🔥 BOUTON SUBMIT AMÉLIORÉ */
+      .inscription-form .submit-button {
+        width: 100%;
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #4CAF50, #32CD32);
+        color: white;
+        border: none;
+        border-radius: 1rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        position: relative;
+        z-index: 3;
+        margin-top: 1rem;
+      }
+
+      .inscription-form .submit-button:hover:not(:disabled) {
+        background: linear-gradient(135deg, #45A049, #2EBF2E);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(76, 175, 80, 0.5);
+      }
+
+      .inscription-form .submit-button::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 0;
+        height: 0;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+      }
+
+      .inscription-form .submit-button:hover::after {
+        width: 100px;
+        height: 100px;
+      }
+
+      .inscription-form .submit-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* 🔵 BOUTON MODE NORMAL AVEC STYLE IDENTIQUE AUX AUTRES */
+      .mode-button.normal {
+        border-color: #6366F1 !important;
+        background: white;
+        color: #1F2937;
+      }
+
+      .mode-button.normal::before {
+        background: linear-gradient(135deg, #6366F1, #4F46E5) !important;
+      }
+
+      .mode-button.normal:hover:not(:disabled) {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05)) !important;
+        border-color: #4F46E5 !important;
+      }
+
+      .mode-button.normal .mode-benefit {
+        background: rgba(99, 102, 241, 0.1);
+        color: #4F46E5;
+      }
+
+      /* 🌙 MODE SOMBRE */
+      .dark-mode .inscription-form {
+        background: linear-gradient(135deg, #D2691E, #FF6B35);
+        box-shadow: 0 12px 35px rgba(210, 105, 30, 0.4);
+      }
+
+      .dark-mode .inscription-form .form-input,
+      .dark-mode .inscription-form .form-select {
+        background: rgba(31, 41, 55, 0.95);
+        color: #F9FAFB;
+        border-color: rgba(255, 255, 255, 0.4);
+      }
+
+      .dark-mode .inscription-form .form-input:focus,
+      .dark-mode .inscription-form .form-select:focus {
+        background: #1F2937;
+        color: #F9FAFB;
+        border-color: #FFF;
+      }
+
+      .dark-mode .inscription-form .form-input::placeholder {
+        color: #9CA3AF;
+      }
+
+      /* 🎨 ANIMATIONS */
+      @keyframes formSlideIn {
+        0% {
+          opacity: 0;
+          transform: translateY(30px) scale(0.95);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @keyframes fieldFocus {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+      }
+
+      /* 📱 RESPONSIVE */
+      @media (max-width: 768px) {
+        .inscription-form {
+          padding: 2rem;
+          margin: 1.5rem 0;
+        }
+
+        .inscription-form .form-input,
+        .inscription-form .form-select {
+          padding: 1rem 1.25rem;
+          font-size: 0.95rem;
+        }
+
+        .inscription-form .submit-button {
+          padding: 1.25rem 1.5rem;
+          font-size: 1.1rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .inscription-form {
+          padding: 1.5rem;
+          border-radius: 1rem;
+        }
+
+        .inscription-form .form-group {
+          margin-bottom: 1.5rem;
+        }
+
+        .inscription-form .form-input,
+        .inscription-form .form-select {
+          padding: 0.875rem 1rem;
+          font-size: 0.9rem;
+        }
+
+        .inscription-form .form-label {
+          font-size: 1rem;
+          margin-bottom: 0.5rem;
+        }
+      }
+    `;
+
+    // Injection des styles
+    if (!document.getElementById('enhanced-form-styles')) {
+      const styleElement = document.createElement('style');
+      styleElement.id = 'enhanced-form-styles';
+      styleElement.textContent = additionalStyles;
+      document.head.appendChild(styleElement);
+    }
+  }, []);
+
   // Fonctions utilitaires
   const showTemporaryMessage = (text, type = 'success', duration = 10000) => {
     setConnectionMessage({ show: true, text, type });
@@ -86,7 +340,7 @@ function App() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // NOUVEAU: Fonction déconnexion
+  // 🔧 CORRECTION: Fonction déconnexion avec bon message
   const handleLogout = () => {
     setStudent(null);
     setCurrentStep(1);
@@ -100,10 +354,11 @@ function App() {
       class_level: '',
       school: ''
     });
+    // 🔧 CORRECTION: Message approprié pour déconnexion
     showTemporaryMessage('👋 Déconnexion réussie ! À bientôt sur ÉtudIA !', 'info');
   };
 
-  // NOUVEAU: Charger tous les documents de l'utilisateur
+  // Charger tous les documents de l'utilisateur
   const loadUserDocuments = async (userId) => {
     try {
       const response = await fetch(`${API_URL}/api/documents/${userId}`);
@@ -121,7 +376,7 @@ function App() {
     }
   };
 
-  // NOUVEAU: Changer de document actif
+  // Changer de document actif
   const switchDocument = (documentId) => {
     const selectedDoc = allDocuments.find(doc => doc.id === documentId);
     if (selectedDoc) {
@@ -220,8 +475,7 @@ function App() {
             documents: data.documents || 0,
             chats: data.chats || 0,
             active_students_7days: data.active_students_7days || 0,
-            tokens_status: data.tokens_status || { used_today: 0, remaining: 95000 }
-          });
+            });
           
           console.log('✅ Stats mises à jour:', {
             students: data.students,
@@ -433,7 +687,10 @@ function App() {
               <span className="title-version">4.0</span>
             </h1>
             <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
-            
+            <div className="made-in-ci">
+              <span className="flag">🇨🇮</span>
+              <span>Made with ❤️ in Côte d'Ivoire by @Pacousstar</span>
+            </div>
           </div>
           
           {/* Section contrôles utilisateur */}
@@ -517,7 +774,7 @@ function App() {
         </div>
       </header>
 
-      {/* NOUVEAU: Sélecteur de documents */}
+      {/* Sélecteur de documents */}
       {student && allDocuments.length > 1 && (
         <div className="document-selector">
           <h3>📄 Vos Documents Analysés</h3>
@@ -600,13 +857,13 @@ function App() {
         />
       </nav>
 
-      {/* CONTENU PRINCIPAL AVEC NOUVEAU BACKGROUND */}
+      {/* CONTENU PRINCIPAL */}
       <main className="main-content enhanced">
         {/* Onglet inscription */}
         {activeTab === 'inscription' && (
           <div className="tab-content inscription-tab">
             <div className="content-header">
-              <h2 className="main-title">🎓 Rejoignez la Révolution Éducative Africaine !</h2>
+              <h2 className="main-title">🎓 Rejoignez la Révolution Éducative ÉtudIA !</h2>
               <p className="main-subtitle">
                 Inscrivez-vous en moins de 2 minutes et bénéficiez des performances de ÉtudIA
               </p>
@@ -629,10 +886,21 @@ function App() {
               </div>
             )}
 
-            {/* Formulaire d'inscription */}
+            {/* 🟠 FORMULAIRE D'INSCRIPTION AVEC FOND ORANGE ET EFFETS */}
             <form onSubmit={handleSubmit} className="inscription-form">
+              <div className="form-header">
+                <h3 style={{ color: 'white', textAlign: 'center', marginBottom: '1rem', fontSize: '1.3rem', fontWeight: '800' }}>
+                  🚀 Rejoindre ÉtudIA
+                </h3>
+                <p style={{ color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: '2rem' }}>
+                  Créez votre compte en quelques secondes
+                </p>
+              </div>
+
               <div className="form-group">
-                <label htmlFor="name" className="form-label">Nom complet *</label>
+                <label htmlFor="name" className="form-label">
+                  👤 Nom complet *
+                </label>
                 <input
                   type="text"
                   id="name"
@@ -640,14 +908,16 @@ function App() {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  placeholder="Votre nom et prénom"
+                  placeholder="Entrez votre nom et prénom"
                   className="form-input"
                   disabled={backendStatus !== 'online'}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="email" className="form-label">Email *</label>
+                <label htmlFor="email" className="form-label">
+                  📧 Email *
+                </label>
                 <input
                   type="email"
                   id="email"
@@ -663,7 +933,9 @@ function App() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="class_level" className="form-label">Classe *</label>
+                  <label htmlFor="class_level" className="form-label">
+                    🎓 Classe *
+                  </label>
                   <select
                     id="class_level"
                     name="class_level"
@@ -673,7 +945,7 @@ function App() {
                     className="form-select"
                     disabled={backendStatus !== 'online'}
                   >
-                    <option value="">Sélectionnez votre classe</option>
+                    <option value="">Choisissez votre classe</option>
                     {classLevels.map(level => (
                       <option key={level} value={level}>{level}</option>
                     ))}
@@ -681,7 +953,9 @@ function App() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="school" className="form-label">École</label>
+                  <label htmlFor="school" className="form-label">
+                    🏫 École
+                  </label>
                   <select
                     id="school"
                     name="school"
@@ -706,12 +980,12 @@ function App() {
                 {isSubmitting ? (
                   <>
                     <span className="spinner"></span>
-                    Inscription en cours...
+                    ⏳ Inscription en cours...
                   </>
                 ) : backendStatus !== 'online' ? (
                   <>⏳ Attente serveur EtudIA...</>
                 ) : (
-                  <>🚀 Rejoindre ÉtudIA </>
+                  <>🚀 Rejoindre ÉtudIA Maintenant !</>
                 )}
               </button>
             </form>
@@ -757,7 +1031,7 @@ function App() {
                 <span className="feature-icon">🧠</span>
                 <h3 className="feature-title">IA ÉtudIA Personnalisée</h3>
                 <p className="feature-description">
-                  Mémoire avancée avec précision en mathématique et compréhension française
+                  Mémoire avancée en mathématique et compréhension française
                 </p>
                 <div className="feature-status status-active">✅ Actif</div>
               </div>
@@ -839,7 +1113,7 @@ function App() {
                   </div>
                 </div>
                 
-                            
+                
                 <div className="improvement-item">
                   <span className="improvement-icon">🧠</span>
                   <div className="improvement-content">
@@ -901,14 +1175,14 @@ function App() {
         <div className="footer-content">
           <div className="footer-main">
             <p>&copy; 2025 ÉtudIA v4.0 - Révolutionnons l'éducation Africaine ! 🌍</p>
-            <p>Développé avec ❤️ par <strong>@Pacousstar</strong></p>
+            <p>Développé avec ❤️ par <strong>@Pacousstar</strong> - Côte d'Ivoire</p>
           </div>
           
           <div className="footer-stats">
             <span>🚀 {stats.students.toLocaleString()}+ élèves</span>
             <span>📚 {stats.documents.toLocaleString()}+ documents</span>
             <span>💬 {stats.chats.toLocaleString()}+ conversations</span>
-            <span>🦙 LlAMA 3.3 {stats.tokens_status?.remaining > 85000 ? 'optimal' : 'actif'}</span>
+            <span>🦙 07 07 80 18 17</span>
           </div>
           
           <div className="footer-tech">
