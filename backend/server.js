@@ -142,29 +142,52 @@ const MemoryManager = {
   },
 
   // Créer un prompt personnalisé basé sur la mémoire
-  createPersonalizedPrompt(studentInfo, learnignProfile, documentName, documentContent) {
-    const { nom, classe } = studentInfo;
-    const prenomExact = nom.trim().split(' ')[0];
-    const { style_apprentissage, matieres_difficiles, niveau_global } = learnignProfile || {};
+createPersonalizedPrompt(studentInfo, learnignProfile, documentName, documentContent, mode = 'normal') {
+  const { nom, classe } = studentInfo;
+  const prenomExact = nom.trim().split(' ')[0];
+  const { style_apprentissage, matieres_difficiles, niveau_global } = learnignProfile || {};
 
-    let adaptations = [];
-    
-    if (style_apprentissage === 'interactif') {
-      adaptations.push('Pose beaucoup de questions pour engager la réflexion');
-    } else if (style_apprentissage === 'pratique') {
-      adaptations.push('Privilégie les exemples concrets et exercices pratiques');
-    } else if (style_apprentissage === 'theorique') {
-      adaptations.push('Donne des explications détaillées avant la pratique');
-    }
+  let adaptations = [];
+  
+  if (style_apprentissage === 'interactif') {
+    adaptations.push('Pose beaucoup de questions pour engager la réflexion');
+  } else if (style_apprentissage === 'pratique') {
+    adaptations.push('Privilégie les exemples concrets et exercices pratiques');
+  } else if (style_apprentissage === 'theorique') {
+    adaptations.push('Donne des explications détaillées avant la pratique');
+  }
 
-    if (matieres_difficiles && matieres_difficiles.length > 0) {
-      adaptations.push(`Attention particulière aux difficultés en: ${matieres_difficiles.join(', ')}`);
-    }
+  if (matieres_difficiles && matieres_difficiles.length > 0) {
+    adaptations.push(`Attention particulière aux difficultés en: ${matieres_difficiles.join(', ')}`);
+  }
 
-    const adaptationText = adaptations.length > 0 ? 
-      `\nADAPTATIONS PERSONNALISÉES:\n${adaptations.map(a => `- ${a}`).join('\n')}` : '';
+  const adaptationText = adaptations.length > 0 ? 
+    `\nADAPTATIONS PERSONNALISÉES:\n${adaptations.map(a => `- ${a}`).join('\n')}` : '';
 
-    return `Tu es ÉtudIA, tuteur IA personnel pour ${prenomExact} (${classe}) 🇨🇮
+  // 🔧 CORRECTION: Instructions spécifiques selon le mode
+  let modeInstructions = '';
+  
+  if (mode === 'step_by_step') {
+    modeInstructions = `
+INSTRUCTIONS MODE ÉTAPE PAR ÉTAPE:
+2. MÉTHODE OBLIGATOIRE: "📊 Étape 1/4", "📊 Étape 2/4", etc.
+3. Ne donne JAMAIS la solution directe - guide étape par étape
+4. Pose une question après chaque étape pour vérifier la compréhension`;
+  } else if (mode === 'direct_solution') {
+    modeInstructions = `
+INSTRUCTIONS MODE SOLUTION DIRECTE:
+2. Donne les solutions complètes et détaillées
+3. Explique clairement chaque calcul
+4. NE PAS utiliser le format "📊 Étape X/Y"`;
+  } else {
+    modeInstructions = `
+INSTRUCTIONS MODE NORMAL:
+2. Équilibre entre guidage et solutions
+3. Adapte selon la question de l'élève
+4. NE PAS utiliser le format "📊 Étape X/Y" sauf si explicitement demandé`;
+  }
+
+  return `Tu es ÉtudIA, tuteur IA personnel pour ${prenomExact} (${classe}) 🇨🇮
 
 PROFIL ÉLÈVE:
 - Nom: ${prenomExact}
@@ -179,49 +202,50 @@ ${documentContent}
 
 RÈGLES PÉDAGOGIQUES STRICTES:
 1. Utilise TOUJOURS "${prenomExact}" dans tes réponses
-2. MÉTHODE OBLIGATOIRE uniquement pour exercices mode explication étape par étape: "📊 Étape 1/4", "📊 Étape 2/4", etc.
-3. Ne donne JAMAIS la solution directe - guide étape par étape
-4. Pose une question après chaque étape pour vérifier la compréhension
+${modeInstructions}
 5. Adapte ton style selon le profil de ${prenomExact}
 6. Utilise des exemples du contexte Africain
-7. Maximum 200 mots par réponse
-8. Encourage à chaque étape: "Bravo ${prenomExact} !"
-9. À la fin d'un exercice: "🎉 Excellent ${prenomExact} ! Exercice terminé !"
+7. IMPORTANT: Si ta réponse est longue (plus de 250 mots), termine TOUJOURS par "🔄 [RÉPONSE CONTINUE...]" pour indiquer que tu peux continuer
+8. Si l'élève dit "continue" ou "suite", reprends exactement où tu t'es arrêté
+9. Encourage à chaque interaction: "Bravo ${prenomExact} !"
+10. À la fin d'un exercice complet: "🎉 Excellent ${prenomExact} ! Exercice terminé !"
 
-GUIDE PÉDAGOGIQUEMENT, NE DONNE PAS LES RÉPONSES !`;
-  }
+ADAPTATION AUTOMATIQUE: Tu dois détecter si ta réponse est incomplète et le signaler !`;
+}
 };
 
 // 🎯 GESTIONNAIRE MODES DE CHAT
 const ChatModeManager = {
-  // Mode étape par étape
-  createStepByStepPrompt(basePrompt, currentStep, totalSteps) {
-    return `${basePrompt}
+ // Mode étape par étape
+createStepByStepPrompt(basePrompt, currentStep, totalSteps) {
+  return `${basePrompt}
 
 MODE SPÉCIAL: ÉTAPE PAR ÉTAPE ACTIVÉ
 - Tu dois absolument suivre le format: "📊 Étape ${currentStep}/${totalSteps}"
 - Pose UNE question précise pour cette étape
 - Attends la réponse avant de passer à l'étape suivante
 - Ne donne AUCUNE solution finale, juste guide cette étape
+- Si ta réponse est longue, termine par "🔄 [RÉPONSE CONTINUE...]"
 - Signale toujours lorsque c'est la fin d'un exercice
 
 CONCENTRE-TOI UNIQUEMENT SUR L'ÉTAPE ${currentStep}/${totalSteps} !`;
-  },
+},
 
-  // Mode solution directe
-  createDirectSolutionPrompt(basePrompt) {
-    return `${basePrompt}
+// Mode solution directe
+createDirectSolutionPrompt(basePrompt) {
+  return `${basePrompt}
 
 MODE SPÉCIAL: SOLUTION DIRECTE ACTIVÉ
 - Analyse TOUS les exercices du document
 - Donne les solutions complètes et détaillées par exercices 
-- Formate proprement avec numérotation
+- Formate proprement avec numérotation (mais PAS "📊 Étape X/Y")
 - Explique brièvement chaque réponse
+- Si ta réponse est très longue, utilise "🔄 [RÉPONSE CONTINUE...]"
 - Reste pédagogique même en donnant les solutions
 - Signale toujours lorsque c'est la fin d'un exercice
 
-FOURNIS TOUTES LES SOLUTIONS MAINTENANT !`;
-  }
+IMPORTANT: N'utilise PAS le format "📊 Étape X/Y" dans ce mode !`;
+}
 };
 
 // Fonctions OCR (inchangées)
@@ -727,29 +751,62 @@ Sur quoi veux-tu travailler aujourd'hui ?`;
       maxTokens = 600;
     }
 
-    // ✅ CONSTRUCTION MESSAGES AVEC HISTORIQUE
-    const messages = [
-      { role: 'system', content: finalPrompt },
-      ...(chatHistory?.slice(-3).reverse().map(h => [
-        { role: 'user', content: h.message_eleve },
-        { role: 'assistant', content: h.reponse_ia }
-      ]).flat() || []),
-      { role: 'user', content: message }
-    ];
+    // ✅ CONSTRUCTION MESSAGES AVEC HISTORIQUE ET GESTION CONTINUITÉ
+const messages = [
+  { role: 'system', content: finalPrompt },
+  ...(chatHistory?.slice(-3).reverse().map(h => [
+    { role: 'user', content: h.message_eleve },
+    { role: 'assistant', content: h.reponse_ia }
+  ]).flat() || []),
+  { role: 'user', content: message }
+];
 
-    // ✅ PARAMÈTRES ADAPTATIFS SELON PROFIL
-    const temperature = learnignProfile?.style_apprentissage === 'theorique' ? 0.05 : 0.1;
+// 🔧 DÉTECTION DEMANDE DE CONTINUATION
+const isContinuationRequest = /continue|suite|la suite|plus|termine|finis/.test(message.toLowerCase());
 
-    const completion = await groq.chat.completions.create({
-      messages: messages,
-      model: 'llama-3.3-70b-versatile',
-      temperature: temperature,
-      max_tokens: maxTokens,
-      top_p: 0.9,
-      stream: false
+if (isContinuationRequest && chatHistory?.length > 0) {
+  const lastAiResponse = chatHistory[0].reponse_ia;
+  if (lastAiResponse.includes('[RÉPONSE CONTINUE...]') || lastAiResponse.length > 280) {
+    // Ajouter instruction spéciale pour continuer
+    messages.push({
+      role: 'system', 
+      content: `INSTRUCTION SPÉCIALE: L'élève demande la suite de ta dernière réponse. Reprends exactement où tu t'es arrêté dans: "${lastAiResponse.slice(-100)}" et continue ton explication de manière fluide.`
     });
+  }
+}
 
-    let aiResponse = completion.choices[0]?.message?.content || `Désolé ${prenomExact}, erreur technique.`;
+// ✅ PARAMÈTRES ADAPTATIFS SELON PROFIL avec tokens plus élevés
+const temperature = learnignProfile?.style_apprentissage === 'theorique' ? 0.05 : 0.1;
+let adaptiveMaxTokens = maxTokens;
+
+// Augmenter tokens pour réponses complètes
+if (mode === 'direct_solution') adaptiveMaxTokens = 800;
+if (mode === 'step_by_step') adaptiveMaxTokens = 400;
+if (isContinuationRequest) adaptiveMaxTokens = 600;
+
+const completion = await groq.chat.completions.create({
+  messages: messages,
+  model: 'llama-3.3-70b-versatile',
+  temperature: temperature,
+  max_tokens: adaptiveMaxTokens,
+  top_p: 0.9,
+  stream: false
+});
+
+let aiResponse = completion.choices[0]?.message?.content || `Désolé ${prenomExact}, erreur technique.`;
+
+// 🔧 DÉTECTION ET SIGNALEMENT RÉPONSE INCOMPLÈTE
+const isResponseIncomplete = (
+  aiResponse.length > 280 && 
+  !aiResponse.includes('🎉') && 
+  !aiResponse.includes('terminé') &&
+  !aiResponse.includes('[RÉPONSE CONTINUE...]') &&
+  (aiResponse.endsWith('.') === false || aiResponse.split('.').pop().length > 20)
+);
+
+if (isResponseIncomplete) {
+  aiResponse += '\n\n🔄 [RÉPONSE CONTINUE...]\n💬 Écris "continue" pour voir la suite !';
+}
 
     // ✅ NETTOYAGE ET PERSONNALISATION
     aiResponse = aiResponse.replace(/undefined/g, prenomExact);
