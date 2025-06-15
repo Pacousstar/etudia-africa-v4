@@ -900,113 +900,26 @@ function App() {
         </div>
       )}
 
-      {/* HEADER RÉVOLUTIONNAIRE RESPONSIVE */}
-      <header className="app-header revolutionary">
-        <div className="cosmic-background"></div>
-        
-        {/* Menu mobile toggle */}
-        <button 
-          className="mobile-menu-toggle"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? '✕' : '☰'}
-        </button>
-
-        <div className={`header-content ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-          {/* Section logo */}
-          <div className="logo-section">
-            <h1 className="app-title">
-              <span className="title-etud">Étud</span>
-              <span className="title-ia">IA</span>
-              <span className="title-version">4.0</span>
-            </h1>
-            <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
-            <div className="made-in-ci">
-              <span className="flag">🇨🇮</span>
-              <span>Made with ❤️ in Côte d'Ivoire by @Pacousstar</span>
-            </div>
-          </div>
-          
-          {/* Section contrôles utilisateur */}
-          {student && (
-            <div className="user-controls">
-              <div className="user-info">
-                <span className="user-welcome">👋 Salut {student.nom?.split(' ')[0]} !</span>
-                <span className="user-class">🎓 {student.classe}</span>
-              </div>
-              <div className="control-buttons">
-                <button 
-                  onClick={() => setIsDarkMode(!isDarkMode)}
-                  className={`control-btn ${isDarkMode ? 'active' : ''}`}
-                  title="Mode sombre"
-                >
-                  {isDarkMode ? '☀️' : '🌙'}
-                </button>
-                <button 
-                  onClick={handleLogout}
-                  className="control-btn logout"
-                  title="Déconnexion"
-                >
-                  🚪 Déconnexion
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {/* Section statistiques AVEC STYLE ORANGE AMÉLIORÉ */}
-          <div className="stats-section">
-            <div className="stat-item">
-              <span className="stat-number">{stats.students.toLocaleString()}+</span>
-              <span className="stat-label">Élèves aidés</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">{stats.documents.toLocaleString()}+</span>
-              <span className="stat-label">Documents analysés</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">{stats.active_students_7days}+</span>
-              <span className="stat-label">Actifs cette semaine</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">
-                {stats.tokens_status?.remaining > 85000 ? '🟢' : 
-                 stats.tokens_status?.remaining > 50000 ? '🟡' : '🔴'}
-              </span>
-              <span className="stat-label">ÉtudIA Status</span>
-            </div>
-          </div>
-
-          {/* Section statut serveur */}
-          <div className="backend-status">
-            <div className={`status-indicator ${backendStatus}`}>
-              <span className="status-dot">
-                {backendStatus === 'online' ? '✅' : 
-                 backendStatus === 'offline' ? '🔴' : '⏳'}
-              </span>
-              <span className="status-text">
-                {backendStatus === 'online' ? 'ÉtudIA En ligne' :
-                 backendStatus === 'offline' ? 'Hors ligne' : 'Connexion...'}
-              </span>
-            </div>
-            {backendStatus === 'online' && stats.tokens_status && (
-              <div className="tokens-info">
-                <div className="tokens-bar">
-                  <div 
-                    className="tokens-fill" 
-                    style={{ 
-                      width: `${((stats.tokens_status.used_today || 0) / 95000) * 100}%`,
-                      backgroundColor: (stats.tokens_status.used_today || 0) > 85000 ? '#EF4444' : '#32CD32'
-                    }}
-                  ></div>
-                </div>
-                <span className="tokens-text">
-                  Tokens: {(stats.tokens_status.used_today || 0).toLocaleString()}/95k
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      {/* HEADER RÉVOLUTIONNAIRE ÉPURÉ - NE PAS MODIFIER */}
+<header className="app-header revolutionary">
+  <div className="cosmic-background"></div>
+  
+  <div className="header-content">
+    {/* Section logo SEULE */}
+    <div className="logo-section">
+      <h1 className="app-title">
+        <span className="title-etud">Étud</span>
+        <span className="title-ia">IA</span>
+        <span className="title-version">4.0</span>
+      </h1>
+      <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
+      <div className="made-in-ci">
+        <span className="flag">🇨🇮</span>
+        <span>Made with ❤️ in Côte d'Ivoire by @Pacousstar</span>
+      </div>
+    </div>
+  </div>
+</header>
 
       {/* 🔋 AFFICHAGE STATISTIQUES UTILISATEUR */}
       {student && (
