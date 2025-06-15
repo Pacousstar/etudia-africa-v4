@@ -48,9 +48,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 🔶 BACKGROUND ORANGE DÉGRADÉ POUR TOUTE L'APP */
+
 .app {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--bg-light), var(--bg-white));
+  background: linear-gradient(135deg, 
+    #FFF8E1 0%,     /* Crème très clair */
+    #FFE0B2 25%,    /* Orange très clair */
+    #FFCC80 50%,    /* Orange doux */
+    #FFB74D 75%,    /* Orange moyen */
+    #FFA726 100%    /* Orange vif */
+  );
+  background-attachment: fixed;
+  background-size: 100% 100%;
   color: var(--text-dark);
   transition: all 0.3s ease;
   overflow-x: hidden;
@@ -1840,4 +1850,52 @@ body {
     font-size: 0.75rem !important;
     padding: 0.4rem 0.8rem !important;
   }
+
+/* Alternative plus subtile si tu préfères */
+.app-subtle {
+  background: linear-gradient(135deg, 
+    #FFFDE7 0%,     /* Jaune très pâle */
+    #FFF8E1 30%,    /* Crème */
+    #FFE0B2 70%,    /* Orange très clair */
+    #FFCC80 100%    /* Orange doux */
+  );
+}
+
+/* Mode sombre avec orange foncé */
+.dark-mode .app {
+  background: linear-gradient(135deg, 
+    #BF360C 0%,     /* Orange très foncé */
+    #D84315 25%,    /* Orange foncé */
+    #E64A19 50%,    /* Orange moyen foncé */
+    #FF5722 75%,    /* Orange */
+    #FF7043 100%    /* Orange clair */
+  );
+}
+
+/* Ajustements pour les contenus blancs */
+.main-content.enhanced {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 2rem 2rem 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.inscription-form,
+.login-section,
+.features-grid .feature-card,
+.testimonials-section .testimonial {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 165, 0, 0.2);
+}
+
+/* Couleurs plus foncées pour le contraste */
+.main-title {
+  color: #BF360C !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.section-title {
+  color: #D84315 !important;
+}
 }
