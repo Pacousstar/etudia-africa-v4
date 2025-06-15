@@ -59,131 +59,331 @@ body {
 /* =================================================================
    🎯 HEADER RÉVOLUTIONNAIRE RESPONSIVE
    ================================================================= */
+/* 🎯 Header principal ultra captivant */
 .app-header.revolutionary {
-  background: var(--gradient-cosmic);
+  background: linear-gradient(135deg, 
+    #1e3c72 0%, 
+    #2a5298 15%, 
+    #667eea 30%, 
+    #764ba2 45%, 
+    #f093fb 60%, 
+    #f5576c 75%, 
+    #4facfe 90%, 
+    #00f2fe 100%
+  );
+  background-size: 300% 300%;
+  animation: headerGradientFlow 12s ease infinite;
+  min-height: 100vh;
   color: white;
-  padding: 1rem;
+  padding: 2rem 1rem;
   position: relative;
   overflow: hidden;
-  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* 🌊 Animation gradient plus fluide */
+@keyframes headerGradientFlow {
+  0% { background-position: 0% 50%; }
+  25% { background-position: 100% 25%; }
+  50% { background-position: 100% 75%; }
+  75% { background-position: 0% 75%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ✨ Particules magiques améliorées */
 .cosmic-background {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 70% 20%, rgba(255, 107, 53, 0.2) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(76, 175, 80, 0.2) 0%, transparent 50%);
-  animation: cosmicMove 20s ease-in-out infinite;
+  background: 
+    radial-gradient(circle at 15% 85%, rgba(255, 107, 53, 0.4) 0%, transparent 60%),
+    radial-gradient(circle at 85% 15%, rgba(255, 140, 0, 0.4) 0%, transparent 60%),
+    radial-gradient(circle at 45% 45%, rgba(255, 215, 0, 0.3) 0%, transparent 60%),
+    radial-gradient(circle at 75% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 25% 20%, rgba(120, 199, 255, 0.3) 0%, transparent 50%);
+  animation: particlesDance 15s ease-in-out infinite;
 }
 
-@keyframes cosmicMove {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(-10px, -10px) rotate(1deg); }
+@keyframes particlesDance {
+  0%, 100% { 
+    transform: translateY(0px) translateX(0px) rotate(0deg); 
+    opacity: 0.8; 
+  }
+  25% { 
+    transform: translateY(-20px) translateX(10px) rotate(90deg); 
+    opacity: 1; 
+  }
+  50% { 
+    transform: translateY(-10px) translateX(-15px) rotate(180deg); 
+    opacity: 0.9; 
+  }
+  75% { 
+    transform: translateY(-25px) translateX(5px) rotate(270deg); 
+    opacity: 1; 
+  }
 }
 
+/* 📱 Menu mobile amélioré */
 .mobile-menu-toggle {
   display: none;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 15px;
   color: white;
   font-size: 1.5rem;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
+  width: 55px;
+  height: 55px;
+  backdrop-filter: blur(15px);
   cursor: pointer;
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1000;
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
 .mobile-menu-toggle:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
 }
 
+/* 🎯 Contenu header parfaitement centré */
 .header-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr 1fr;
-  gap: 2rem;
-  align-items: center;
+  width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   position: relative;
   z-index: 10;
+  gap: 4rem;
 }
 
+/* 🏆 Section logo révolutionnaire et centrée */
 .logo-section {
-  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 2rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(30px);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3rem;
+  padding: 4rem 3rem;
+  box-shadow: 
+    0 35px 90px rgba(0, 0, 0, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    0 0 50px rgba(255, 107, 53, 0.3);
+  animation: logoMagicFloat 10s ease-in-out infinite;
+  position: relative;
+  max-width: 800px;
+  width: 100%;
 }
 
+/* ✨ Effet magique autour du logo */
+.logo-section::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(45deg, 
+    #FF6B35, #FF8C00, #FFD700, 
+    #FF6B35, #FF8C00, #FFD700
+  );
+  border-radius: 3rem;
+  z-index: -1;
+  animation: borderGlow 4s linear infinite;
+}
+
+@keyframes borderGlow {
+  0% { opacity: 0.7; transform: rotate(0deg); }
+  50% { opacity: 1; transform: rotate(180deg); }
+  100% { opacity: 0.7; transform: rotate(360deg); }
+}
+
+@keyframes logoMagicFloat {
+  0%, 100% { transform: translateY(0px) scale(1) rotate(0deg); }
+  25% { transform: translateY(-10px) scale(1.02) rotate(0.5deg); }
+  50% { transform: translateY(-15px) scale(1.03) rotate(0deg); }
+  75% { transform: translateY(-8px) scale(1.01) rotate(-0.5deg); }
+}
+
+/* 🎨 Titre ÉtudIA ultra captivant */
 .app-title {
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(4rem, 12vw, 8rem);
   font-weight: 900;
-  margin-bottom: 0.5rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  margin: 0;
+  letter-spacing: -4px;
+  text-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.5),
+    0 0 50px rgba(255, 107, 53, 0.8),
+    0 0 100px rgba(255, 140, 0, 0.4);
+  animation: titlePulseMagic 6s ease-in-out infinite;
+  position: relative;
+  background: linear-gradient(135deg, 
+    #FF6B35 0%, 
+    #FF8C00 25%, 
+    #FFD700 50%, 
+    #FF8C00 75%, 
+    #FF6B35 100%
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: titlePulseMagic 6s ease-in-out infinite, gradientShift 5s ease infinite;
 }
 
+@keyframes titlePulseMagic {
+  0%, 100% { 
+    transform: scale(1); 
+    filter: brightness(1);
+  }
+  50% { 
+    transform: scale(1.1); 
+    filter: brightness(1.3);
+  }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 🎯 Couleurs exactes ÉtudIA préservées */
 .title-etud {
-  color: var(--primary-orange);
+  color: #FF6B35 !important;
+  -webkit-text-fill-color: #FF6B35 !important;
 }
 
 .title-ia {
-  color: var(--primary-green);
+  color: #FF8C00 !important;
+  -webkit-text-fill-color: #FF8C00 !important;
 }
 
 .title-version {
-  color: #FFD700;
-  font-size: 0.7em;
+  font-size: 0.5em;
+  color: #FFD700 !important;
+  -webkit-text-fill-color: #FFD700 !important;
   vertical-align: super;
+  text-shadow: 
+    0 0 25px rgba(255, 215, 0, 0.9),
+    0 5px 10px rgba(0, 0, 0, 0.4);
+  animation: versionSparkle 3s ease-in-out infinite;
 }
 
+@keyframes versionSparkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; transform: scale(1.15); }
+}
+
+/* 🌟 Sous-titre ultra accrocheur */
 .app-subtitle {
-  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 1rem;
-  max-width: 400px;
+  font-size: clamp(1.3rem, 5vw, 2rem);
+  color: rgba(255, 255, 255, 0.98);
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(255, 255, 255, 0.4);
+  animation: subtitleGlowWave 5s ease-in-out infinite alternate;
+  max-width: 800px;
+  line-height: 1.4;
+  letter-spacing: 1px;
 }
 
+@keyframes subtitleGlowWave {
+  0% { 
+    text-shadow: 
+      0 4px 8px rgba(0, 0, 0, 0.5),
+      0 0 40px rgba(255, 255, 255, 0.4);
+  }
+  100% { 
+    text-shadow: 
+      0 4px 8px rgba(0, 0, 0, 0.5),
+      0 0 50px rgba(255, 255, 255, 0.7),
+      0 0 80px rgba(255, 107, 53, 0.5);
+  }
+}
+
+/* 🇨🇮 Badge Côte d'Ivoire ultra élégant */
 .made-in-ci {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 0.5rem;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-radius: 35px;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.98);
+  font-weight: 700;
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.2),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.5s ease;
+  animation: badgeFloat 8s ease-in-out infinite;
+}
+
+.made-in-ci:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1) translateY(-3px);
+  box-shadow: 
+    0 15px 40px rgba(0, 0, 0, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+@keyframes badgeFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
 }
 
 .flag {
-  font-size: 1.2rem;
+  font-size: 1.6rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+  animation: flagWave 4s ease-in-out infinite;
 }
 
-.llama-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 0.5rem 1rem;
-  border-radius: 2rem;
-  font-size: 0.85rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  max-width: fit-content;
+@keyframes flagWave {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(3deg) scale(1.08); }
+  75% { transform: rotate(-3deg) scale(1.08); }
 }
 
-.llama-icon {
-  font-size: 1.1rem;
-}
-
-/* Contrôles utilisateur */
+/* 👤 Contrôles utilisateur élégants */
 .user-controls {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   align-items: center;
+  gap: 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 2rem;
+  padding: 2rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  max-width: 350px;
+  width: 100%;
 }
 
 .user-info {
@@ -192,173 +392,322 @@ body {
 
 .user-welcome {
   display: block;
-  font-weight: 700;
-  font-size: 1.1rem;
-  margin-bottom: 0.25rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
 }
 
 .user-class {
-  display: block;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
 }
 
 .control-buttons {
   display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  gap: 1rem;
+  width: 100%;
 }
 
 .control-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 15px;
   color: white;
-  padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  white-space: nowrap;
+  transition: all 0.4s ease;
+  font-weight: 700;
+  backdrop-filter: blur(15px);
+  font-size: 1rem;
+  flex: 1;
+  text-align: center;
 }
 
-.control-btn:hover,
-.control-btn.active {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
 }
 
 .control-btn.logout {
-  background: rgba(239, 68, 68, 0.8);
-  border-color: rgba(239, 68, 68, 0.9);
+  background: rgba(244, 63, 94, 0.4);
+  border-color: rgba(244, 63, 94, 0.6);
 }
 
 .control-btn.logout:hover {
-  background: rgba(239, 68, 68, 0.9);
+  background: rgba(244, 63, 94, 0.6);
 }
 
-/* Section statistiques */
+/* 📊 Statistiques parfaitement centrées et captivantes */
 .stats-section {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  justify-items: center;
 }
 
 .stat-item {
-  text-align: center;
   background: rgba(255, 255, 255, 0.15);
-  padding: 1rem;
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  border: 3px solid rgba(255, 140, 0, 0.6);
+  border-radius: 2.5rem;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  backdrop-filter: blur(25px);
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.25),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    0 0 40px rgba(255, 140, 0, 0.3);
+  transition: all 0.5s ease;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 280px;
+}
+
+/* ✨ Effet shimmer sur les stats */
+.stat-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.3), 
+    rgba(255, 140, 0, 0.2),
+    transparent
+  );
+  transition: left 1s ease;
+}
+
+.stat-item:hover::before {
+  left: 100%;
 }
 
 .stat-item:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
+  transform: translateY(-10px) scale(1.08);
+  box-shadow: 
+    0 30px 70px rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    0 0 50px rgba(255, 140, 0, 0.5);
+  border-color: rgba(255, 140, 0, 0.9);
 }
 
+/* 🔥 Chiffres stats ultra captivants */
 .stat-number {
   display: block;
-  font-size: clamp(1.5rem, 4vw, 2rem);
-  font-weight: 800;
-  color: var(--primary-green);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-size: 3rem;
+  font-weight: 900;
+  color: #FF8C00 !important;
+  text-shadow: 
+    4px 4px 8px rgba(0, 0, 0, 0.7),
+    0 0 25px rgba(255, 140, 0, 0.9),
+    0 0 50px rgba(255, 140, 0, 0.5);
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 2;
+  animation: numberPulse 4s ease-in-out infinite;
+}
+
+@keyframes numberPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
 }
 
 .stat-label {
-  font-size: clamp(0.7rem, 2vw, 0.85rem);
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.98) !important;
+  font-weight: 800;
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.7),
+    0 0 20px rgba(255, 255, 255, 0.4);
+  position: relative;
+  z-index: 2;
+  letter-spacing: 0.5px;
 }
 
-/* Section statut serveur */
+/* 🔋 Statut serveur moderne et centré */
 .backend-status {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 2rem;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 100%;
 }
 
 .status-indicator {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 1rem 1.5rem;
-  border-radius: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
-
-.status-indicator.online {
-  border-color: var(--primary-green);
-  background: rgba(76, 175, 80, 0.2);
-}
-
-.status-indicator.offline {
-  border-color: #EF4444;
-  background: rgba(239, 68, 68, 0.2);
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .status-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
+  font-size: 1.5rem;
+  filter: drop-shadow(0 0 10px currentColor);
 }
 
 .status-text {
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 800;
+  color: white;
+  font-size: 1.1rem;
+  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
 }
 
 .tokens-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
+  margin-top: 1.5rem;
 }
 
 .tokens-bar {
-  width: 120px;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 5px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .tokens-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 5px;
   transition: all 0.5s ease;
-  position: relative;
-}
-
-.tokens-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  background: linear-gradient(90deg, #32CD32, #FFD700);
 }
 
 .tokens-text {
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: rgba(255, 255, 255, 0.9);
-  font-weight: 600;
+  font-weight: 700;
+}
+
+/* 📱 Responsive amélioré */
+@media (max-width: 1200px) {
+  .header-content {
+    gap: 3rem;
+    padding: 0 1.5rem;
+  }
+
+  .stats-section {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    max-width: 700px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  
+  .header-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, 
+      #1e3c72 0%, 
+      #2a5298 50%, 
+      #667eea 100%
+    );
+    padding: 3rem 1rem;
+    border-radius: 0 0 2rem 2rem;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    gap: 2.5rem;
+  }
+  
+  .header-content.mobile-open {
+    display: flex;
+  }
+
+  .logo-section {
+    padding: 3rem 2rem;
+    border-radius: 2.5rem;
+  }
+
+  .app-title {
+    font-size: clamp(3rem, 15vw, 5rem);
+    letter-spacing: -3px;
+  }
+
+  .app-subtitle {
+    font-size: clamp(1.1rem, 6vw, 1.6rem);
+  }
+
+  .stats-section {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    max-width: 400px;
+  }
+
+  .stat-item {
+    padding: 2rem 1.5rem;
+  }
+
+  .stat-number {
+    font-size: 2.5rem;
+  }
+
+  .stat-label {
+    font-size: 1rem;
+  }
+
+  .control-buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .control-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    padding: 2rem 1rem;
+    gap: 2rem;
+  }
+
+  .logo-section {
+    padding: 2rem 1.5rem;
+    border-radius: 2rem;
+  }
+
+  .app-title {
+    font-size: clamp(2.5rem, 18vw, 4rem);
+    letter-spacing: -2px;
+  }
+
+  .made-in-ci {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .stat-item {
+    padding: 1.5rem 1rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+
+  .user-controls {
+    padding: 1.5rem;
+  }
 }
 
 /* =================================================================
