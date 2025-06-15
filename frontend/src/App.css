@@ -1599,3 +1599,134 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--secondary-green);
 }
+
+/* 🚨 FIX MOBILE URGENT - AJOUTE À LA FIN DE TON APP.CSS */
+
+/* Force l'affichage sur mobile */
+@media (max-width: 768px) {
+  .app-header.revolutionary {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 60vh !important;
+    padding: 1rem !important;
+    background: linear-gradient(135deg, 
+      #1e3c72 0%, 
+      #2a5298 25%, 
+      #667eea 50%, 
+      #764ba2 75%, 
+      #f093fb 100%
+    ) !important;
+    background-size: 300% 300% !important;
+    animation: headerGradientFlow 12s ease infinite !important;
+  }
+
+  .header-content {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 1rem !important;
+  }
+
+  .logo-section {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 95% !important;
+    max-width: 350px !important;
+    padding: 2rem 1.5rem !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 1.5rem !important;
+    gap: 1rem !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .app-title {
+    font-size: 2.5rem !important;
+    font-weight: 900 !important;
+    margin: 0 !important;
+    text-align: center !important;
+    line-height: 1.1 !important;
+  }
+
+  .title-etud {
+    color: #FFA500 !important;
+  }
+
+  .title-ia {
+    color: #228B22 !important;
+  }
+
+  .title-version {
+    color: #F8F9FA !important;
+    font-size: 0.5em !important;
+  }
+
+  .app-subtitle {
+    font-size: 1rem !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-align: center !important;
+    margin: 0 !important;
+    line-height: 1.3 !important;
+    max-width: 300px !important;
+  }
+
+  .made-in-ci {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    font-size: 0.85rem !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .flag {
+    font-size: 1rem !important;
+  }
+
+  /* Force masquer les autres éléments */
+  .mobile-menu-toggle,
+  .user-controls,
+  .stats-section,
+  .backend-status {
+    display: none !important;
+  }
+}
+
+/* Mobile très petit */
+@media (max-width: 480px) {
+  .app-header.revolutionary {
+    min-height: 50vh !important;
+    padding: 0.5rem !important;
+  }
+
+  .logo-section {
+    width: 90% !important;
+    padding: 1.5rem 1rem !important;
+  }
+
+  .app-title {
+    font-size: 2rem !important;
+  }
+
+  .app-subtitle {
+    font-size: 0.9rem !important;
+  }
+
+  .made-in-ci {
+    font-size: 0.75rem !important;
+    padding: 0.4rem 0.8rem !important;
+  }
+}
