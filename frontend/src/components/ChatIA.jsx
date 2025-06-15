@@ -698,6 +698,17 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
             </div>
           ))}
 
+// Dans le composant message bubble, ajoutez après le contenu :
+{message.content.includes('[RÉPONSE CONTINUE...]') && (
+  <button
+    className="continue-button"
+    onClick={() => handleSendMessage('continue', chatMode)}
+    disabled={isLoading}
+  >
+    🔄 Voir la suite
+  </button>
+)}
+
           {/* 🔧 INDICATEUR CHARGEMENT AMÉLIORÉ */}
           {isLoading && (
             <div className="message-bubble ai loading enhanced">
