@@ -82,7 +82,7 @@ function App() {
     const additionalStyles = `
       /* 🟠 FORMULAIRE D'INSCRIPTION CENTRÉ */
       .inscription-form {
-        background: linear-gradient(135deg, #FF6B35, #FF8C00);
+        background: linear-gradient(135deg, #FF6B35, #FF8C00) !important;
         padding: 2.5rem;
         border-radius: 1.5rem;
         box-shadow: 0 12px 35px rgba(255, 107, 53, 0.3);
@@ -1359,7 +1359,11 @@ function App() {
             <p>&copy; 2025 ÉtudIA v4.0 - Révolutionnons l'éducation Africaine ! 🌍</p>
             <p>Développé avec ❤️ par <strong>@Pacousstar</strong> - Côte d'Ivoire</p>
           </div>
-          
+        
+          <a href="https://etudia-v4.gsnexpertises.com" target="_blank">
+           📝 Donner votre avis testeur
+          </a>
+        
           <div className="footer-stats">
             <span>🚀 {stats.students.toLocaleString()}+ élèves</span>
             <span>📚 {stats.documents.toLocaleString()}+ documents</span>
