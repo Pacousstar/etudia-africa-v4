@@ -228,16 +228,16 @@ body {
 
 /* 🎯 Couleurs exactes ÉtudIA préservées */
 .title-etud {
-  color: #FF6B35 !important;
+  color: #FFA500 !important;
 }
 
 .title-ia {
-  color: #FF8C00 !important;
+  color: #228B22 !important;
 }
 
 .title-version {
   font-size: 0.55em;
-  color: #FFD700 !important;
+  color: #F8F9FA !important;
   vertical-align: super;
   text-shadow: 
     0 0 20px rgba(255, 215, 0, 0.9),
