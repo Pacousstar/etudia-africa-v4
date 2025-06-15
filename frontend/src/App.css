@@ -403,6 +403,92 @@ body {
   }
 }
 
+/* 🚨 FIX Z-INDEX MOBILE - AJOUTE CES RÈGLES À TON CSS HEADER */
+
+/* Fix pour que le header reste au-dessus de tout */
+.app-header.revolutionary {
+  position: relative !important;
+  z-index: 100 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  min-height: 70vh !important;
+  margin-bottom: 0 !important;
+}
+
+/* Logo section au premier plan */
+.logo-section {
+  position: relative !important;
+  z-index: 101 !important;
+}
+
+/* S'assurer que les onglets passent APRÈS le header */
+.tab-navigation {
+  position: relative !important;
+  z-index: 50 !important;
+  margin-top: 2rem !important;
+}
+
+.progress-container {
+  position: relative !important;
+  z-index: 50 !important;
+  margin-top: 1rem !important;
+}
+
+.main-content {
+  position: relative !important;
+  z-index: 50 !important;
+  margin-top: 0 !important;
+  padding-top: 2rem !important;
+}
+
+/* Force mobile - Header complet visible */
+@media (max-width: 768px) {
+  .app-header.revolutionary {
+    position: relative !important;
+    z-index: 200 !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 2rem !important;
+  }
+
+  .header-content {
+    position: relative !important;
+    z-index: 201 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .logo-section {
+    position: relative !important;
+    z-index: 202 !important;
+    transform: translateY(0) !important;
+    margin: 0 auto !important;
+  }
+
+  /* Force les autres éléments en dessous */
+  .tab-navigation,
+  .progress-container,
+  .main-content {
+    position: relative !important;
+    z-index: 10 !important;
+    margin-top: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header.revolutionary {
+    min-height: 90vh !important;
+    padding: 2rem 0.5rem !important;
+  }
+}
+
 /* =================================================================
    📄 SÉLECTEUR DE DOCUMENTS
    ================================================================= */
