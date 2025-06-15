@@ -41,7 +41,8 @@ const supabase = createClient(
 );
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || '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'
+  apiKey: process.env.GROQ_API_KEY || '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'
+
 });
 
 // 🧠 GESTION MÉMOIRE IA RÉVOLUTIONNAIRE
