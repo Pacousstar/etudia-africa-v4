@@ -4,13 +4,14 @@ import './App.css';
 import UploadDocument from './components/UploadDocument';
 import ChatIA from './components/ChatIA';
 
-// Configuration API
+// Configuration API pour Render
 const API_URL = process.env.REACT_APP_API_URL || 
   (process.env.NODE_ENV === 'production'  
-  ? 'https://etudia-africa-v4-production.up.railway.app'
-  : '');
+  ? 'https://etudia-v4-revolutionary.onrender.com'  // NOUVELLE URL RENDER
+  : 'http://localhost:10000');  // Port local changé
 
 console.log('🔗 API_URL:', API_URL || 'PROXY LOCAL ACTIVÉ');
+console.log('🏢 Hébergement: Render.com (Frankfurt)');
 
 function App() {
   // États principaux
