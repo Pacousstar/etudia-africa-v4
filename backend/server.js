@@ -906,7 +906,8 @@ if (isResponseIncomplete) {
     // ✅ MISE À JOUR PROFIL APRÈS INTERACTION
     MemoryManager.updateStudentProfile(user_id).catch(console.error);
 
-    res.json({
+    // 🔧 CRÉATION DE LA RÉPONSE AVEC CACHE (NOUVEAU)
+    const responseData = {
       response: aiResponse,
       timestamp: new Date().toISOString(),
       model: `llama-3.3-70b-revolutionary-${mode}`,
@@ -920,7 +921,16 @@ if (isResponseIncomplete) {
         total: step_info.total_steps,
         next: step_info.current_step < step_info.total_steps ? step_info.current_step + 1 : null
       } : null
-    });
+    };
+
+    // 🔧 METTRE EN CACHE SI PAS D'ERREUR (NOUVEAU)
+    if (!is_welcome && message.length > 5) {
+      cache.set(cacheKey, responseData, 300); // Cache pendant 5 minutes
+      console.log('💾 Réponse mise en cache:', cacheKey);
+    }
+
+    // 🔧 ENVOYER LA RÉPONSE (REMPLACE VOTRE res.json EXISTANT)
+    res.json(responseData);
 
   } catch (error) {
     console.error('❌ Erreur chat révolutionnaire:', error);
