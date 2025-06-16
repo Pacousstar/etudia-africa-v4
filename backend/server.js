@@ -1,4 +1,4 @@
-// 🎓 ÉtudIA v4.0 - RÉVOLUTION SILICON VALLEY LEVEL ! 🚀
+// ÉtudIA v4.0 - RÉVOLUTION SILICON VALLEY LEVEL ! 
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -215,7 +215,7 @@ INSTRUCTIONS MODE NORMAL:
 4. NE PAS utiliser le format "📊 Étape X/Y" sauf si explicitement demandé`;
   }
 
-  return `Tu es ÉtudIA, tuteur IA personnel pour ${prenomExact} (${classe}) 🇨🇮
+  return `Tu es ÉtudIA, tuteur IA personnel pour ${prenomExact} (${classe}) 
 
 PROFIL ÉLÈVE:
 - Nom: ${prenomExact}
@@ -366,7 +366,7 @@ app.use(express.urlencoded({
 
 // 4. Headers de sécurité
 app.use((req, res, next) => {
-  res.header('X-Powered-By', 'EtudIA v4.0 🇨🇮');
+  res.header('X-Powered-By', 'EtudIA v4.0 ');
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
@@ -395,7 +395,7 @@ if (process.env.NODE_ENV === 'production') {
 // Routes de base
 app.get('/', (req, res) => {
   res.json({
-    message: "🎓 ÉtudIA v4.0 - RÉVOLUTION SILICON VALLEY LEVEL !",
+    message: " ÉtudIA v4.0 - RÉVOLUTION SILICON VALLEY LEVEL !",
     version: "4.0.0-revolutionary",
     new_features: [
       "🧠 IA à mémoire personnalisée",
@@ -756,7 +756,7 @@ app.post('/api/chat', async (req, res) => {
 
     // ✅ MESSAGE D'ACCUEIL PERSONNALISÉ
     if (!chatHistory?.length || is_welcome) {
-      const reponseAccueil = `Salut ${prenomExact} ! 🎓
+      const reponseAccueil = `Salut ${prenomExact} ! 
 
 Je suis ÉtudIA, ton tuteur IA personnel ! 🤖✨
 
@@ -769,7 +769,7 @@ ${learnignProfile?.style_apprentissage ? `Style d'apprentissage : ${learnignProf
 • Mode guidé étape par étape
 • Mode solution directe
 
-🇨🇮 Prêt à révolutionner tes études ?
+Prêt à révolutionner tes études ?
 
 Sur quoi veux-tu travailler aujourd'hui ?`;
 
@@ -1170,7 +1170,7 @@ app.get('/api/stats', async (req, res) => {
 app.get('/health', async (req, res) => {
   try {
     const healthData = {
-      status: '🎓 ÉtudIA v4.0 RÉVOLUTIONNAIRE sur Render !',
+      status: ' ÉtudIA v4.0 RÉVOLUTIONNAIRE sur Render !',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       memory: process.memoryUsage(),
@@ -1236,7 +1236,7 @@ app.get('/health', async (req, res) => {
 // 🚀 DÉMARRAGE SERVEUR RENDER.COM
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`
-🎓 ═══════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════
    ✨ ÉtudIA v4.0 - RÉVOLUTION SUR RENDER.COM ! ✨
    
    📍 Port: ${PORT}
@@ -1261,7 +1261,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
    🔒 SSL: Automatique
    
 🌍 MISSION: Révolutionner l'éducation Africaine !
-🇨🇮 Made with ❤️ in Côte d'Ivoire by @Pacousstar
+Made with ❤️ in Côte d'Ivoire by @Pacousstar
    
 🏆 NIVEAU: RENDER REVOLUTIONARY !
 ═══════════════════════════════════════════════════════════
