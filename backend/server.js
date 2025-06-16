@@ -9,21 +9,41 @@ const Tesseract = require('tesseract.js');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const fs = require('fs');
+const path = require('path');
+const NodeCache = require('node-cache');
+const rateLimit = require('express-rate-limit');
+
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000; // Render utilise PORT 10000
 
-// Configuration
+// 🔧 OPTIMISATIONS RENDER.COM
+const cache = new NodeCache({ stdTTL: 300 }); // Cache 5 minutes
+
+// Rate limiting pour éviter surcharge
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requêtes par IP
+  message: {
+    error: 'Trop de requêtes. Attendez 15 minutes.',
+    retry_after: 900
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Configuration Cloudinary (inchangée)
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Configuration Multer optimisée pour Render
 const upload = multer({ 
-  dest: 'uploads/',
-  limits: { fileSize: 15 * 1024 * 1024 },
+  dest: '/tmp/uploads/', // Render utilise /tmp
+  limits: { fileSize: 10 * 1024 * 1024 }, // Réduit à 10MB
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
       'image/jpeg', 'image/png', 'image/jpg', 'image/webp',
@@ -35,16 +55,23 @@ const upload = multer({
   }
 });
 
+// Supabase (inchangé)
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
 
+// Groq avec gestion d'erreurs améliorée
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || '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'
-
-
+  apiKey: process.env.GROQ_API_KEY
 });
+
+console.log('🔗 Configuration Render:');
+console.log('- Port:', PORT);
+console.log('- Environment:', process.env.NODE_ENV);
+console.log('- Supabase URL:', process.env.SUPABASE_URL ? '✅ Configuré' : '❌ Manquant');
+console.log('- Groq API:', process.env.GROQ_API_KEY ? '✅ Configuré' : '❌ Manquant');
+console.log('- Cloudinary:', process.env.CLOUDINARY_CLOUD_NAME ? '✅ Configuré' : '❌ Manquant');
 
 // 🧠 GESTION MÉMOIRE IA RÉVOLUTIONNAIRE
 const MemoryManager = {
@@ -304,32 +331,65 @@ JSON requis:
 
 // Middlewares
 
-// Configuration CORS universelle
-// 1. CORS en PREMIER
+// 🔧 MIDDLEWARES OPTIMISÉS RENDER.COM
+
+// 1. Rate limiting AVANT CORS
+app.use('/api/', limiter);
+
+// 2. CORS configuration pour Render
 app.use(cors({
-  origin: true,
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001', 
+    'https://etudia-v4-revolutionary.onrender.com', // URL Render
+    'https://your-frontend-domain.vercel.app', // Si frontend séparé
+    /\.onrender\.com$/, // Tous les sous-domaines Render
+    /\.vercel\.app$/ // Tous Vercel
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   optionsSuccessStatus: 200
 }));
 
-// 2. PARSING JSON après CORS
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// 3. Parsing avec limites Render
+app.use(express.json({ 
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: '10mb' 
+}));
 
-// 3. Headers manuels en DERNIER
+// 4. Headers de sécurité
 app.use((req, res, next) => {
+  res.header('X-Powered-By', 'ÉtudIA v4.0 🇨🇮');
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
   
+  // Gestion OPTIONS pour Render
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
   next();
 });
+
+// 5. Logs pour debugging Render
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.path} - IP: ${req.ip}`);
+  next();
+});
+
+// 6. Servir fichiers statiques si frontend inclus
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'build')));
+}
 
 
 // Routes de base
@@ -647,7 +707,7 @@ app.delete('/api/documents/:documentId', async (req, res) => {
   }
 });
 
-// 🚀 CHAT IA RÉVOLUTIONNAIRE AVEC MÉMOIRE ET MODES
+// 🤖 CHAT IA AVEC CACHE POUR RENDER AVEC MEMOIRE ET MODES
 app.post('/api/chat', async (req, res) => {
   try {
     const { message, user_id, document_context = '', is_welcome = false, mode = 'normal', step_info = null } = req.body;
@@ -656,8 +716,21 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'ID utilisateur manquant' });
     }
 
-    console.log(`🤖 Chat RÉVOLUTIONNAIRE pour élève ${user_id} - Mode: ${mode}`);
+    // 🔧 CACHE INTELLIGENT POUR RENDER
+    const cacheKey = `chat_${user_id}_${Buffer.from(message.substring(0, 50)).toString('base64')}_${mode}`;
+    const cachedResponse = cache.get(cacheKey);
     
+    if (cachedResponse && !is_welcome) {
+      console.log('💾 Réponse depuis cache:', cacheKey);
+      return res.json({
+        ...cachedResponse,
+        cached: true,
+        cache_key: cacheKey
+      });
+    }
+
+    console.log(`🤖 Chat RÉVOLUTIONNAIRE pour élève ${user_id} - Mode: ${mode}`);
+           
     // ✅ RÉCUPÉRATION DONNÉES COMPLÈTES AVEC PROFIL
     const [studentResult, documentResult, profilResult] = await Promise.all([
       supabase.from('eleves').select('*').eq('id', user_id).single(),
@@ -1083,66 +1156,123 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
+// 🔧 ROUTE HEALTH OPTIMISÉE POUR RENDER
 app.get('/health', async (req, res) => {
   try {
-    const { count } = await supabase
-      .from('eleves')
-      .select('*', { count: 'exact', head: true });
-    
-    res.json({ 
-      status: '🎓 ÉtudIA v4.0 RÉVOLUTIONNAIRE fonctionne !',
-      version: '4.0.0-revolutionary',
-      students_count: count,
-      revolutionary_features: [
-        '✅ IA à mémoire personnalisée activée',
-        '✅ Profils d\'apprentissage automatiques',
-        '✅ Mode étape par étape structuré',
-        '✅ Mode solution directe disponible',
-        '✅ Analytics avancées intégrées',
-        '✅ Adaptation temps réel au profil élève',
-        '✅ Suppression documents avec Cloudinary cleanup',
-        '🎤 Mode audio actif'
+    const healthData = {
+      status: '🎓 ÉtudIA v4.0 RÉVOLUTIONNAIRE sur Render !',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      version: '4.0.0-render-optimized',
+      environment: process.env.NODE_ENV,
+      port: PORT,
+      platform: 'Render.com',
+      region: 'Frankfurt (proche Afrique)',
+      features: [
+        '✅ IA à mémoire personnalisée',
+        '✅ Mode étape par étape',
+        '✅ Mode solution directe',
+        '✅ Suppression documents',
+        '✅ Rate limiting actif',
+        '✅ Cache intelligent',
+        '🎤 Mode audio optimisé'
       ],
-      ai_intelligence: 'Silicon Valley Level 🚀',
-      made_in: '🇨🇮 Côte d\'Ivoire avec ❤️'
-    });
+      cache_stats: {
+        keys: cache.keys().length,
+        hits: cache.getStats().hits || 0,
+        misses: cache.getStats().misses || 0
+      }
+    };
+
+    // Test connexions essentielles
+    try {
+      const { count } = await supabase
+        .from('eleves')
+        .select('*', { count: 'exact', head: true });
+      
+      healthData.database = {
+        status: '✅ Supabase connecté',
+        students_count: count || 0
+      };
+    } catch (error) {
+      healthData.database = {
+        status: '❌ Erreur Supabase',
+        error: error.message
+      };
+    }
+
+    // Test Groq
+    healthData.ai = {
+      status: process.env.GROQ_API_KEY ? '✅ Groq configuré' : '❌ Groq manquant',
+      provider: 'Groq (LLaMA 3.3-70B)'
+    };
+
+    // Test Cloudinary
+    healthData.storage = {
+      status: process.env.CLOUDINARY_CLOUD_NAME ? '✅ Cloudinary configuré' : '❌ Cloudinary manquant'
+    };
+
+    res.status(200).json(healthData);
   } catch (error) {
-    res.status(503).json({ status: '⚠️ Problème technique', error: error.message });
+    res.status(503).json({ 
+      status: '⚠️ Problème technique', 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
-app.listen(PORT, () => {
+// 🚀 DÉMARRAGE SERVEUR RENDER.COM
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`
 🎓 ═══════════════════════════════════════════════════════════
-   ✨ ÉtudIA v4.0 - RÉVOLUTION SILICON VALLEY ! ✨
+   ✨ ÉtudIA v4.0 - RÉVOLUTION SUR RENDER.COM ! ✨
    
    📍 Port: ${PORT}
+   🌍 Host: 0.0.0.0 (Render requirement)
+   🏭 Environment: ${process.env.NODE_ENV}
+   🗄️  Cache: ${cache.keys().length} clés
    
-🚀 FONCTIONNALITÉS RÉVOLUTIONNAIRES ACTIVÉES:
+🚀 FONCTIONNALITÉS RENDER OPTIMISÉES:
    🧠 IA à mémoire personnalisée - ACTIF
    📊 Mode étape par étape structuré - ACTIF  
    ✅ Mode solution directe - ACTIF
    🎯 Adaptation automatique profil élève - ACTIF
    📈 Analytics avancées - ACTIF
-   🔄 Mise à jour profil temps réel - ACTIF
+   🔄 Cache intelligent 5min - ACTIF
+   ⚡ Rate limiting 100req/15min - ACTIF
    🗑️ Suppression documents + Cloudinary - ACTIF
    
-🎯 INTELLIGENCE ARTIFICIELLE:
-   ✅ Mémorisation styles d'apprentissage
-   ✅ Détection difficultés automatique
-   ✅ Prompts personnalisés par profil
-   ✅ Adaptation température IA selon élève
-   ✅ Tracking progression multi-dimensionnel
-   🎤 Mode audio avec reconnaissance vocale
-   🌙 Mode dark interface
-   📱 App mobile progressive
+🌍 HÉBERGEMENT:
+   🏢 Plateforme: Render.com
+   📍 Région: Frankfurt (Europe - proche Afrique)
+   💾 Stockage temporaire: /tmp
+   🔒 SSL: Automatique
    
 🌍 MISSION: Révolutionner l'éducation Africaine !
 🇨🇮 Made with ❤️ in Côte d'Ivoire by @Pacousstar
    
-🏆 NIVEAU: SILICON VALLEY REVOLUTIONARY !
+🏆 NIVEAU: RENDER REVOLUTIONARY !
 ═══════════════════════════════════════════════════════════
   `);
+});
+
+// Gestion propre de l'arrêt pour Render
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM reçu, arrêt propre du serveur...');
+  server.close(() => {
+    console.log('✅ Serveur ÉtudIA arrêté proprement');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT reçu, arrêt du serveur...');
+  server.close(() => {
+    console.log('✅ Serveur ÉtudIA arrêté');
+    process.exit(0);
+  });
 });
 
 module.exports = app;
