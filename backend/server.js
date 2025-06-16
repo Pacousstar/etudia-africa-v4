@@ -41,7 +41,8 @@ const supabase = createClient(
 );
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || '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'
+  apiKey: process.env.GROQ_API_KEY || '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'
+
 
 });
 
