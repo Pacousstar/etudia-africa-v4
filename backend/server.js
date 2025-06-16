@@ -366,7 +366,7 @@ app.use(express.urlencoded({
 
 // 4. Headers de sécurité
 app.use((req, res, next) => {
-  res.header('X-Powered-By', 'ÉtudIA v4.0 🇨🇮');
+  res.header('X-Powered-By', 'EtudIA v4.0 🇨🇮');
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
