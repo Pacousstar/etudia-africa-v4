@@ -1,7 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const ChatIA = ({ student, apiUrl, documentContext = '', allDocuments = [] }) => {
-  const [messages, setMessages] = useState([]);
+{/* Onglet chat ÉtudIA */}
+{activeTab === 'chat' && student && (
+  <ChatIA
+    student={student}
+    apiUrl={API_URL}
+    documentContext={documentContext}
+    allDocuments={allDocuments}
+    selectedDocumentId={selectedDocumentId}
+    chatHistory={chatHistory} // NOUVEAU
+    setChatHistory={setChatHistory} // NOUVEAU
+    chatTokensUsed={chatTokensUsed} // NOUVEAU
+    setChatTokensUsed={setChatTokensUsed} // NOUVEAU
+    onStatsUpdate={updateUserStats} // NOUVEAU
+  />
+  }) => {
+  const [messages, setMessages] = useState(chatHistory || []);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversationCount, setConversationCount] = useState(0);
@@ -170,73 +184,87 @@ const ChatIA = ({ student, apiUrl, documentContext = '', allDocuments = [] }) =>
   };
 
   // 🔧 CORRECTION 3: MESSAGE D'ACCUEIL CORRIGÉ
-  const triggerWelcomeMessage = async () => {
-    if (welcomeMessageSent) return;
+ // 📍 MODIFIEZ LA FONCTION triggerWelcomeMessage
+const triggerWelcomeMessage = async () => {
+  // Si on a déjà des messages restaurés, ne pas envoyer le message d'accueil
+  if (messages.length > 0 || chatHistory.length > 0) {
+    console.log('💬 Messages existants trouvés, pas de message d\'accueil');
+    setWelcomeMessageSent(true);
+    return;
+  }
+  
+  if (welcomeMessageSent) return;
+  
+  try {
+    setIsLoading(true);
+    setConnectionStatus('connecting');
     
-    try {
-      setIsLoading(true);
-      setConnectionStatus('connecting');
-      
-      const response = await fetch(`${apiUrl}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: 'Connexion',
-          user_id: student.id,
-          document_context: documentContext,
-          is_welcome: true
-        }),
-      });
+    const response = await fetch(`${apiUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'Connexion',
+        user_id: student.id,
+        document_context: documentContext,
+        is_welcome: true
+      }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (response.ok) {
-        const welcomeMessage = {
-          id: Date.now(),
-          type: 'ai',
-          content: data.response,
-          timestamp: data.timestamp,
-          tokens: data.tokens_used || 0,
-          model: data.model,
-          hasContext: data.has_context,
-          isWelcome: true
-        };
-
-        setMessages([welcomeMessage]);
-        setWelcomeMessageSent(true);
-        setTotalTokens(data.tokens_used || 0);
-        setLearningProfile(data.learning_profile);
-        setConnectionStatus('online');
-
-        // CORRECTION: Mise à jour tokens correcte
-        if (data.tokens_used) {
-          updateTokenUsage(data.tokens_used);
-        }
-      }
-    } catch (error) {
-      console.error('❌ Erreur message d\'accueil:', error);
-      setConnectionStatus('offline');
-      
-      const fallbackWelcome = {
+    if (response.ok) {
+      const welcomeMessage = {
         id: Date.now(),
         type: 'ai',
-        content: `Salut ${prenomEleve} ! 🎓
+        content: data.response,
+        timestamp: data.timestamp,
+        tokens: data.tokens_used || 0,
+        model: data.model,
+        hasContext: data.has_context,
+        isWelcome: true
+      };
+
+      const welcomeMessages = [welcomeMessage];
+      setMessages(welcomeMessages);
+      setChatHistory(welcomeMessages); // NOUVEAU : Sauvegarder le message d'accueil
+      
+      setWelcomeMessageSent(true);
+      setTotalTokens(data.tokens_used || 0);
+      setLearningProfile(data.learning_profile);
+      setConnectionStatus('online');
+
+      // CORRECTION: Mise à jour tokens correcte
+      if (data.tokens_used) {
+        updateTokenUsage(data.tokens_used);
+        setChatTokensUsed(data.tokens_used); // NOUVEAU
+      }
+    }
+  } catch (error) {
+    console.error('❌ Erreur message d\'accueil:', error);
+    setConnectionStatus('offline');
+    
+    const fallbackWelcome = {
+      id: Date.now(),
+      type: 'ai',
+      content: `Salut ${prenomEleve} ! 🎓
 
 Je suis ÉtudIA, ton tuteur IA révolutionnaire ! 🤖✨
 
 ⚠️ Mode hors ligne activé. Reconnecte-toi pour l'expérience complète !`,
-        timestamp: new Date().toISOString(),
-        tokens: 0,
-        isWelcome: true,
-        isOffline: true
-      };
+      timestamp: new Date().toISOString(),
+      tokens: 0,
+      isWelcome: true,
+      isOffline: true
+    };
 
-      setMessages([fallbackWelcome]);
-      setWelcomeMessageSent(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const fallbackMessages = [fallbackWelcome];
+    setMessages(fallbackMessages);
+    setChatHistory(fallbackMessages); // NOUVEAU : Sauvegarder même en mode hors ligne
+    setWelcomeMessageSent(true);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     if (student?.id && !welcomeMessageSent) {
@@ -254,22 +282,36 @@ Je suis ÉtudIA, ton tuteur IA révolutionnaire ! 🤖✨
     }
   }, [isLoading]);
 
+useEffect(() => {
+  if (chatHistory && chatHistory.length > 0) {
+    setMessages(chatHistory);
+    console.log(`💬 ${chatHistory.length} messages restaurés dans ChatIA`);
+  }
+}, [chatHistory]);
+
+  
   // 🔧 CORRECTION 4: ENVOI MESSAGE CORRIGÉ
-  const handleSendMessage = async (messageText = inputMessage, mode = chatMode) => {
-    if (!messageText.trim() || isLoading) return;
+  // 📍 MODIFIEZ LA FONCTION handleSendMessage POUR SAUVEGARDER
+const handleSendMessage = async (messageText = inputMessage, mode = chatMode) => {
+  if (!messageText.trim() || isLoading) return;
 
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      content: messageText.trim(),
-      timestamp: new Date().toISOString(),
-      tokens: 0,
-      mode: mode
-    };
+  const userMessage = {
+    id: Date.now(),
+    type: 'user',
+    content: messageText.trim(),
+    timestamp: new Date().toISOString(),
+    tokens: 0,
+    mode: mode
+  };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
+    // Mettre à jour les messages localement ET dans le parent
+  const newMessages = [...messages, userMessage];
+  setMessages(newMessages);
+  setChatHistory(newMessages); // NOUVEAU : Sauvegarder dans le parent
+
+  setInputMessage('');
+  setIsLoading(true);
+
 
     try {
       // Construire payload selon le mode
@@ -297,62 +339,81 @@ Je suis ÉtudIA, ton tuteur IA révolutionnaire ! 🤖✨
       const data = await response.json();
 
       if (response.ok) {
-        const aiMessage = {
-          id: Date.now() + 1,
-          type: 'ai',
-          content: data.response,
-          timestamp: data.timestamp,
-          tokens: data.tokens_used || 0,
-          model: data.model,
-          hasContext: data.has_context,
-          mode: mode,
-          nextStep: data.next_step
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
-        setConversationCount(prev => prev + 1);
-        setTotalTokens(prev => prev + (data.tokens_used || 0));
-        setConnectionStatus('online');
-
-        // CORRECTION: Mise à jour tokens en temps réel
-        if (data.tokens_used) {
-          updateTokenUsage(data.tokens_used, totalTokens + (data.tokens_used || 0));
-        }
-
-        // Gérer progression étapes
-        if (mode === 'step_by_step' && data.next_step?.next) {
-          setCurrentStep(data.next_step.next);
-        }
-
-        // Synthèse vocale si mode audio ACTIVÉ
-        if (isAudioMode && data.response) {
-          setTimeout(() => speakResponse(data.response), 500);
-        }
-
-      } else {
-        throw new Error(data.error || 'Erreur communication IA');
-      }
-    } catch (error) {
-      console.error('❌ Erreur chat:', error);
-      setConnectionStatus('error');
-      
-      const errorMessage = {
+      const aiMessage = {
         id: Date.now() + 1,
         type: 'ai',
-        content: `Désolé ${prenomEleve}, je rencontre des difficultés techniques ! 😅
+        content: data.response,
+        timestamp: data.timestamp,
+        tokens: data.tokens_used || 0,
+        model: data.model,
+        hasContext: data.has_context,
+        mode: mode,
+        nextStep: data.next_step
+      };
+
+
+       // Mettre à jour avec le message IA
+      const finalMessages = [...newMessages, aiMessage];
+      setMessages(finalMessages);
+      setChatHistory(finalMessages); // NOUVEAU : Sauvegarder dans le parent
+
+      setConversationCount(prev => prev + 1);
+      const newTotalTokens = totalTokens + (data.tokens_used || 0);
+      setTotalTokens(newTotalTokens);
+      
+      // 🔧 NOUVEAU : Mettre à jour les tokens du chat
+      const newChatTokens = chatTokensUsed + (data.tokens_used || 0);
+      setChatTokensUsed(newChatTokens);
+      
+      setConnectionStatus('online');
+
+      // CORRECTION: Mise à jour tokens en temps réel
+      if (data.tokens_used) {
+        updateTokenUsage(data.tokens_used, newTotalTokens);
+      }
+
+      // 🔧 NOUVEAU : Notifier le parent pour mettre à jour les stats
+      if (onStatsUpdate && student?.id) {
+        setTimeout(() => onStatsUpdate(student.id), 1000);
+      }
+
+      // Gérer progression étapes
+      if (mode === 'step_by_step' && data.next_step?.next) {
+        setCurrentStep(data.next_step.next);
+      }
+
+      // Synthèse vocale si mode audio ACTIVÉ
+      if (isAudioMode && data.response) {
+        setTimeout(() => speakResponse(data.response), 500);
+      }
+
+    } else {
+      throw new Error(data.error || 'Erreur communication IA');
+    }
+  } catch (error) {
+    console.error('❌ Erreur chat:', error);
+    setConnectionStatus('error');
+    
+    const errorMessage = {
+      id: Date.now() + 1,
+      type: 'ai',
+      content: `Désolé ${prenomEleve}, je rencontre des difficultés techniques ! 😅
 
 Veuillez réessayer dans quelques instants.
 
 🤖 ÉtudIA sera bientôt de retour pour t'aider !`,
-        timestamp: new Date().toISOString(),
-        tokens: 0,
-        isError: true
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      timestamp: new Date().toISOString(),
+      tokens: 0,
+      isError: true
+    };
+    
+    const errorMessages = [...newMessages, errorMessage];
+    setMessages(errorMessages);
+    setChatHistory(errorMessages); // NOUVEAU : Sauvegarder même les erreurs
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // 🎯 BOUTON 1: MODE ÉTAPE PAR ÉTAPE 
   const activateStepByStepMode = () => {
@@ -874,53 +935,52 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
 
           {/* 🔧 CORRECTION 7: STATISTIQUES PERSONNELLES MISES À JOUR */}
           <div className="personal-stats">
-            <h4>📊 Tes Statistiques, {prenomEleve}</h4>
-            <div className="stats-grid">
-              <div className="stat-item">
-                <span className="stat-number">{conversationCount}</span>
-                <span className="stat-label">Conversations</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">{tokenUsage.used_today.toLocaleString()}</span>
-                <span className="stat-label">Tokens utilisés</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">
-                  {allDocuments?.length || (documentContext ? '1' : '0')}
-                </span>
-                <span className="stat-label">Documents analysés</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">
-                  {learningProfile?.level || Math.min(5, Math.ceil(conversationCount / 10))}
-                </span>
-                <span className="stat-label">Niveau IA</span>
-              </div>
-            </div>
-            
-            {/* Graphique progression tokens */}
-            <div className="token-progress-chart">
-              <h5>🔋 Utilisation Tokens Aujourd'hui</h5>
-              <div className="progress-visualization">
-                <div className="progress-segment green" style={{ width: '60%' }}>
-                  <span>Zone optimale</span>
-                </div>
-                <div className="progress-segment yellow" style={{ width: '25%' }}>
-                  <span>Attention</span>
-                </div>
-                <div className="progress-segment red" style={{ width: '15%' }}>
-                  <span>Limite</span>
-                </div>
-              </div>
-              <div className="current-position" style={{ 
-                left: `${Math.min(100, (tokenUsage.used_today / 95000) * 100)}%` 
-              }}>
-                <div className="position-marker">📍</div>
-                <div className="position-label">{tokenUsage.used_today.toLocaleString()}</div>
-              </div>
-            </div>
-          </div>
-        </div>
+  <h4>📊 Tes Statistiques, {prenomEleve}</h4>
+  <div className="stats-grid">
+    <div className="stat-item">
+      <span className="stat-number">{messages.length}</span>
+      <span className="stat-label">Messages Chat</span>
+    </div>
+    <div className="stat-item">
+      <span className="stat-number">{chatTokensUsed.toLocaleString()}</span>
+      <span className="stat-label">Tokens Chat</span>
+    </div>
+    <div className="stat-item">
+      <span className="stat-number">
+        {allDocuments?.length || (documentContext ? '1' : '0')}
+      </span>
+      <span className="stat-label">Documents analysés</span>
+    </div>
+    <div className="stat-item">
+      <span className="stat-number">
+        {Math.min(5, Math.max(1, Math.ceil(messages.length / 10)))}
+      </span>
+      <span className="stat-label">Niveau IA</span>
+    </div>
+  </div>
+  
+  {/* Graphique progression tokens ACTUALISÉ */}
+  <div className="token-progress-chart">
+    <h5>🔋 Tokens Utilisés Cette Session</h5>
+    <div className="progress-visualization">
+      <div className="progress-segment green" style={{ width: '60%' }}>
+        <span>Zone optimale</span>
+      </div>
+      <div className="progress-segment yellow" style={{ width: '25%' }}>
+        <span>Attention</span>
+      </div>
+      <div className="progress-segment red" style={{ width: '15%' }}>
+        <span>Limite</span>
+      </div>
+    </div>
+    <div className="current-position" style={{ 
+      left: `${Math.min(100, (chatTokensUsed / 1000) * 100)}%` 
+    }}>
+      <div className="position-marker">📍</div>
+      <div className="position-label">{chatTokensUsed.toLocaleString()}</div>
+    </div>
+  </div>
+</div>
       )}
 
       {/* 🔧 CORRECTION 8 + 9 + 10: STYLES CSS RÉVOLUTIONNAIRES COMPLETS */}
