@@ -992,12 +992,12 @@ const handleDocumentProcessed = (extractedText, documentData) => {
           setBackendStatus('offline');
         }
       } catch (error) {
-        console.log('💥 Erreur fetch:', error.message);
-        setBackendStatus('offline');
-        if (backendStatus === 'online') {
-          showTemporaryMessage('❌ Serveur temporairement hors ligne', 'error', 5000);
-        }
-      }
+  console.log('💥 Erreur fetch:', error.message);
+  setBackendStatus('offline');
+  if (backendStatus === 'online') {
+    showTemporaryMessage('❌ Serveur temporairement hors ligne', 'error', 5000);
+  }
+}
     };
 
     // PWA Service Worker
