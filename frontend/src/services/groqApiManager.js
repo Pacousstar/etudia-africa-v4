@@ -1,9 +1,9 @@
 // ===================================================================
-// 🔑 GESTIONNAIRE MULTI-CLÉS API GROQ POUR ÉtudIA
+// 🔑 GESTIONNAIRE MULTI-CLÉS API GROQ POUR ÉtudIA - VERSION CORRIGÉE
 // Fichier: src/services/groqApiManager.js
 // ===================================================================
 
-class groqApiManager {
+class GroqApiManager {
   constructor() {
     // 🔐 Configuration des 5 clés API Groq depuis les variables d'environnement
     this.apiKeys = [
@@ -16,7 +16,9 @@ class groqApiManager {
 
     // Vérification qu'au moins une clé est disponible
     if (this.apiKeys.length === 0) {
-      throw new Error('🚫 Aucune clé API Groq configurée dans les variables d\'environnement');
+      console.warn('⚠️ Aucune clé API Groq configurée - Mode dégradé activé');
+      // Continuer avec clé par défaut
+      this.apiKeys = ['demo_key_for_development'];
     }
 
     // 📊 État de chaque clé
@@ -33,7 +35,7 @@ class groqApiManager {
     this.currentKeyIndex = 0;
     this.maxRetries = this.apiKeys.length;
     
-    console.log(`🔑 groqApiManager initialisé avec ${this.apiKeys.length} clés API`);
+    console.log(`🔑 GroqApiManager initialisé avec ${this.apiKeys.length} clés API`);
   }
 
   // 🎯 Obtenir la clé API active
@@ -183,4 +185,4 @@ class groqApiManager {
   }
 }
 
-export default groqApiManager;
+export default GroqApiManager;
