@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-{/* Onglet chat ÉtudIA */}
+// Onglet de chat ÉtudIA
 const ChatIA = ({
    etudiant,
    urlApi,
@@ -13,27 +13,28 @@ const ChatIA = ({
    surMiseAJourStats = () => {}
 }) => {
    const [messages, setMessages] = useState(historiqueChat || []);
-   const [messageEntree, setMessageEntree] = useState('');
+   const [messageSaisie, setMessageSaisie] = useState('');
    const [estEnChargement, setEstEnChargement] = useState(false);
    const [nombreConversations, setNombreConversations] = useState(0);
    const [totalTokens, setTotalTokens] = useState(0);
    const [messageBienvenueEnvoye, setMessageBienvenueEnvoye] = useState(false);
    const [profilApprentissage, setProfilApprentissage] = useState(null);
    
-   // 🎯 ÉTATS RÉVOLUTIONNAIRES
+   // États révolutionnaires
    const [modeChat, setModeChat] = useState('normal');
    const [etapeActuelle, setEtapeActuelle] = useState(1);
    const [totalEtapes, setTotalEtapes] = useState(4);
    const [estModeAudio, setEstModeAudio] = useState(false);
    const [estModeNuit, setEstModeNuit] = useState(false);
    
-   // 🔧 CORRECTION 1: GESTION TOKENS CORRIGÉE
+   // Gestion des tokens corrigée
    const [utilisationTokens, setUtilisationTokens] = useState({
-      utilises_aujourdhui: 0,
+      utilisesAujourdhui: 0,
       restants: 95000,
-      total_conversations: 0,
-      derniere_mise_a_jour: Date.now()
+      totalConversations: 0,
+      derniereMiseAJour: Date.now()
    });
+
   
   const [connectionStatus, setConnectionStatus] = useState('online');
   const [isRecording, setIsRecording] = useState(false);
