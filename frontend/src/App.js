@@ -447,7 +447,7 @@ const handleDocumentProcessed = (extractedText, documentData) => {
   }, 1500);
 };
 
-// 🔧 FONCTION SUPPRESSION DOCUMENT AVEC MISE À JOUR CACHE
+// 🗑️ FONCTION SUPPRESSION DOCUMENT - VERSION UNIQUE ET CORRIGÉE
 const handleDeleteDocument = async (documentId, documentName) => {
   if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${documentName}" ?`)) {
     return;
@@ -940,45 +940,7 @@ const handleDeleteDocument = async (documentId, documentName) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 🗑️ FONCTION SUPPRESSION DOCUMENT
-  const handleDeleteDocument = async (documentId, documentName) => {
-    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${documentName}" ?`)) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/api/documents/${documentId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (response.ok) {
-        // Mettre à jour la liste locale
-        setAllDocuments(prev => prev.filter(doc => doc.id !== documentId));
-        
-        // Si c'était le document sélectionné, sélectionner le suivant
-        if (selectedDocumentId === documentId) {
-          const remainingDocs = allDocuments.filter(doc => doc.id !== documentId);
-          if (remainingDocs.length > 0) {
-            setSelectedDocumentId(remainingDocs[0].id);
-            setDocumentContext(remainingDocs[0].texte_extrait);
-          } else {
-            setSelectedDocumentId(null);
-            setDocumentContext('');
-          }
-        }
-
-        showTemporaryMessage(`🗑️ Document "${documentName}" supprimé avec succès !`, 'success');
-      } else {
-        showTemporaryMessage('❌ Erreur lors de la suppression', 'error');
-      }
-    } catch (error) {
-      console.error('Erreur suppression:', error);
-      showTemporaryMessage('❌ Erreur technique lors de la suppression', 'error');
-    }
-  };
-
-  // 📊 FONCTION MISE À JOUR STATISTIQUES UTILISATEUR
+    // 📊 FONCTION MISE À JOUR STATISTIQUES UTILISATEUR
   const updateUserStats = async (userId) => {
     try {
       const response = await fetch(`${API_URL}/api/student/profile/${userId}`);
