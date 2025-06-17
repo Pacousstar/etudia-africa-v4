@@ -7,10 +7,10 @@ const ChatIA = ({
    contexteDocument = '',
    tousDocuments = [],
    historiqueChat = [],
-   setHistoriqueChat = () => {},
+   setHistoriqueChat,
    tokensUtilisesChat = 0,
-   setTokensUtilisesChat = () => {},
-   surMiseAJourStats = () => {}
+   setTokensUtilisesChat,
+   surMiseAJourStats
 }) => {
    const [messages, setMessages] = useState(historiqueChat || []);
    const [messageSaisie, setMessageSaisie] = useState('');
@@ -46,6 +46,11 @@ const ChatIA = ({
    // ✅ Récupération sécurisée du prénom
    const prenomEleve = etudiant?.nom?.split(' ')[0] || etudiant?.name?.split(' ')[0] || 'Élève';
    const classeEleve = etudiant?.classe || etudiant?.class_level || 'votre classe';
+
+   // Fonctions par défaut si non fournies
+   const setHistoriqueChatSafe = setHistoriqueChat || (() => {});
+   const setTokensUtilisesChatSafe = setTokensUtilisesChat || (() => {});
+   const surMiseAJourStatsSafe = surMiseAJourStats || (() => {});
 
    // 🔧 CORRECTION 2: FONCTION MISE À JOUR TOKENS
    const mettreAJourUtilisationTokens = (nouveauxTokens, totalTokens = null) => {
