@@ -1648,6 +1648,11 @@ const handleLogout = () => {
             documentContext={documentContext}
             allDocuments={allDocuments}
             selectedDocumentId={selectedDocumentId}
+            chatHistory={chatHistory}
+            setChatHistory={setChatHistory}
+            chatTokensUsed={chatTokensUsed}
+            setChatTokensUsed={setChatTokensUsed}
+            onStatsUpdate={updateUserStats}
           />
         )}
       </main>
