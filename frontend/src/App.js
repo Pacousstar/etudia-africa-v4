@@ -1665,9 +1665,41 @@ const handleLogout = () => {
             <p>Développé avec ❤️ par <strong>@Pacousstar</strong> - Côte d'Ivoire</p>
           </div>
         
-          <a href="https://etudia-v4.gsnexpertises.com" target="_blank" rel="noopener noreferrer">
-           📝 Donner votre avis testeur
-          </a>
+          // 🎨 DANS App.js - REMPLACEZ LE LIEN FOOTER PAR CECI :
+
+<a 
+  href="https://etudia-v4.gsnexpertises.com" 
+  target="_blank" 
+  rel="noopener noreferrer"
+  style={{
+    fontSize: '16px',
+    fontWeight: 'bold',
+    color: '#FF8C00',
+    textDecoration: 'none',
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
+    padding: '8px 16px',
+    borderRadius: '8px',
+    border: '2px solid #FF8C00',
+    transition: 'all 0.3s ease',
+    display: 'inline-block',
+    textTransform: 'uppercase',
+    letterSpacing: '1px'
+  }}
+  onMouseEnter={(e) => {
+    e.target.style.backgroundColor = '#FF8C00';
+    e.target.style.color = 'white';
+    e.target.style.transform = 'translateY(-2px)';
+    e.target.style.boxShadow = '0 4px 15px rgba(255, 140, 0, 0.4)';
+  }}
+  onMouseLeave={(e) => {
+    e.target.style.backgroundColor = 'rgba(255, 140, 0, 0.1)';
+    e.target.style.color = '#FF8C00';
+    e.target.style.transform = 'translateY(0)';
+    e.target.style.boxShadow = 'none';
+  }}
+>
+  📝 DONNER VOTRE AVIS TESTEUR
+</a>
         
           <div className="footer-stats">
             <span>🚀 {stats.students.toLocaleString()}+ élèves</span>
