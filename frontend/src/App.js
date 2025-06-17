@@ -59,6 +59,10 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  // 📍 1. AJOUTEZ CES NOUVEAUX ÉTATS APRÈS LES AUTRES useState
+const [chatHistory, setChatHistory] = useState([]); // Nouveau : historique chat
+const [chatTokensUsed, setChatTokensUsed] = useState(0); // Nouveau : tokens chat session
+
   // Données statiques
   const schools = [
     'Lycée Classique d\'Abidjan',
@@ -95,125 +99,155 @@ function App() {
     }
   };
 
-  const loadFromStorage = (key) => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const stored = localStorage.getItem(`etudia_${key}`);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          // Vérifier que les données ne sont pas trop anciennes (7 jours max)
-          const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 jours
-          if (Date.now() - parsed.timestamp < maxAge) {
-            console.log(`📂 Chargement ${key}:`, parsed.data);
-            return parsed.data;
-          } else {
-            // Supprimer données expirées
-            localStorage.removeItem(`etudia_${key}`);
-            console.log(`🗑️ Données ${key} expirées et supprimées`);
-          }
-        }
-      }
-    } catch (error) {
-      console.warn('⚠️ Erreur chargement localStorage:', error);
-    }
-    return null;
-  };
-
-  const clearAllStorage = () => {
-    try {
-      const keys = [
-        'student', 'currentStep', 'activeTab', 'documentContext', 
-        'allDocuments', 'selectedDocumentId', 'userStats', 'formData'
-      ];
-      keys.forEach(key => {
-        localStorage.removeItem(`etudia_${key}`);
-      });
-      console.log('🗑️ Tout le storage ÉtudIA vidé');
-    } catch (error) {
-      console.warn('⚠️ Erreur nettoyage storage:', error);
-    }
-  };
-
-  // 🔄 USEEFFECT POUR RESTAURER LES DONNÉES AU DÉMARRAGE
-  useEffect(() => {
-    console.log('🚀 Chargement données sauvegardées...');
-    
-    // Vérifier si on est dans le navigateur
-    if (typeof window === 'undefined') return;
-    
-    try {
-      // Charger toutes les données sauvegardées
-      const savedStudent = loadFromStorage('student');
-      const savedCurrentStep = loadFromStorage('currentStep');
-      const savedActiveTab = loadFromStorage('activeTab');
-      const savedDocumentContext = loadFromStorage('documentContext');
-      const savedAllDocuments = loadFromStorage('allDocuments');
-      const savedSelectedDocumentId = loadFromStorage('selectedDocumentId');
-      const savedUserStats = loadFromStorage('userStats');
-      const savedFormData = loadFromStorage('formData');
-
-      // Restaurer l'élève si connecté
-      if (savedStudent && savedStudent.id) {
-        console.log('✅ Élève trouvé en localStorage:', savedStudent.nom);
-        setStudent(savedStudent);
-        
-        // Restaurer l'étape (minimum 2 si connecté)
-        const stepToRestore = savedCurrentStep || 2;
-        setCurrentStep(stepToRestore);
-        
-        // Restaurer l'onglet actif (upload par défaut si connecté)
-        const tabToRestore = savedActiveTab || (stepToRestore >= 3 ? 'chat' : 'upload');
-        setActiveTab(tabToRestore);
-        
-        // Restaurer le contexte document
-        if (savedDocumentContext) {
-          setDocumentContext(savedDocumentContext);
-          console.log('📄 Contexte document restauré');
-        }
-        
-        // Restaurer la liste des documents
-        if (savedAllDocuments && Array.isArray(savedAllDocuments)) {
-          setAllDocuments(savedAllDocuments);
-          console.log(`📚 ${savedAllDocuments.length} documents restaurés`);
-        }
-        
-        // Restaurer le document sélectionné
-        if (savedSelectedDocumentId) {
-          setSelectedDocumentId(savedSelectedDocumentId);
-        }
-        
-        // Restaurer les stats utilisateur
-        if (savedUserStats) {
-          setUserStats(savedUserStats);
+  // 📍 MODIFIEZ LA FONCTION loadFromStorage POUR INCLURE LE CHAT
+const loadFromStorage = (key) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = localStorage.getItem(`etudia_${key}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Vérifier que les données ne sont pas trop anciennes (7 jours max)
+        const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 jours
+        if (Date.now() - parsed.timestamp < maxAge) {
+          console.log(`📂 Chargement ${key}:`, parsed.data);
+          return parsed.data;
         } else {
-          // Charger stats depuis serveur
-          updateUserStats(savedStudent.id);
-        }
-        
-        // Recharger documents depuis serveur si cache vide
-        if (!savedAllDocuments || savedAllDocuments.length === 0) {
-          loadUserDocuments(savedStudent.id);
-        }
-        
-        showTemporaryMessage(
-          `👋 Re-bienvenue ${savedStudent.nom.split(' ')[0]} ! Session restaurée !`, 
-          'success'
-        );
-      } else {
-        console.log('📝 Aucune session sauvegardée');
-        
-        // Restaurer le formulaire d'inscription si rempli
-        if (savedFormData) {
-          setFormData(savedFormData);
-          console.log('📝 Formulaire d\'inscription restauré');
+          // Supprimer données expirées
+          localStorage.removeItem(`etudia_${key}`);
+          console.log(`🗑️ Données ${key} expirées et supprimées`);
         }
       }
-    } catch (error) {
-      console.error('❌ Erreur restauration données:', error);
-      // En cas d'erreur, nettoyer le storage corrompu
-      clearAllStorage();
     }
-  }, []); // Se déclenche une seule fois au montage
+  } catch (error) {
+    console.warn('⚠️ Erreur chargement localStorage:', error);
+  }
+  return null;
+};
+
+// 📍 MODIFIEZ LA FONCTION clearAllStorage POUR INCLURE LE CHAT
+const clearAllStorage = () => {
+  try {
+    const keys = [
+      'student', 'currentStep', 'activeTab', 'documentContext', 
+      'allDocuments', 'selectedDocumentId', 'userStats', 'formData',
+      'chatHistory', 'chatTokensUsed' // AJOUT NOUVEAU
+    ];
+    keys.forEach(key => {
+      localStorage.removeItem(`etudia_${key}`);
+    });
+    console.log('🗑️ Tout le storage ÉtudIA vidé');
+  } catch (error) {
+    console.warn('⚠️ Erreur nettoyage storage:', error);
+  }
+};
+
+  // 📍 4. MODIFIEZ LE useEffect DE RESTAURATION POUR LE CHAT
+useEffect(() => {
+  console.log('🚀 Chargement données sauvegardées...');
+  
+  // Vérifier si on est dans le navigateur
+  if (typeof window === 'undefined') return;
+  
+  try {
+    // Charger toutes les données sauvegardées
+    const savedStudent = loadFromStorage('student');
+    const savedCurrentStep = loadFromStorage('currentStep');
+    const savedActiveTab = loadFromStorage('activeTab');
+    const savedDocumentContext = loadFromStorage('documentContext');
+    const savedAllDocuments = loadFromStorage('allDocuments');
+    const savedSelectedDocumentId = loadFromStorage('selectedDocumentId');
+    const savedUserStats = loadFromStorage('userStats');
+    const savedFormData = loadFromStorage('formData');
+    const savedChatHistory = loadFromStorage('chatHistory'); // NOUVEAU
+    const savedChatTokensUsed = loadFromStorage('chatTokensUsed'); // NOUVEAU
+
+    // Restaurer l'élève si connecté
+    if (savedStudent && savedStudent.id) {
+      console.log('✅ Élève trouvé en localStorage:', savedStudent.nom);
+      setStudent(savedStudent);
+      
+      // Restaurer l'étape (minimum 2 si connecté)
+      const stepToRestore = savedCurrentStep || 2;
+      setCurrentStep(stepToRestore);
+      
+      // Restaurer l'onglet actif (upload par défaut si connecté)
+      const tabToRestore = savedActiveTab || (stepToRestore >= 3 ? 'chat' : 'upload');
+      setActiveTab(tabToRestore);
+      
+      // Restaurer le contexte document
+      if (savedDocumentContext) {
+        setDocumentContext(savedDocumentContext);
+        console.log('📄 Contexte document restauré');
+      }
+      
+      // Restaurer la liste des documents
+      if (savedAllDocuments && Array.isArray(savedAllDocuments)) {
+        setAllDocuments(savedAllDocuments);
+        console.log(`📚 ${savedAllDocuments.length} documents restaurés`);
+      }
+      
+      // Restaurer le document sélectionné
+      if (savedSelectedDocumentId) {
+        setSelectedDocumentId(savedSelectedDocumentId);
+      }
+      
+      // 🔧 NOUVEAU : Restaurer l'historique du chat
+      if (savedChatHistory && Array.isArray(savedChatHistory)) {
+        setChatHistory(savedChatHistory);
+        console.log(`💬 ${savedChatHistory.length} messages de chat restaurés`);
+      }
+      
+      // 🔧 NOUVEAU : Restaurer les tokens du chat
+      if (savedChatTokensUsed) {
+        setChatTokensUsed(savedChatTokensUsed);
+        console.log(`🔋 ${savedChatTokensUsed} tokens de chat restaurés`);
+      }
+      
+      // Restaurer les stats utilisateur
+      if (savedUserStats) {
+        setUserStats(savedUserStats);
+      } else {
+        // Charger stats depuis serveur
+        updateUserStats(savedStudent.id);
+      }
+      
+      // Recharger documents depuis serveur si cache vide
+      if (!savedAllDocuments || savedAllDocuments.length === 0) {
+        loadUserDocuments(savedStudent.id);
+      }
+      
+      showTemporaryMessage(
+        `👋 Re-bienvenue ${savedStudent.nom.split(' ')[0]} ! Session complète restaurée !`, 
+        'success'
+      );
+    } else {
+      console.log('📝 Aucune session sauvegardée');
+      
+      // Restaurer le formulaire d'inscription si rempli
+      if (savedFormData) {
+        setFormData(savedFormData);
+        console.log('📝 Formulaire d\'inscription restauré');
+      }
+    }
+  } catch (error) {
+    console.error('❌ Erreur restauration données:', error);
+    // En cas d'erreur, nettoyer le storage corrompu
+    clearAllStorage();
+  }
+}, []); // Se déclenche une seule fois au montage
+
+// 📍 AJOUTEZ CES useEffect POUR SAUVEGARDER LE CHAT
+useEffect(() => {
+  if (chatHistory.length > 0) {
+    saveToStorage('chatHistory', chatHistory);
+  }
+}, [chatHistory]);
+
+useEffect(() => {
+  if (chatTokensUsed > 0) {
+    saveToStorage('chatTokensUsed', chatTokensUsed);
+  }
+}, [chatTokensUsed]);
 
   // 🔄 SAUVEGARDER À CHAQUE CHANGEMENT D'ÉTAT
   useEffect(() => {
@@ -697,55 +731,83 @@ function App() {
   };
 
   // 📊 FONCTION MISE À JOUR STATISTIQUES UTILISATEUR
-  const updateUserStats = async (userId) => {
-    try {
-      const response = await fetch(`${API_URL}/api/student/profile/${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUserStats({
-            conversations: data.statistics.total_conversations || 0,
-            documents: data.statistics.documents_uploaded || 0,
-            tokens_used: data.statistics.total_tokens_used || 0,
-            level: data.learning_profile.level || 1
-          });
-        }
+  // 📍 6. MODIFIEZ LA FONCTION updateUserStats POUR ÊTRE PLUS ROBUSTE
+const updateUserStats = async (userId) => {
+  try {
+    const response = await fetch(`${API_URL}/api/student/profile/${userId}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        const newStats = {
+          conversations: data.statistics.total_conversations || 0,
+          documents: data.statistics.documents_uploaded || allDocuments.length || 0,
+          tokens_used: data.statistics.total_tokens_used || chatTokensUsed || 0,
+          level: data.learning_profile?.level || Math.min(5, Math.max(1, Math.ceil((data.statistics.total_conversations || 0) / 10)))
+        };
+        
+        setUserStats(newStats);
+        saveToStorage('userStats', newStats);
+        console.log('📊 Stats utilisateur mises à jour:', newStats);
       }
-    } catch (error) {
-      console.warn('Erreur récupération stats utilisateur:', error);
+    } else {
+      // Fallback avec données locales si serveur indisponible
+      const fallbackStats = {
+        conversations: chatHistory.length || 0,
+        documents: allDocuments.length || 0,
+        tokens_used: chatTokensUsed || 0,
+        level: Math.min(5, Math.max(1, Math.ceil((chatHistory.length || 0) / 10)))
+      };
+      setUserStats(fallbackStats);
+      saveToStorage('userStats', fallbackStats);
+      console.log('📊 Stats fallback utilisées:', fallbackStats);
     }
-  };
+  } catch (error) {
+    console.warn('Erreur récupération stats utilisateur:', error);
+    // Utiliser données locales en cas d'erreur
+    const localStats = {
+      conversations: chatHistory.length || 0,
+      documents: allDocuments.length || 0,
+      tokens_used: chatTokensUsed || 0,
+      level: Math.min(5, Math.max(1, Math.ceil((chatHistory.length || 0) / 10)))
+    };
+    setUserStats(localStats);
+    saveToStorage('userStats', localStats);
+  }
+};
 
   // 🔧 CORRECTION FONCTION LOGOUT AVEC NETTOYAGE COMPLET
-  const handleLogout = () => {
-    console.log('👋 Déconnexion en cours...');
-    
-    // Demander confirmation
-    if (!window.confirm('🚪 Êtes-vous sûr de vouloir vous déconnecter ?')) {
-      return;
-    }
-    
-    // Nettoyer les états React
-    setStudent(null);
-    setCurrentStep(1);
-    setActiveTab('inscription');
-    setDocumentContext('');
-    setAllDocuments([]);
-    setSelectedDocumentId(null);
-    setUserStats({ conversations: 0, documents: 0, tokens_used: 0, level: 1 });
-    setFormData({
-      name: '',
-      email: '',
-      class_level: '',
-      school: ''
-    });
-    
-    // Nettoyer complètement le localStorage
-    clearAllStorage();
-    
-    // Message de confirmation
-    showTemporaryMessage('👋 Déconnexion réussie ! À bientôt sur ÉtudIA !', 'info');
-  };
+  // 📍 MODIFIEZ LA FONCTION handleLogout POUR NETTOYER LE CHAT
+const handleLogout = () => {
+  console.log('👋 Déconnexion en cours...');
+  
+  // Demander confirmation
+  if (!window.confirm('🚪 Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    return;
+  }
+  
+  // Nettoyer les états React
+  setStudent(null);
+  setCurrentStep(1);
+  setActiveTab('inscription');
+  setDocumentContext('');
+  setAllDocuments([]);
+  setSelectedDocumentId(null);
+  setUserStats({ conversations: 0, documents: 0, tokens_used: 0, level: 1 });
+  setChatHistory([]); // NOUVEAU
+  setChatTokensUsed(0); // NOUVEAU
+  setFormData({
+    name: '',
+    email: '',
+    class_level: '',
+    school: ''
+  });
+  
+  // Nettoyer complètement le localStorage
+  clearAllStorage();
+  
+  // Message de confirmation
+  showTemporaryMessage('👋 Déconnexion réussie ! À bientôt sur ÉtudIA !', 'info');
+};
 
   // 🔧 CORRECTION FONCTION LOGIN AVEC SAUVEGARDE IMMÉDIATE
   const handleLogin = async (email) => {
@@ -1236,32 +1298,47 @@ function App() {
         </div>
       </div>
 
-      {/* Navigation onglets */}
-      <nav className="tab-navigation">
-        <TabButton
-          id="inscription"
-          label="Inscription"
-          icon="👤"
-          isActive={activeTab === 'inscription'}
-          onClick={setActiveTab}
-        />
-        <TabButton
-          id="upload"
-          label="Upload OCR"
-          icon="📸"
-          isActive={activeTab === 'upload'}
-          onClick={setActiveTab}
-          disabled={!student}
-        />
-        <TabButton
-          id="chat"
-          label="Chat ÉtudIA"
-          icon="🦙"
-          isActive={activeTab === 'chat'}
-          onClick={setActiveTab}
-          disabled={!student}
-        />
-      </nav>
+      // 📍 AJOUTEZ LE BOUTON DÉCONNEXION DANS LA NAVIGATION
+// Remplacez la section "Navigation onglets" par ceci :
+
+{/* Navigation onglets AVEC BOUTON DÉCONNEXION */}
+<nav className="tab-navigation">
+  <TabButton
+    id="inscription"
+    label="Inscription"
+    icon="👤"
+    isActive={activeTab === 'inscription'}
+    onClick={setActiveTab}
+  />
+  <TabButton
+    id="upload"
+    label="Upload OCR"
+    icon="📸"
+    isActive={activeTab === 'upload'}
+    onClick={setActiveTab}
+    disabled={!student}
+  />
+  <TabButton
+    id="chat"
+    label="Chat ÉtudIA"
+    icon="🦙"
+    isActive={activeTab === 'chat'}
+    onClick={setActiveTab}
+    disabled={!student}
+  />
+  
+  {/* 🚪 NOUVEAU BOUTON DÉCONNEXION */}
+  {student && (
+    <button
+      className="logout-tab-button"
+      onClick={handleLogout}
+      title="Se déconnecter de ÉtudIA"
+    >
+      <span className="tab-icon">🚪</span>
+      <span className="tab-label">Déconnexion</span>
+    </button>
+  )}
+</nav>
 
       {/* CONTENU PRINCIPAL */}
       <main className="main-content enhanced">
