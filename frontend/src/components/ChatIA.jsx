@@ -1,20 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 {/* Onglet chat ÉtudIA */}
-{activeTab === 'chat' && student && (
-  <ChatIA
-    student={student}
-    apiUrl={API_URL}
-    documentContext={documentContext}
-    allDocuments={allDocuments}
-    selectedDocumentId={selectedDocumentId}
-    chatHistory={chatHistory} // NOUVEAU
-    setChatHistory={setChatHistory} // NOUVEAU
-    chatTokensUsed={chatTokensUsed} // NOUVEAU
-    setChatTokensUsed={setChatTokensUsed} // NOUVEAU
-    onStatsUpdate={updateUserStats} // NOUVEAU
-  />
-  }) => {
+const ChatIA = ({ 
+  student, 
+  apiUrl, 
+  documentContext = '', 
+  allDocuments = [],
+  chatHistory = [],
+  setChatHistory = () => {},
+  chatTokensUsed = 0,
+  setChatTokensUsed = () => {},
+  onStatsUpdate = () => {}
+}) => {
   const [messages, setMessages] = useState(chatHistory || []);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
