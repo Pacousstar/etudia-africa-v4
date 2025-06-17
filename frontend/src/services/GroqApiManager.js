@@ -1,11 +1,11 @@
-// src/services/GroqApiManager.js
 // ===================================================================
 // 🔑 GESTIONNAIRE MULTI-CLÉS API GROQ POUR ÉtudIA
+// Fichier: src/services/groqApiManager.js
 // ===================================================================
 
 class GroqApiManager {
   constructor() {
-    // 🔐 Configuration des 5 clés API Groq
+    // 🔐 Configuration des 5 clés API Groq depuis les variables d'environnement
     this.apiKeys = [
       process.env.REACT_APP_GROQ_API_KEY_1,
       process.env.REACT_APP_GROQ_API_KEY_2,
@@ -13,6 +13,11 @@ class GroqApiManager {
       process.env.REACT_APP_GROQ_API_KEY_4,
       process.env.REACT_APP_GROQ_API_KEY_5
     ].filter(key => key && key !== ''); // Filtre les clés vides
+
+    // Vérification qu'au moins une clé est disponible
+    if (this.apiKeys.length === 0) {
+      throw new Error('🚫 Aucune clé API Groq configurée dans les variables d\'environnement');
+    }
 
     // 📊 État de chaque clé
     this.keyStatus = this.apiKeys.map((key, index) => ({
@@ -80,8 +85,12 @@ class GroqApiManager {
     
     console.warn(`🚫 Clé ${keyInfo.id + 1} bloquée pour ${durationMinutes} minutes`);
     
-    // Passer à la clé suivante
-    this.rotateToNextKey();
+    // Passer à la clé suivante si possible
+    try {
+      this.rotateToNextKey();
+    } catch (error) {
+      console.error('❌ Impossible de rotation - toutes les clés sont bloquées');
+    }
   }
 
   // 📊 Enregistrer l'utilisation d'une clé
@@ -112,11 +121,16 @@ class GroqApiManager {
         return currentKey;
       }
       
-      this.rotateToNextKey();
+      try {
+        this.rotateToNextKey();
+      } catch (error) {
+        break; // Toutes les clés sont bloquées
+      }
+      
       attempts++;
     }
     
-    throw new Error('🚫 Aucune clé API Groq disponible');
+    throw new Error('🚫 Aucune clé API Groq disponible actuellement');
   }
 
   // 📈 Statistiques des clés
@@ -152,132 +166,21 @@ class GroqApiManager {
     this.currentKeyIndex = 0;
     console.log('🔄 Toutes les clés API ont été réinitialisées');
   }
-}
 
-// ===================================================================
-// 🚀 SERVICE GROQ AVEC GESTION MULTI-CLÉS
-// ===================================================================
-
-class GroqService {
-  constructor() {
-    this.apiManager = new GroqApiManager();
-    this.baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  // 📊 Obtenir le nombre de clés disponibles
+  getAvailableKeysCount() {
+    return this.keyStatus.filter(key => !this.isKeyBlocked(key)).length;
   }
 
-  // 🤖 Appel API avec rotation automatique des clés
-  async callGroqAPI(messages, options = {}) {
-    const maxRetries = this.apiManager.apiKeys.length;
-    let lastError = null;
-
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        const keyInfo = await this.apiManager.getValidApiKey();
-        
-        console.log(`🔑 Tentative ${attempt + 1} avec la clé ${keyInfo.id + 1}`);
-
-        const response = await this.makeApiCall(keyInfo.key, messages, options);
-        
-        // Enregistrer le succès
-        this.apiManager.recordKeyUsage(keyInfo, true);
-        
-        return response;
-
-      } catch (error) {
-        lastError = error;
-        const currentKey = this.apiManager.getCurrentKey();
-        
-        console.error(`❌ Erreur avec la clé ${currentKey.id + 1}:`, error.message);
-
-        // Gestion des erreurs spécifiques
-        if (this.isQuotaError(error) || this.isRateLimitError(error)) {
-          console.warn(`🚫 Quota/Rate limit atteint pour la clé ${currentKey.id + 1}`);
-          this.apiManager.blockKey(currentKey, 60); // Bloquer 1 heure
-        } else if (this.isAuthError(error)) {
-          console.error(`🔐 Erreur d'authentification pour la clé ${currentKey.id + 1}`);
-          this.apiManager.blockKey(currentKey, 120); // Bloquer 2 heures
-        } else {
-          // Erreur temporaire, juste enregistrer
-          this.apiManager.recordKeyUsage(currentKey, false);
-          this.apiManager.rotateToNextKey();
-        }
-
-        // Attendre avant la prochaine tentative
-        if (attempt < maxRetries - 1) {
-          await this.delay(1000 * (attempt + 1)); // Délai progressif
-        }
-      }
-    }
-
-    throw new Error(`🚫 Échec après ${maxRetries} tentatives. Dernière erreur: ${lastError?.message}`);
-  }
-
-  // 🌐 Effectuer l'appel API réel
-  async makeApiCall(apiKey, messages, options) {
-    const requestBody = {
-      model: options.model || "llama-3.1-70b-versatile",
-      messages: messages,
-      temperature: options.temperature || 0.7,
-      max_tokens: options.max_tokens || 1000,
-      top_p: options.top_p || 1,
-      stream: false
+  // 🔍 Obtenir des informations détaillées
+  getDetailedStatus() {
+    return {
+      totalKeys: this.apiKeys.length,
+      availableKeys: this.getAvailableKeysCount(),
+      currentKeyIndex: this.currentKeyIndex + 1,
+      keyStatuses: this.getKeyStatistics()
     };
-
-    const response = await fetch(this.baseUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const error = new Error(errorData.error?.message || `HTTP ${response.status}`);
-      error.status = response.status;
-      error.response = errorData;
-      throw error;
-    }
-
-    return await response.json();
-  }
-
-  // 🔍 Identifier les erreurs de quota
-  isQuotaError(error) {
-    return error.status === 429 || 
-           error.message?.includes('quota') ||
-           error.message?.includes('limit exceeded');
-  }
-
-  // 🔍 Identifier les erreurs de rate limiting
-  isRateLimitError(error) {
-    return error.status === 429 ||
-           error.message?.includes('rate limit') ||
-           error.message?.includes('too many requests');
-  }
-
-  // 🔍 Identifier les erreurs d'authentification
-  isAuthError(error) {
-    return error.status === 401 || 
-           error.status === 403 ||
-           error.message?.includes('authorization') ||
-           error.message?.includes('invalid api key');
-  }
-
-  // ⏰ Fonction de délai
-  delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  // 📊 Obtenir les statistiques
-  getStatistics() {
-    return this.apiManager.getKeyStatistics();
-  }
-
-  // 🔄 Réinitialiser les clés
-  resetKeys() {
-    this.apiManager.resetAllKeys();
   }
 }
 
-export { GroqApiManager, GroqService };
+export default GroqApiManager;
