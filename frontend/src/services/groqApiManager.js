@@ -3,7 +3,7 @@
 // Fichier: src/services/groqApiManager.js
 // ===================================================================
 
-class GroqApiManager {
+class groqApiManager {
   constructor() {
     // 🔐 Configuration des 5 clés API Groq depuis les variables d'environnement
     this.apiKeys = [
@@ -33,7 +33,7 @@ class GroqApiManager {
     this.currentKeyIndex = 0;
     this.maxRetries = this.apiKeys.length;
     
-    console.log(`🔑 GroqApiManager initialisé avec ${this.apiKeys.length} clés API`);
+    console.log(`🔑 groqApiManager initialisé avec ${this.apiKeys.length} clés API`);
   }
 
   // 🎯 Obtenir la clé API active
@@ -183,4 +183,4 @@ class GroqApiManager {
   }
 }
 
-export default GroqApiManager;
+export default groqApiManager;
