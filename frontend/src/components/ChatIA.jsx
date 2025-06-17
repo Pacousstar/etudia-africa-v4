@@ -1,39 +1,39 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 {/* Onglet chat ÉtudIA */}
-const ChatIA = ({ 
-  student, 
-  apiUrl, 
-  documentContext = '', 
-  allDocuments = [],
-  chatHistory = [],
-  setChatHistory = () => {},
-  chatTokensUsed = 0,
-  setChatTokensUsed = () => {},
-  onStatsUpdate = () => {}
+const ChatIA = ({
+   etudiant,
+   urlApi,
+   contexteDocument = '',
+   tousDocuments = [],
+   historiqueChat = [],
+   setHistoriqueChat = () => {},
+   tokensUtilisesChat = 0,
+   setTokensUtilisesChat = () => {},
+   surMiseAJourStats = () => {}
 }) => {
-  const [messages, setMessages] = useState(chatHistory || []);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [conversationCount, setConversationCount] = useState(0);
-  const [totalTokens, setTotalTokens] = useState(0);
-  const [welcomeMessageSent, setWelcomeMessageSent] = useState(false);
-  const [learningProfile, setLearningProfile] = useState(null);
-  
-  // 🎯 ÉTATS RÉVOLUTIONNAIRES
-  const [chatMode, setChatMode] = useState('normal');
-  const [currentStep, setCurrentStep] = useState(1);
-  const [totalSteps, setTotalSteps] = useState(4);
-  const [isAudioMode, setIsAudioMode] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
-  // 🔧 CORRECTION 1: GESTION TOKENS CORRIGÉE
-  const [tokenUsage, setTokenUsage] = useState({ 
-    used_today: 0, 
-    remaining: 95000,
-    total_conversations: 0,
-    last_updated: Date.now()
-  });
+   const [messages, setMessages] = useState(historiqueChat || []);
+   const [messageEntree, setMessageEntree] = useState('');
+   const [estEnChargement, setEstEnChargement] = useState(false);
+   const [nombreConversations, setNombreConversations] = useState(0);
+   const [totalTokens, setTotalTokens] = useState(0);
+   const [messageBienvenueEnvoye, setMessageBienvenueEnvoye] = useState(false);
+   const [profilApprentissage, setProfilApprentissage] = useState(null);
+   
+   // 🎯 ÉTATS RÉVOLUTIONNAIRES
+   const [modeChat, setModeChat] = useState('normal');
+   const [etapeActuelle, setEtapeActuelle] = useState(1);
+   const [totalEtapes, setTotalEtapes] = useState(4);
+   const [estModeAudio, setEstModeAudio] = useState(false);
+   const [estModeNuit, setEstModeNuit] = useState(false);
+   
+   // 🔧 CORRECTION 1: GESTION TOKENS CORRIGÉE
+   const [utilisationTokens, setUtilisationTokens] = useState({
+      utilises_aujourdhui: 0,
+      restants: 95000,
+      total_conversations: 0,
+      derniere_mise_a_jour: Date.now()
+   });
   
   const [connectionStatus, setConnectionStatus] = useState('online');
   const [isRecording, setIsRecording] = useState(false);
