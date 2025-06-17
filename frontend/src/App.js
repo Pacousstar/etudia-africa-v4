@@ -447,48 +447,7 @@ const handleDocumentProcessed = (extractedText, documentData) => {
   }, 1500);
 };
 
-// 🗑️ FONCTION SUPPRESSION DOCUMENT - VERSION UNIQUE ET CORRIGÉE
-const handleDeleteDocument = async (documentId, documentName) => {
-  if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${documentName}" ?`)) {
-    return;
-  }
 
-  try {
-    const response = await fetch(`${API_URL}/api/documents/${documentId}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (response.ok) {
-      // Mettre à jour la liste locale ET le cache
-      const newDocuments = allDocuments.filter(doc => doc.id !== documentId);
-      setAllDocuments(newDocuments);
-      saveToStorage('allDocuments', newDocuments);
-      
-      // Si c'était le document sélectionné, sélectionner le suivant
-      if (selectedDocumentId === documentId) {
-        if (newDocuments.length > 0) {
-          setSelectedDocumentId(newDocuments[0].id);
-          setDocumentContext(newDocuments[0].texte_extrait);
-          saveToStorage('selectedDocumentId', newDocuments[0].id);
-          saveToStorage('documentContext', newDocuments[0].texte_extrait);
-        } else {
-          setSelectedDocumentId(null);
-          setDocumentContext('');
-          localStorage.removeItem('etudia_selectedDocumentId');
-          localStorage.removeItem('etudia_documentContext');
-        }
-      }
-
-      showTemporaryMessage(`🗑️ Document "${documentName}" supprimé avec succès !`, 'success');
-    } else {
-      showTemporaryMessage('❌ Erreur lors de la suppression', 'error');
-    }
-  } catch (error) {
-    console.error('Erreur suppression:', error);
-    showTemporaryMessage('❌ Erreur technique lors de la suppression', 'error');
-  }
-};
   
   // Données statiques
   const schools = [
