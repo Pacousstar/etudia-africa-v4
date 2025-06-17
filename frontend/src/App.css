@@ -49,21 +49,41 @@ body {
 }
 
 /* 🔶 BACKGROUND ORANGE DÉGRADÉ POUR TOUTE L'APP */
-
 .app {
   min-height: 100vh;
   background: linear-gradient(135deg, 
-    #FFF8E1 0%,     /* Crème très clair */
-    #FFE0B2 25%,    /* Orange très clair */
-    #FFCC80 50%,    /* Orange doux */
-    #FFB74D 75%,    /* Orange moyen */
-    #FFA726 100%    /* Orange vif */
+    #FFF8E1 0%,     
+    #FFE0B2 25%,    
+    #FFCC80 50%,    
+    #FFB74D 75%,    
+    #FFA726 100%    
   );
   background-attachment: fixed;
   background-size: 100% 100%;
   color: var(--text-dark);
   transition: all 0.3s ease;
   overflow-x: hidden;
+}
+
+/* Alternative plus subtile */
+.app-subtle {
+  background: linear-gradient(135deg, 
+    #FFFDE7 0%,     
+    #FFF8E1 30%,    
+    #FFE0B2 70%,    
+    #FFCC80 100%    
+  );
+}
+
+/* Mode sombre avec orange foncé */
+.dark-mode .app {
+  background: linear-gradient(135deg, 
+    #BF360C 0%,     
+    #D84315 25%,    
+    #E64A19 50%,    
+    #FF5722 75%,    
+    #FF7043 100%    
+  );
 }
 
 /* =================================================================
@@ -238,16 +258,16 @@ body {
 
 /* 🎯 COULEURS DÉFINITIVES ÉtudIA */
 .title-etud {
-  color: #FFA500 !important; /* Orange doré */
+  color: #FFA500 !important;
 }
 
 .title-ia {
-  color: #228B22 !important; /* Vert forêt */
+  color: #228B22 !important;
 }
 
 .title-version {
   font-size: 0.55em;
-  color: #F8F9FA !important; /* Blanc cassé */
+  color: #F8F9FA !important;
   vertical-align: super;
   text-shadow: 
     0 0 20px rgba(248, 249, 250, 0.9),
@@ -261,7 +281,6 @@ body {
 }
 
 /* 🌟 Sous-titre */
-/* 🔧 FIX POINT D'EXCLAMATION DESKTOP */
 .app-subtitle {
   font-size: clamp(1rem, 4vw, 1.4rem);
   color: rgba(255, 255, 255, 0.98);
@@ -273,15 +292,16 @@ body {
   animation: subtitleGlowWave 4s ease-in-out infinite alternate;
   line-height: 1.4;
   letter-spacing: 0.5px;
-  
-  /* 🎯 FIX DESKTOP - Empêcher la coupure du point d'exclamation */
   max-width: 100% !important;
   white-space: nowrap !important;
   text-align: center !important;
   word-spacing: normal !important;
-  
-  /* Si le texte est trop long, on réduit légèrement */
   font-size: clamp(1rem, 3.5vw, 1.3rem) !important;
+}
+
+@keyframes subtitleGlowWave {
+  0% { text-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 255, 255, 0.4); }
+  100% { text-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 255, 255, 0.8); }
 }
 
 /* Desktop spécifique */
@@ -291,7 +311,6 @@ body {
     white-space: nowrap !important;
     overflow: visible !important;
     text-overflow: clip !important;
-    /* Ajuste la taille si nécessaire pour que tout tienne */
     font-size: clamp(1.1rem, 3vw, 1.25rem) !important;
     line-height: 1.3 !important;
   }
@@ -353,96 +372,6 @@ body {
   display: none !important;
 }
 
-/* 📱 RESPONSIVE MOBILE PARFAIT */
-@media (max-width: 768px) {
-  .app-header.revolutionary {
-    min-height: 100vh !important;
-    padding: 1rem 0.5rem !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .header-content {
-    width: 100% !important;
-    padding: 0 0.5rem !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .logo-section {
-    width: 95% !important;
-    max-width: 400px !important;
-    padding: 2.5rem 2rem !important;
-    border-radius: 2rem !important;
-    gap: 1.25rem !important;
-    margin: 0 auto !important;
-  }
-
-  .app-title {
-    font-size: clamp(2.5rem, 12vw, 4rem) !important;
-    letter-spacing: -1px !important;
-    line-height: 1.1 !important;
-  }
-
-  .app-subtitle {
-    font-size: clamp(0.9rem, 5vw, 1.2rem) !important;
-    line-height: 1.3 !important;
-    max-width: 350px !important;
-  }
-
-  .made-in-ci {
-    padding: 0.6rem 1.25rem !important;
-    font-size: 0.85rem !important;
-    gap: 0.5rem !important;
-  }
-
-  .flag {
-    font-size: 1.1rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .app-header.revolutionary {
-    min-height: 100vh !important;
-    padding: 0.5rem !important;
-  }
-
-  .logo-section {
-    width: 90% !important;
-    padding: 2rem 1.5rem !important;
-    border-radius: 1.5rem !important;
-  }
-
-  .app-title {
-    font-size: clamp(2rem, 15vw, 3.5rem) !important;
-  }
-
-  .app-subtitle {
-    font-size: clamp(0.85rem, 6vw, 1.1rem) !important;
-    max-width: 300px !important;
-  }
-
-  .made-in-ci {
-    padding: 0.5rem 1rem !important;
-    font-size: 0.8rem !important;
-  }
-}
-
-@media (max-width: 360px) {
-  .logo-section {
-    padding: 1.5rem 1rem !important;
-  }
-
-  .app-title {
-    font-size: clamp(1.8rem, 18vw, 3rem) !important;
-  }
-}
-
-/* 🚨 FIX Z-INDEX MOBILE - AJOUTE CES RÈGLES À TON CSS HEADER */
-
 /* Fix pour que le header reste au-dessus de tout */
 .app-header.revolutionary {
   position: relative !important;
@@ -479,52 +408,6 @@ body {
   z-index: 50 !important;
   margin-top: 0 !important;
   padding-top: 2rem !important;
-}
-
-/* Force mobile - Header complet visible */
-@media (max-width: 768px) {
-  .app-header.revolutionary {
-    position: relative !important;
-    z-index: 200 !important;
-    min-height: 100vh !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin-bottom: 2rem !important;
-  }
-
-  .header-content {
-    position: relative !important;
-    z-index: 201 !important;
-    width: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .logo-section {
-    position: relative !important;
-    z-index: 202 !important;
-    transform: translateY(0) !important;
-    margin: 0 auto !important;
-  }
-
-  /* Force les autres éléments en dessous */
-  .tab-navigation,
-  .progress-container,
-  .main-content {
-    position: relative !important;
-    z-index: 10 !important;
-    margin-top: 1rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .app-header.revolutionary {
-    min-height: 90vh !important;
-    padding: 2rem 0.5rem !important;
-  }
 }
 
 /* =================================================================
@@ -669,6 +552,11 @@ body {
   animation: shimmer 2s infinite;
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
 .progress-steps {
   display: flex;
   justify-content: space-between;
@@ -810,7 +698,8 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1rem;
-  background: var(--gradient-content);
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px);
   border-radius: 2rem 2rem 0 0;
   min-height: 60vh;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
@@ -844,6 +733,8 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-bottom: 1rem;
+  color: #BF360C !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .main-subtitle {
@@ -894,9 +785,6 @@ body {
 /* =================================================================
    📝 FORMULAIRE D'INSCRIPTION AMÉLIORÉ
    ================================================================= */
-/* 🔶 FIX FORMULAIRE INSCRIPTION - COULEUR ORANGE RESTAURÉE */
-
-/* Formulaire inscription - Desktop et Mobile */
 .inscription-form {
   background: linear-gradient(135deg, #FF6B35, #FF8C00) !important;
   padding: 2.5rem;
@@ -908,6 +796,20 @@ body {
   max-width: 600px;
   animation: formSlideIn 0.6s ease-out;
   border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 165, 0, 0.2);
+}
+
+@keyframes formSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Effet pattern sur le formulaire */
@@ -996,6 +898,30 @@ body {
   box-shadow: 0 10px 30px rgba(76, 175, 80, 0.5);
 }
 
+.continue-button {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.continue-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #D97706, #B45309);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+.continue-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Mode sombre - formulaire */
 .dark-mode .inscription-form {
   background: linear-gradient(135deg, #D2691E, #FF6B35) !important;
@@ -1016,25 +942,6 @@ body {
   border-color: #FFF;
 }
 
-/* Responsive mobile */
-@media (max-width: 768px) {
-  .inscription-form {
-    background: linear-gradient(135deg, #FF6B35, #FF8C00) !important;
-    padding: 2rem !important;
-    margin: 1.5rem auto !important;
-    max-width: 95% !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .inscription-form {
-    background: linear-gradient(135deg, #FF6B35, #FF8C00) !important;
-    padding: 1.5rem !important;
-    margin: 1rem auto !important;
-    max-width: 90% !important;
-  }
-}
-
 /* =================================================================
    ⚡ SECTION CONNEXION RAPIDE
    ================================================================= */
@@ -1044,6 +951,9 @@ body {
   border-radius: 1.5rem;
   padding: 2rem;
   margin-bottom: 3rem;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 165, 0, 0.2);
 }
 
 .login-header {
@@ -1056,6 +966,7 @@ body {
   font-weight: 700;
   color: var(--accent-blue);
   margin-bottom: 0.5rem;
+  color: #D84315 !important;
 }
 
 .section-subtitle {
@@ -1132,6 +1043,9 @@ body {
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-light);
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 165, 0, 0.2);
 }
 
 .feature-card::before {
@@ -1204,6 +1118,9 @@ body {
   border-radius: 1.5rem;
   padding: 2.5rem;
   margin-bottom: 3rem;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 165, 0, 0.2);
 }
 
 .llama-improvements-section .section-title {
@@ -1289,6 +1206,9 @@ body {
   border-radius: 1.5rem;
   padding: 2.5rem;
   margin-bottom: 3rem;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 165, 0, 0.2);
 }
 
 .testimonials-section .section-title {
@@ -1312,6 +1232,9 @@ body {
   transition: all 0.3s ease;
   position: relative;
   box-shadow: var(--shadow-light);
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 165, 0, 0.2);
 }
 
 .testimonial::before {
@@ -1468,45 +1391,80 @@ body {
   }
 }
 
-/* Mobile Landscape */
+/* Force mobile - Header complet visible */
 @media (max-width: 768px) {
-  .mobile-menu-toggle {
-    display: block;
-  }
-  
-  .header-content {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: var(--gradient-cosmic);
-    padding: 2rem;
-    border-radius: 0 0 1rem 1rem;
-    box-shadow: var(--shadow-medium);
-    z-index: 999;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-  
-  .header-content.mobile-open {
-    display: grid;
-  }
-  
   .app-header.revolutionary {
-    padding-bottom: 0;
+    position: relative !important;
+    z-index: 200 !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 2rem !important;
+    background: linear-gradient(135deg, 
+      #1e3c72 0%, 
+      #2a5298 25%, 
+      #667eea 50%, 
+      #764ba2 75%, 
+      #f093fb 100%
+    ) !important;
+    background-size: 300% 300% !important;
+    animation: headerGradientFlow 12s ease infinite !important;
   }
-  
+
+  .header-content {
+    position: relative !important;
+    z-index: 201 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
   .logo-section {
-    text-align: center;
+    position: relative !important;
+    z-index: 202 !important;
+    transform: translateY(0) !important;
+    margin: 0 auto !important;
+    width: 95% !important;
+    max-width: 400px !important;
+    padding: 2.5rem 2rem !important;
+    border-radius: 2rem !important;
+    gap: 1.25rem !important;
+    margin: 0 auto !important;
   }
-  
+
   .app-title {
-    font-size: 2.5rem;
+    font-size: clamp(2.5rem, 12vw, 4rem) !important;
+    letter-spacing: -1px !important;
+    line-height: 1.1 !important;
   }
-  
-  .stats-section {
-    grid-template-columns: repeat(2, 1fr);
+
+  .app-subtitle {
+    font-size: clamp(0.9rem, 5vw, 1.2rem) !important;
+    line-height: 1.3 !important;
+    max-width: 350px !important;
+    white-space: normal !important;
+  }
+
+  .made-in-ci {
+    padding: 0.6rem 1.25rem !important;
+    font-size: 0.85rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .flag {
+    font-size: 1.1rem !important;
+  }
+
+  /* Force les autres éléments en dessous */
+  .tab-navigation,
+  .progress-container,
+  .main-content {
+    position: relative !important;
+    z-index: 10 !important;
+    margin-top: 1rem !important;
   }
   
   .tab-navigation {
@@ -1564,10 +1522,42 @@ body {
     flex-direction: column;
     gap: 0.5rem;
   }
+
+  /* Responsive mobile */
+  .inscription-form {
+    background: linear-gradient(135deg, #FF6B35, #FF8C00) !important;
+    padding: 2rem !important;
+    margin: 1.5rem auto !important;
+    max-width: 95% !important;
+  }
 }
 
-/* Mobile Portrait */
 @media (max-width: 480px) {
+  .app-header.revolutionary {
+    min-height: 90vh !important;
+    padding: 2rem 0.5rem !important;
+  }
+
+  .logo-section {
+    width: 90% !important;
+    padding: 2rem 1.5rem !important;
+    border-radius: 1.5rem !important;
+  }
+
+  .app-title {
+    font-size: clamp(2rem, 15vw, 3.5rem) !important;
+  }
+
+  .app-subtitle {
+    font-size: clamp(0.85rem, 6vw, 1.1rem) !important;
+    max-width: 300px !important;
+  }
+
+  .made-in-ci {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.8rem !important;
+  }
+
   .app {
     font-size: 14px;
   }
@@ -1578,9 +1568,10 @@ body {
   }
   
   .inscription-form {
-    padding: 1.5rem;
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
+    padding: 1.5rem !important;
+    margin: 1rem auto !important;
+    max-width: 90% !important;
+    background: linear-gradient(135deg, #FF6B35, #FF8C00) !important;
   }
   
   .login-section {
@@ -1605,10 +1596,6 @@ body {
     padding: 1.5rem;
     margin-left: 0.5rem;
     margin-right: 0.5rem;
-  }
-  
-  .app-title {
-    font-size: 2rem;
   }
   
   .tab-button {
@@ -1639,8 +1626,15 @@ body {
   }
 }
 
-/* Ultra Mobile */
 @media (max-width: 360px) {
+  .logo-section {
+    padding: 1.5rem 1rem !important;
+  }
+
+  .app-title {
+    font-size: clamp(1.8rem, 18vw, 3rem) !important;
+  }
+
   .stats-section {
     grid-template-columns: 1fr;
   }
@@ -1763,208 +1757,4 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--secondary-green);
-}
-
-/* 🚨 FIX MOBILE URGENT - AJOUTE À LA FIN DE TON APP.CSS */
-
-/* Force l'affichage sur mobile */
-@media (max-width: 768px) {
-  .app-header.revolutionary {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-height: 60vh !important;
-    padding: 1rem !important;
-    background: linear-gradient(135deg, 
-      #1e3c72 0%, 
-      #2a5298 25%, 
-      #667eea 50%, 
-      #764ba2 75%, 
-      #f093fb 100%
-    ) !important;
-    background-size: 300% 300% !important;
-    animation: headerGradientFlow 12s ease infinite !important;
-  }
-
-  .header-content {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 1rem !important;
-  }
-
-  .logo-section {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    width: 95% !important;
-    max-width: 350px !important;
-    padding: 2rem 1.5rem !important;
-    background: rgba(255, 255, 255, 0.15) !important;
-    backdrop-filter: blur(20px) !important;
-    border: 2px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 1.5rem !important;
-    gap: 1rem !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
-  }
-
-  .app-title {
-    font-size: 2.5rem !important;
-    font-weight: 900 !important;
-    margin: 0 !important;
-    text-align: center !important;
-    line-height: 1.1 !important;
-  }
-
-  .title-etud {
-    color: #FFA500 !important;
-  }
-
-  .title-ia {
-    color: #228B22 !important;
-  }
-
-  .title-version {
-    color: #F8F9FA !important;
-    font-size: 0.5em !important;
-  }
-
-  .app-subtitle {
-    font-size: 1rem !important;
-    color: rgba(255, 255, 255, 0.95) !important;
-    text-align: center !important;
-    margin: 0 !important;
-    line-height: 1.3 !important;
-    max-width: 300px !important;
-  }
-
-  .made-in-ci {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 0.5rem !important;
-    font-size: 0.85rem !important;
-    color: rgba(255, 255, 255, 0.9) !important;
-    background: rgba(255, 255, 255, 0.1) !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 20px !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  }
-
-  .flag {
-    font-size: 1rem !important;
-  }
-
-  /* Force masquer les autres éléments */
-  .mobile-menu-toggle,
-  .user-controls,
-  .stats-section,
-  .backend-status {
-    display: none !important;
-  }
-}
-
-/* Mobile très petit */
-@media (max-width: 480px) {
-  .app-header.revolutionary {
-    min-height: 50vh !important;
-    padding: 0.5rem !important;
-  }
-
-  .logo-section {
-    width: 90% !important;
-    padding: 1.5rem 1rem !important;
-  }
-
-  .app-title {
-    font-size: 2rem !important;
-  }
-
-  .app-subtitle {
-    font-size: 0.9rem !important;
-  }
-
-  .made-in-ci {
-    font-size: 0.75rem !important;
-    padding: 0.4rem 0.8rem !important;
-  }
-
-/* Alternative plus subtile si tu préfères */
-.app-subtle {
-  background: linear-gradient(135deg, 
-    #FFFDE7 0%,     /* Jaune très pâle */
-    #FFF8E1 30%,    /* Crème */
-    #FFE0B2 70%,    /* Orange très clair */
-    #FFCC80 100%    /* Orange doux */
-  );
-}
-
-/* Mode sombre avec orange foncé */
-.dark-mode .app {
-  background: linear-gradient(135deg, 
-    #BF360C 0%,     /* Orange très foncé */
-    #D84315 25%,    /* Orange foncé */
-    #E64A19 50%,    /* Orange moyen foncé */
-    #FF5722 75%,    /* Orange */
-    #FF7043 100%    /* Orange clair */
-  );
-}
-
-/* Ajustements pour les contenus blancs */
-.main-content.enhanced {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(10px);
-  border-radius: 2rem 2rem 0 0;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.inscription-form,
-.login-section,
-.features-grid .feature-card,
-.testimonials-section .testimonial {
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 165, 0, 0.2);
-}
-
-/* Couleurs plus foncées pour le contraste */
-.main-title {
-  color: #BF360C !important;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.section-title {
-  color: #D84315 !important;
-}
-
-.continue-button {
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #F59E0B, #D97706);
-  color: white;
-  border: none;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-}
-
-.continue-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #D97706, #B45309);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
-}
-
-.continue-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 }
