@@ -286,4 +286,59 @@ const GroqKeyMonitor = ({ groqService }) => {
 
             {/* Statistiques de la clé */}
             <div style={{ fontSize: '13px', lineHeight: '1.4' }}>
-              <div style={{ display: 'flex', justifyContent:
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span>📊 Requêtes: <strong>{key.requestCount}</strong></span>
+                <span>❌ Erreurs: <strong>{key.errorCount}</strong></span>
+              </div>
+              
+              <div style={{ marginBottom: '4px' }}>
+                <span>🕐 Dernière utilisation: <strong>{formatDate(key.lastUsed)}</strong></span>
+              </div>
+              
+              {key.isBlocked && key.blockedUntil && (
+                <div style={{ 
+                  color: '#f44336', 
+                  fontWeight: 'bold',
+                  marginTop: '6px',
+                  padding: '6px',
+                  background: 'rgba(244, 67, 54, 0.1)',
+                  borderRadius: '4px'
+                }}>
+                  🚫 Bloquée jusqu'à: {formatDateLong(key.blockedUntil)}
+                  <br />
+                  ⏰ Temps restant: {getTimeUntilUnblock(key.blockedUntil)}
+                </div>
+              )}
+              
+              {!key.isBlocked && key.errorCount > 0 && (
+                <div style={{ 
+                  color: '#ff9800', 
+                  fontSize: '12px',
+                  marginTop: '4px'
+                }}>
+                  ⚠️ Attention: {key.errorCount} erreur(s) récente(s)
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Pied de page avec informations */}
+      <div style={{
+        marginTop: '15px',
+        padding: '10px',
+        background: '#f0f0f0',
+        borderRadius: '6px',
+        fontSize: '12px',
+        color: '#666'
+      }}>
+        <div>💡 <strong>Info:</strong> Les clés se débloquent automatiquement</div>
+        <div>🔄 Rotation automatique en cas d'erreur</div>
+        <div>📈 Mise à jour toutes les 10 secondes</div>
+      </div>
+    </div>
+  );
+};
+
+export default GroqKeyMonitor;
