@@ -2006,9 +2006,9 @@ body {
   background: var(--secondary-green);
 }
 
-// ===================================================================
-// 📱 STYLES CSS ADDITIONNELS POUR LES NOUVEAUX COMPOSANTS
-// ===================================================================
+/* ===================================================================
+ 📱 STYLES CSS ADDITIONNELS POUR LES NOUVEAUX COMPOSANTS
+   =================================================================== */
 
 .api-status-container {
   margin-top: 1rem;
