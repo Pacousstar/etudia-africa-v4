@@ -59,396 +59,6 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-// 🔧 CORRECTION PERSISTANCE DONNÉES - Ajouts dans App.js
-
-// 📍 AJOUTEZ CES FONCTIONS APRÈS LES useState (ligne ~50)
-
-// 💾 FONCTIONS DE PERSISTANCE SÉCURISÉES
-const saveToStorage = (key, data) => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const jsonData = JSON.stringify({
-        data: data,
-        timestamp: Date.now(),
-        version: '4.0.0'
-      });
-      localStorage.setItem(`etudia_${key}`, jsonData);
-      console.log(`💾 Sauvegarde ${key}:`, data);
-    }
-  } catch (error) {
-    console.warn('⚠️ Erreur sauvegarde localStorage:', error);
-  }
-};
-
-const loadFromStorage = (key) => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const stored = localStorage.getItem(`etudia_${key}`);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Vérifier que les données ne sont pas trop anciennes (7 jours max)
-        const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 jours
-        if (Date.now() - parsed.timestamp < maxAge) {
-          console.log(`📂 Chargement ${key}:`, parsed.data);
-          return parsed.data;
-        } else {
-          // Supprimer données expirées
-          localStorage.removeItem(`etudia_${key}`);
-          console.log(`🗑️ Données ${key} expirées et supprimées`);
-        }
-      }
-    }
-  } catch (error) {
-    console.warn('⚠️ Erreur chargement localStorage:', error);
-  }
-  return null;
-};
-
-const clearAllStorage = () => {
-  try {
-    const keys = [
-      'student', 'currentStep', 'activeTab', 'documentContext', 
-      'allDocuments', 'selectedDocumentId', 'userStats', 'formData'
-    ];
-    keys.forEach(key => {
-      localStorage.removeItem(`etudia_${key}`);
-    });
-    console.log('🗑️ Tout le storage ÉtudIA vidé');
-  } catch (error) {
-    console.warn('⚠️ Erreur nettoyage storage:', error);
-  }
-};
-
-// 🔄 USEEFFECT POUR RESTAURER LES DONNÉES AU DÉMARRAGE
-useEffect(() => {
-  console.log('🚀 Chargement données sauvegardées...');
-  
-  // Vérifier si on est dans le navigateur
-  if (typeof window === 'undefined') return;
-  
-  try {
-    // Charger toutes les données sauvegardées
-    const savedStudent = loadFromStorage('student');
-    const savedCurrentStep = loadFromStorage('currentStep');
-    const savedActiveTab = loadFromStorage('activeTab');
-    const savedDocumentContext = loadFromStorage('documentContext');
-    const savedAllDocuments = loadFromStorage('allDocuments');
-    const savedSelectedDocumentId = loadFromStorage('selectedDocumentId');
-    const savedUserStats = loadFromStorage('userStats');
-    const savedFormData = loadFromStorage('formData');
-
-    // Restaurer l'élève si connecté
-    if (savedStudent && savedStudent.id) {
-      console.log('✅ Élève trouvé en localStorage:', savedStudent.nom);
-      setStudent(savedStudent);
-      
-      // Restaurer l'étape (minimum 2 si connecté)
-      const stepToRestore = savedCurrentStep || 2;
-      setCurrentStep(stepToRestore);
-      
-      // Restaurer l'onglet actif (upload par défaut si connecté)
-      const tabToRestore = savedActiveTab || (stepToRestore >= 3 ? 'chat' : 'upload');
-      setActiveTab(tabToRestore);
-      
-      // Restaurer le contexte document
-      if (savedDocumentContext) {
-        setDocumentContext(savedDocumentContext);
-        console.log('📄 Contexte document restauré');
-      }
-      
-      // Restaurer la liste des documents
-      if (savedAllDocuments && Array.isArray(savedAllDocuments)) {
-        setAllDocuments(savedAllDocuments);
-        console.log(`📚 ${savedAllDocuments.length} documents restaurés`);
-      }
-      
-      // Restaurer le document sélectionné
-      if (savedSelectedDocumentId) {
-        setSelectedDocumentId(savedSelectedDocumentId);
-      }
-      
-      // Restaurer les stats utilisateur
-      if (savedUserStats) {
-        setUserStats(savedUserStats);
-      } else {
-        // Charger stats depuis serveur
-        updateUserStats(savedStudent.id);
-      }
-      
-      // Recharger documents depuis serveur si cache vide
-      if (!savedAllDocuments || savedAllDocuments.length === 0) {
-        loadUserDocuments(savedStudent.id);
-      }
-      
-      showTemporaryMessage(
-        `👋 Re-bienvenue ${savedStudent.nom.split(' ')[0]} ! Session restaurée !`, 
-        'success'
-      );
-    } else {
-      console.log('📝 Aucune session sauvegardée');
-      
-      // Restaurer le formulaire d'inscription si rempli
-      if (savedFormData) {
-        setFormData(savedFormData);
-        console.log('📝 Formulaire d\'inscription restauré');
-      }
-    }
-  } catch (error) {
-    console.error('❌ Erreur restauration données:', error);
-    // En cas d'erreur, nettoyer le storage corrompu
-    clearAllStorage();
-  }
-}, []); // Se déclenche une seule fois au montage
-
-// 🔄 SAUVEGARDER À CHAQUE CHANGEMENT D'ÉTAT
-useEffect(() => {
-  if (student) {
-    saveToStorage('student', student);
-  }
-}, [student]);
-
-useEffect(() => {
-  if (currentStep) {
-    saveToStorage('currentStep', currentStep);
-  }
-}, [currentStep]);
-
-useEffect(() => {
-  if (activeTab) {
-    saveToStorage('activeTab', activeTab);
-  }
-}, [activeTab]);
-
-useEffect(() => {
-  if (documentContext) {
-    saveToStorage('documentContext', documentContext);
-  }
-}, [documentContext]);
-
-useEffect(() => {
-  if (allDocuments.length > 0) {
-    saveToStorage('allDocuments', allDocuments);
-  }
-}, [allDocuments]);
-
-useEffect(() => {
-  if (selectedDocumentId) {
-    saveToStorage('selectedDocumentId', selectedDocumentId);
-  }
-}, [selectedDocumentId]);
-
-useEffect(() => {
-  if (userStats) {
-    saveToStorage('userStats', userStats);
-  }
-}, [userStats]);
-
-useEffect(() => {
-  // Sauvegarder formulaire seulement si partiellement rempli
-  if (formData.name || formData.email) {
-    saveToStorage('formData', formData);
-  }
-}, [formData]);
-
-// 🔧 CORRECTION FONCTION LOGOUT AVEC NETTOYAGE COMPLET
-const handleLogout = () => {
-  console.log('👋 Déconnexion en cours...');
-  
-  // Demander confirmation
-  if (!window.confirm('🚪 Êtes-vous sûr de vouloir vous déconnecter ?')) {
-    return;
-  }
-  
-  // Nettoyer les états React
-  setStudent(null);
-  setCurrentStep(1);
-  setActiveTab('inscription');
-  setDocumentContext('');
-  setAllDocuments([]);
-  setSelectedDocumentId(null);
-  setUserStats({ conversations: 0, documents: 0, tokens_used: 0, level: 1 });
-  setFormData({
-    name: '',
-    email: '',
-    class_level: '',
-    school: ''
-  });
-  
-  // Nettoyer complètement le localStorage
-  clearAllStorage();
-  
-  // Message de confirmation
-  showTemporaryMessage('👋 Déconnexion réussie ! À bientôt sur ÉtudIA !', 'info');
-};
-
-// 🔧 CORRECTION FONCTION LOGIN AVEC SAUVEGARDE IMMÉDIATE
-const handleLogin = async (email) => {
-  if (!email?.trim()) {
-    setMessage({ type: 'error', text: 'Veuillez saisir votre email' });
-    return;
-  }
-
-  try {
-    console.log('🚀 Tentative connexion...', email);
-    
-    const response = await fetch(`${API_URL}/api/students/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim() }),
-    });
-
-    const responseText = await response.text();
-    if (!responseText.trim()) {
-      throw new Error('Réponse serveur vide');
-    }
-    
-    const data = JSON.parse(responseText);
-
-    if (response.ok) {
-      // Sauvegarder IMMÉDIATEMENT après connexion réussie
-      const studentData = data.student;
-      
-      setStudent(studentData);
-      setMessage({ type: 'success', text: data.message });
-      setCurrentStep(2);
-      setActiveTab('upload');
-      setBackendStatus('online');
-      
-      // Sauvegarde explicite immédiate
-      saveToStorage('student', studentData);
-      saveToStorage('currentStep', 2);
-      saveToStorage('activeTab', 'upload');
-      
-      // Charger les données utilisateur
-      loadUserDocuments(studentData.id);
-      updateUserStats(studentData.id);
-      
-      showTemporaryMessage(`🎉 Connexion réussie ! Bonjour ${studentData.nom.split(' ')[0]} !`);
-    } else {
-      if (response.status === 404) {
-        setMessage({ 
-          type: 'error', 
-          text: '🔍 Email non trouvé. Inscrivez-vous d\'abord avec le formulaire ci-dessus.' 
-        });
-      } else {
-        setMessage({ type: 'error', text: data.error || data.message });
-      }
-    }
-  } catch (error) {
-    console.error('💥 Erreur connexion:', error);
-    setMessage({ 
-      type: 'error', 
-      text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
-    });
-  }
-};
-
-// 🔧 CORRECTION FONCTION INSCRIPTION AVEC SAUVEGARDE
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setMessage({ type: '', text: '' });
-
-  if (!formData.name.trim() || !formData.email.trim() || !formData.class_level) {
-    setMessage({ type: 'error', text: 'Veuillez remplir tous les champs obligatoires' });
-    setIsSubmitting(false);
-    return;
-  }
-
-  try {
-    console.log('🚀 Tentative inscription...', formData);
-    
-    const response = await fetch(`${API_URL}/api/students`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    });
-    
-    const responseText = await response.text();
-    if (!responseText.trim()) {
-      throw new Error('Réponse serveur vide');
-    }
-    
-    const data = JSON.parse(responseText);
-
-    if (response.ok) {
-      // Sauvegarder IMMÉDIATEMENT après inscription réussie
-      const studentData = data.student;
-      
-      setStudent(studentData);
-      setMessage({ type: 'success', text: data.message });
-      setCurrentStep(2);
-      setBackendStatus('online');
-      
-      // Sauvegarde explicite immédiate
-      saveToStorage('student', studentData);
-      saveToStorage('currentStep', 2);
-      
-      // Nettoyer le formulaire du cache
-      localStorage.removeItem('etudia_formData');
-      
-      showTemporaryMessage(`🎉 Bienvenue ${studentData.nom.split(' ')[0]} ! Inscription réussie !`);
-      
-      setTimeout(() => {
-        setActiveTab('upload');
-        saveToStorage('activeTab', 'upload');
-      }, 2000);
-    } else {
-      if (data.error === 'EMAIL_EXISTS') {
-        setMessage({ 
-          type: 'error', 
-          text: '📧 Cet email est déjà inscrit ! Utilisez la connexion rapide ci-dessous.' 
-        });
-      } else {
-        setMessage({ 
-          type: 'error', 
-          text: data.message || data.error || `Erreur serveur: ${response.status}`
-        });
-      }
-    }
-  } catch (error) {
-    console.error('💥 Erreur inscription:', error);
-    setMessage({ 
-      type: 'error', 
-      text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
-    });
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-// 🔧 CORRECTION FONCTION DOCUMENT PROCESSÉ AVEC SAUVEGARDE
-const handleDocumentProcessed = (extractedText, documentData) => {
-  setDocumentContext(extractedText);
-  setCurrentStep(3);
-  
-  // Ajouter le nouveau document à la liste
-  if (documentData) {
-    const newDocuments = [documentData, ...allDocuments];
-    setAllDocuments(newDocuments);
-    setSelectedDocumentId(documentData.id);
-    
-    // Sauvegarder immédiatement toutes les données
-    saveToStorage('documentContext', extractedText);
-    saveToStorage('currentStep', 3);
-    saveToStorage('allDocuments', newDocuments);
-    saveToStorage('selectedDocumentId', documentData.id);
-  }
-  
-  // Mettre à jour les statistiques utilisateur
-  if (student?.id) {
-    updateUserStats(student.id);
-  }
-  
-  showTemporaryMessage('📄 Document analysé avec ÉtudIA ! Passons au chat IA !');
-  setTimeout(() => {
-    setActiveTab('chat');
-    saveToStorage('activeTab', 'chat');
-  }, 1500);
-};
-
-
-  
   // Données statiques
   const schools = [
     'Lycée Classique d\'Abidjan',
@@ -467,6 +77,193 @@ const handleDocumentProcessed = (extractedText, documentData) => {
     '6ème', '5ème', '4ème', '3ème',
     'Seconde', 'Première', 'Terminale'
   ];
+
+  // 💾 FONCTIONS DE PERSISTANCE SÉCURISÉES
+  const saveToStorage = (key, data) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const jsonData = JSON.stringify({
+          data: data,
+          timestamp: Date.now(),
+          version: '4.0.0'
+        });
+        localStorage.setItem(`etudia_${key}`, jsonData);
+        console.log(`💾 Sauvegarde ${key}:`, data);
+      }
+    } catch (error) {
+      console.warn('⚠️ Erreur sauvegarde localStorage:', error);
+    }
+  };
+
+  const loadFromStorage = (key) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = localStorage.getItem(`etudia_${key}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          // Vérifier que les données ne sont pas trop anciennes (7 jours max)
+          const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 jours
+          if (Date.now() - parsed.timestamp < maxAge) {
+            console.log(`📂 Chargement ${key}:`, parsed.data);
+            return parsed.data;
+          } else {
+            // Supprimer données expirées
+            localStorage.removeItem(`etudia_${key}`);
+            console.log(`🗑️ Données ${key} expirées et supprimées`);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Erreur chargement localStorage:', error);
+    }
+    return null;
+  };
+
+  const clearAllStorage = () => {
+    try {
+      const keys = [
+        'student', 'currentStep', 'activeTab', 'documentContext', 
+        'allDocuments', 'selectedDocumentId', 'userStats', 'formData'
+      ];
+      keys.forEach(key => {
+        localStorage.removeItem(`etudia_${key}`);
+      });
+      console.log('🗑️ Tout le storage ÉtudIA vidé');
+    } catch (error) {
+      console.warn('⚠️ Erreur nettoyage storage:', error);
+    }
+  };
+
+  // 🔄 USEEFFECT POUR RESTAURER LES DONNÉES AU DÉMARRAGE
+  useEffect(() => {
+    console.log('🚀 Chargement données sauvegardées...');
+    
+    // Vérifier si on est dans le navigateur
+    if (typeof window === 'undefined') return;
+    
+    try {
+      // Charger toutes les données sauvegardées
+      const savedStudent = loadFromStorage('student');
+      const savedCurrentStep = loadFromStorage('currentStep');
+      const savedActiveTab = loadFromStorage('activeTab');
+      const savedDocumentContext = loadFromStorage('documentContext');
+      const savedAllDocuments = loadFromStorage('allDocuments');
+      const savedSelectedDocumentId = loadFromStorage('selectedDocumentId');
+      const savedUserStats = loadFromStorage('userStats');
+      const savedFormData = loadFromStorage('formData');
+
+      // Restaurer l'élève si connecté
+      if (savedStudent && savedStudent.id) {
+        console.log('✅ Élève trouvé en localStorage:', savedStudent.nom);
+        setStudent(savedStudent);
+        
+        // Restaurer l'étape (minimum 2 si connecté)
+        const stepToRestore = savedCurrentStep || 2;
+        setCurrentStep(stepToRestore);
+        
+        // Restaurer l'onglet actif (upload par défaut si connecté)
+        const tabToRestore = savedActiveTab || (stepToRestore >= 3 ? 'chat' : 'upload');
+        setActiveTab(tabToRestore);
+        
+        // Restaurer le contexte document
+        if (savedDocumentContext) {
+          setDocumentContext(savedDocumentContext);
+          console.log('📄 Contexte document restauré');
+        }
+        
+        // Restaurer la liste des documents
+        if (savedAllDocuments && Array.isArray(savedAllDocuments)) {
+          setAllDocuments(savedAllDocuments);
+          console.log(`📚 ${savedAllDocuments.length} documents restaurés`);
+        }
+        
+        // Restaurer le document sélectionné
+        if (savedSelectedDocumentId) {
+          setSelectedDocumentId(savedSelectedDocumentId);
+        }
+        
+        // Restaurer les stats utilisateur
+        if (savedUserStats) {
+          setUserStats(savedUserStats);
+        } else {
+          // Charger stats depuis serveur
+          updateUserStats(savedStudent.id);
+        }
+        
+        // Recharger documents depuis serveur si cache vide
+        if (!savedAllDocuments || savedAllDocuments.length === 0) {
+          loadUserDocuments(savedStudent.id);
+        }
+        
+        showTemporaryMessage(
+          `👋 Re-bienvenue ${savedStudent.nom.split(' ')[0]} ! Session restaurée !`, 
+          'success'
+        );
+      } else {
+        console.log('📝 Aucune session sauvegardée');
+        
+        // Restaurer le formulaire d'inscription si rempli
+        if (savedFormData) {
+          setFormData(savedFormData);
+          console.log('📝 Formulaire d\'inscription restauré');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erreur restauration données:', error);
+      // En cas d'erreur, nettoyer le storage corrompu
+      clearAllStorage();
+    }
+  }, []); // Se déclenche une seule fois au montage
+
+  // 🔄 SAUVEGARDER À CHAQUE CHANGEMENT D'ÉTAT
+  useEffect(() => {
+    if (student) {
+      saveToStorage('student', student);
+    }
+  }, [student]);
+
+  useEffect(() => {
+    if (currentStep) {
+      saveToStorage('currentStep', currentStep);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    if (activeTab) {
+      saveToStorage('activeTab', activeTab);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (documentContext) {
+      saveToStorage('documentContext', documentContext);
+    }
+  }, [documentContext]);
+
+  useEffect(() => {
+    if (allDocuments.length > 0) {
+      saveToStorage('allDocuments', allDocuments);
+    }
+  }, [allDocuments]);
+
+  useEffect(() => {
+    if (selectedDocumentId) {
+      saveToStorage('selectedDocumentId', selectedDocumentId);
+    }
+  }, [selectedDocumentId]);
+
+  useEffect(() => {
+    if (userStats) {
+      saveToStorage('userStats', userStats);
+    }
+  }, [userStats]);
+
+  useEffect(() => {
+    // Sauvegarder formulaire seulement si partiellement rempli
+    if (formData.name || formData.email) {
+      saveToStorage('formData', formData);
+    }
+  }, [formData]);
 
   // 🔧 INJECTION STYLES CSS POUR FORMULAIRE CENTRÉ + COMPTEURS ORANGE
   useEffect(() => {
@@ -899,7 +696,7 @@ const handleDocumentProcessed = (extractedText, documentData) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-    // 📊 FONCTION MISE À JOUR STATISTIQUES UTILISATEUR
+  // 📊 FONCTION MISE À JOUR STATISTIQUES UTILISATEUR
   const updateUserStats = async (userId) => {
     try {
       const response = await fetch(`${API_URL}/api/student/profile/${userId}`);
@@ -919,8 +716,16 @@ const handleDocumentProcessed = (extractedText, documentData) => {
     }
   };
 
-  // 🔧 CORRECTION: Fonction déconnexion avec bon message
+  // 🔧 CORRECTION FONCTION LOGOUT AVEC NETTOYAGE COMPLET
   const handleLogout = () => {
+    console.log('👋 Déconnexion en cours...');
+    
+    // Demander confirmation
+    if (!window.confirm('🚪 Êtes-vous sûr de vouloir vous déconnecter ?')) {
+      return;
+    }
+    
+    // Nettoyer les états React
     setStudent(null);
     setCurrentStep(1);
     setActiveTab('inscription');
@@ -934,8 +739,178 @@ const handleDocumentProcessed = (extractedText, documentData) => {
       class_level: '',
       school: ''
     });
-    // 🔧 CORRECTION: Message approprié pour déconnexion
+    
+    // Nettoyer complètement le localStorage
+    clearAllStorage();
+    
+    // Message de confirmation
     showTemporaryMessage('👋 Déconnexion réussie ! À bientôt sur ÉtudIA !', 'info');
+  };
+
+  // 🔧 CORRECTION FONCTION LOGIN AVEC SAUVEGARDE IMMÉDIATE
+  const handleLogin = async (email) => {
+    if (!email?.trim()) {
+      setMessage({ type: 'error', text: 'Veuillez saisir votre email' });
+      return;
+    }
+
+    try {
+      console.log('🚀 Tentative connexion...', email);
+      
+      const response = await fetch(`${API_URL}/api/students/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const responseText = await response.text();
+      if (!responseText.trim()) {
+        throw new Error('Réponse serveur vide');
+      }
+      
+      const data = JSON.parse(responseText);
+
+      if (response.ok) {
+        // Sauvegarder IMMÉDIATEMENT après connexion réussie
+        const studentData = data.student;
+        
+        setStudent(studentData);
+        setMessage({ type: 'success', text: data.message });
+        setCurrentStep(2);
+        setActiveTab('upload');
+        setBackendStatus('online');
+        
+        // Sauvegarde explicite immédiate
+        saveToStorage('student', studentData);
+        saveToStorage('currentStep', 2);
+        saveToStorage('activeTab', 'upload');
+        
+        // Charger les données utilisateur
+        loadUserDocuments(studentData.id);
+        updateUserStats(studentData.id);
+        
+        showTemporaryMessage(`🎉 Connexion réussie ! Bonjour ${studentData.nom.split(' ')[0]} !`);
+      } else {
+        if (response.status === 404) {
+          setMessage({ 
+            type: 'error', 
+            text: '🔍 Email non trouvé. Inscrivez-vous d\'abord avec le formulaire ci-dessus.' 
+          });
+        } else {
+          setMessage({ type: 'error', text: data.error || data.message });
+        }
+      }
+    } catch (error) {
+      console.error('💥 Erreur connexion:', error);
+      setMessage({ 
+        type: 'error', 
+        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
+      });
+    }
+  };
+
+  // 🔧 CORRECTION FONCTION INSCRIPTION AVEC SAUVEGARDE
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setMessage({ type: '', text: '' });
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.class_level) {
+      setMessage({ type: 'error', text: 'Veuillez remplir tous les champs obligatoires' });
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      console.log('🚀 Tentative inscription...', formData);
+      
+      const response = await fetch(`${API_URL}/api/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      
+      const responseText = await response.text();
+      if (!responseText.trim()) {
+        throw new Error('Réponse serveur vide');
+      }
+      
+      const data = JSON.parse(responseText);
+
+      if (response.ok) {
+        // Sauvegarder IMMÉDIATEMENT après inscription réussie
+        const studentData = data.student;
+        
+        setStudent(studentData);
+        setMessage({ type: 'success', text: data.message });
+        setCurrentStep(2);
+        setBackendStatus('online');
+        
+        // Sauvegarde explicite immédiate
+        saveToStorage('student', studentData);
+        saveToStorage('currentStep', 2);
+        
+        // Nettoyer le formulaire du cache
+        localStorage.removeItem('etudia_formData');
+        
+        showTemporaryMessage(`🎉 Bienvenue ${studentData.nom.split(' ')[0]} ! Inscription réussie !`);
+        
+        setTimeout(() => {
+          setActiveTab('upload');
+          saveToStorage('activeTab', 'upload');
+        }, 2000);
+      } else {
+        if (data.error === 'EMAIL_EXISTS') {
+          setMessage({ 
+            type: 'error', 
+            text: '📧 Cet email est déjà inscrit ! Utilisez la connexion rapide ci-dessous.' 
+          });
+        } else {
+          setMessage({ 
+            type: 'error', 
+            text: data.message || data.error || `Erreur serveur: ${response.status}`
+          });
+        }
+      }
+    } catch (error) {
+      console.error('💥 Erreur inscription:', error);
+      setMessage({ 
+        type: 'error', 
+        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // 🔧 CORRECTION FONCTION DOCUMENT PROCESSÉ AVEC SAUVEGARDE
+  const handleDocumentProcessed = (extractedText, documentData) => {
+    setDocumentContext(extractedText);
+    setCurrentStep(3);
+    
+    // Ajouter le nouveau document à la liste
+    if (documentData) {
+      const newDocuments = [documentData, ...allDocuments];
+      setAllDocuments(newDocuments);
+      setSelectedDocumentId(documentData.id);
+      
+      // Sauvegarder immédiatement toutes les données
+      saveToStorage('documentContext', extractedText);
+      saveToStorage('currentStep', 3);
+      saveToStorage('allDocuments', newDocuments);
+      saveToStorage('selectedDocumentId', documentData.id);
+    }
+    
+    // Mettre à jour les statistiques utilisateur
+    if (student?.id) {
+      updateUserStats(student.id);
+    }
+    
+    showTemporaryMessage('📄 Document analysé avec ÉtudIA ! Passons au chat IA !');
+    setTimeout(() => {
+      setActiveTab('chat');
+      saveToStorage('activeTab', 'chat');
+    }, 1500);
   };
 
   // Charger tous les documents de l'utilisateur
@@ -966,6 +941,49 @@ const handleDocumentProcessed = (extractedText, documentData) => {
     }
   };
 
+  // 🗑️ FONCTION SUPPRESSION DOCUMENT AVEC CACHE
+  const handleDeleteDocument = async (documentId, documentName) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${documentName}" ?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/documents/${documentId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        // Mettre à jour la liste locale ET le cache
+        const newDocuments = allDocuments.filter(doc => doc.id !== documentId);
+        setAllDocuments(newDocuments);
+        saveToStorage('allDocuments', newDocuments);
+        
+        // Si c'était le document sélectionné, sélectionner le suivant
+        if (selectedDocumentId === documentId) {
+          if (newDocuments.length > 0) {
+            setSelectedDocumentId(newDocuments[0].id);
+            setDocumentContext(newDocuments[0].texte_extrait);
+            saveToStorage('selectedDocumentId', newDocuments[0].id);
+            saveToStorage('documentContext', newDocuments[0].texte_extrait);
+          } else {
+            setSelectedDocumentId(null);
+            setDocumentContext('');
+            localStorage.removeItem('etudia_selectedDocumentId');
+            localStorage.removeItem('etudia_documentContext');
+          }
+        }
+
+        showTemporaryMessage(`🗑️ Document "${documentName}" supprimé avec succès !`, 'success');
+      } else {
+        showTemporaryMessage('❌ Erreur lors de la suppression', 'error');
+      }
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+      showTemporaryMessage('❌ Erreur technique lors de la suppression', 'error');
+    }
+  };
+
   // Vérification statut serveur + PWA
   useEffect(() => {
     const checkBackend = async () => {
@@ -992,12 +1010,12 @@ const handleDocumentProcessed = (extractedText, documentData) => {
           setBackendStatus('offline');
         }
       } catch (error) {
-  console.log('💥 Erreur fetch:', error.message);
-  setBackendStatus('offline');
-  if (backendStatus === 'online') {
-    showTemporaryMessage('❌ Serveur temporairement hors ligne', 'error', 5000);
-  }
-}
+        console.log('💥 Erreur fetch:', error.message);
+        setBackendStatus('offline');
+        if (backendStatus === 'online') {
+          showTemporaryMessage('❌ Serveur temporairement hors ligne', 'error', 5000);
+        }
+      }
     };
 
     // PWA Service Worker
@@ -1082,153 +1100,6 @@ const handleDocumentProcessed = (extractedText, documentData) => {
     }
   }, [student]);
 
-  // Gestion inscription
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setMessage({ type: '', text: '' });
-
-    if (!formData.name.trim() || !formData.email.trim() || !formData.class_level) {
-      setMessage({ type: 'error', text: 'Veuillez remplir tous les champs obligatoires' });
-      setIsSubmitting(false);
-      return;
-    }
-
-    try {
-      console.log('🚀 Tentative inscription...', formData);
-      
-      const response = await fetch(`${API_URL}/api/students`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      
-      console.log('📡 Response status:', response.status, response.ok);
-      
-      const responseText = await response.text();
-      console.log('📄 Response raw:', responseText);
-      
-      if (!responseText.trim()) {
-        throw new Error('Réponse serveur vide');
-      }
-      
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('❌ Erreur parsing JSON:', parseError);
-        throw new Error('Réponse serveur invalide');
-      }
-      
-      console.log('📊 Data parsed:', data);
-
-      if (response.ok) {
-        setStudent(data.student);
-        setMessage({ type: 'success', text: data.message });
-        setCurrentStep(2);
-        setBackendStatus('online');
-        
-        showTemporaryMessage(`🎉 Bienvenue ${data.student.nom} ! Inscription réussie avec ÉtudIA !`);
-        setTimeout(() => setActiveTab('upload'), 2000);
-      } else {
-        if (data.error === 'EMAIL_EXISTS') {
-          setMessage({ 
-            type: 'error', 
-            text: '📧 Cet email est déjà inscrit ! Utilisez la connexion rapide ci-dessous.' 
-          });
-        } else {
-          setMessage({ 
-            type: 'error', 
-            text: data.message || data.error || `Erreur serveur: ${response.status}`
-          });
-        }
-      }
-    } catch (error) {
-      console.error('💥 Erreur inscription:', error);
-      setMessage({ 
-        type: 'error', 
-        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Connexion rapide
-  const handleLogin = async (email) => {
-    if (!email?.trim()) {
-      setMessage({ type: 'error', text: 'Veuillez saisir votre email' });
-      return;
-    }
-
-    try {
-      console.log('🚀 Tentative connexion...', email);
-      
-      const response = await fetch(`${API_URL}/api/students/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-
-      console.log('📡 Response status:', response.status, response.ok);
-      
-      const responseText = await response.text();
-      console.log('📄 Response raw:', responseText);
-      
-      if (!responseText.trim()) {
-        throw new Error('Réponse serveur vide');
-      }
-      
-      const data = JSON.parse(responseText);
-      console.log('📊 Data parsed:', data);
-
-      if (response.ok) {
-        setStudent(data.student);
-        setMessage({ type: 'success', text: data.message });
-        setCurrentStep(2);
-        setActiveTab('upload');
-        setBackendStatus('online');
-        
-        showTemporaryMessage(`🎉 Connexion réussie ! Bonjour ${data.student.nom} !`);
-      } else {
-        if (response.status === 404) {
-          setMessage({ 
-            type: 'error', 
-            text: '🔍 Email non trouvé. Inscrivez-vous d\'abord avec le formulaire ci-dessus.' 
-          });
-        } else {
-          setMessage({ type: 'error', text: data.error || data.message });
-        }
-      }
-    } catch (error) {
-      console.error('💥 Erreur connexion:', error);
-      setMessage({ 
-        type: 'error', 
-        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
-      });
-    }
-  };
-
-  // Gestion documents
-  const handleDocumentProcessed = (extractedText, documentData) => {
-    setDocumentContext(extractedText);
-    setCurrentStep(3);
-    
-    // Ajouter le nouveau document à la liste
-    if (documentData) {
-      setAllDocuments(prev => [documentData, ...prev]);
-      setSelectedDocumentId(documentData.id);
-    }
-    
-    // Mettre à jour les statistiques utilisateur
-    if (student?.id) {
-      updateUserStats(student.id);
-    }
-    
-    showTemporaryMessage('📄 Document analysé avec ÉtudIA ! Passons au chat IA !');
-    setTimeout(() => setActiveTab('chat'), 1500);
-  };
-
   // Composant bouton navigation
   const TabButton = ({ id, label, icon, isActive, onClick, disabled = false }) => (
     <button
@@ -1254,25 +1125,25 @@ const handleDocumentProcessed = (extractedText, documentData) => {
       )}
 
       {/* HEADER RÉVOLUTIONNAIRE ÉPURÉ - NE PAS MODIFIER */}
-<header className="app-header revolutionary">
-  <div className="cosmic-background"></div>
-  
-  <div className="header-content">
-    {/* Section logo SEULE */}
-    <div className="logo-section">
-      <h1 className="app-title">
-        <span className="title-etud">Étud</span>
-        <span className="title-ia">IA</span>
-        <span className="title-version">4.0</span>
-      </h1>
-      <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
-      <div className="made-in-ci">
-        <span className="flag">🇨🇮</span>
-        <span>Made with ❤️ in Côte d'Ivoire by @Pacousstar</span>
-      </div>
-    </div>
-  </div>
-</header>
+      <header className="app-header revolutionary">
+        <div className="cosmic-background"></div>
+        
+        <div className="header-content">
+          {/* Section logo SEULE */}
+          <div className="logo-section">
+            <h1 className="app-title">
+              <span className="title-etud">Étud</span>
+              <span className="title-ia">IA</span>
+              <span className="title-version">4.0</span>
+            </h1>
+            <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
+            <div className="made-in-ci">
+              <span className="flag">🇨🇮</span>
+              <span>Made with ❤️ in Côte d'Ivoire by @Pacousstar</span>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* 🔋 AFFICHAGE STATISTIQUES UTILISATEUR */}
       {student && (
@@ -1648,7 +1519,6 @@ const handleDocumentProcessed = (extractedText, documentData) => {
                   </div>
                 </div>
                 
-                
                 <div className="improvement-item">
                   <span className="improvement-icon">🧠</span>
                   <div className="improvement-content">
@@ -1713,7 +1583,7 @@ const handleDocumentProcessed = (extractedText, documentData) => {
             <p>Développé avec ❤️ par <strong>@Pacousstar</strong> - Côte d'Ivoire</p>
           </div>
         
-          <a href="https://etudia-v4.gsnexpertises.com" target="_blank">
+          <a href="https://etudia-v4.gsnexpertises.com" target="_blank" rel="noopener noreferrer">
            📝 Donner votre avis testeur
           </a>
         
@@ -1725,7 +1595,6 @@ const handleDocumentProcessed = (extractedText, documentData) => {
           </div>
           
           <div className="footer-tech">
-            
             <span>Status: {backendStatus === 'online' ? '🟢 En ligne' : '🔴 Maintenance'}</span>
           </div>
         </div>
