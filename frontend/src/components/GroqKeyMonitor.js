@@ -1,39 +1,94 @@
-// src/components/GroqKeyMonitor.js
+// ===================================================================
+// 📱 COMPOSANT REACT POUR SURVEILLER LES CLÉS GROQ
+// Fichier: src/components/GroqKeyMonitor.js
+// ===================================================================
+
 import React, { useState, useEffect } from 'react';
 
 const GroqKeyMonitor = ({ groqService }) => {
   const [stats, setStats] = useState([]);
+  const [detailedStatus, setDetailedStatus] = useState(null);
   const [showMonitor, setShowMonitor] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
 
+  // Mise à jour automatique des statistiques
   useEffect(() => {
-    const interval = setInterval(() => {
+    const updateStats = () => {
       if (groqService) {
         setStats(groqService.getStatistics());
+        setDetailedStatus(groqService.getDetailedStatus());
+        setLastUpdate(new Date());
       }
-    }, 5000); // Mise à jour toutes les 5 secondes
+    };
+
+    // Mise à jour immédiate
+    updateStats();
+
+    // Mise à jour toutes les 10 secondes
+    const interval = setInterval(updateStats, 10000);
 
     return () => clearInterval(interval);
   }, [groqService]);
 
+  // Actions
   const resetAllKeys = () => {
-    groqService.resetKeys();
-    setStats(groqService.getStatistics());
+    if (groqService) {
+      groqService.resetKeys();
+      setStats(groqService.getStatistics());
+      setDetailedStatus(groqService.getDetailedStatus());
+    }
   };
 
+  const resetSingleKey = (keyIndex) => {
+    if (groqService) {
+      groqService.resetKey(keyIndex);
+      setStats(groqService.getStatistics());
+      setDetailedStatus(groqService.getDetailedStatus());
+    }
+  };
+
+  // Formatage des dates
   const formatDate = (date) => {
-    return date ? new Date(date).toLocaleTimeString() : 'Jamais';
+    if (!date) return 'Jamais';
+    return new Date(date).toLocaleTimeString('fr-FR');
   };
 
+  const formatDateLong = (date) => {
+    if (!date) return 'Non défini';
+    return new Date(date).toLocaleString('fr-FR');
+  };
+
+  // Calcul du temps restant de blocage
+  const getTimeUntilUnblock = (blockedUntil) => {
+    if (!blockedUntil) return null;
+    
+    const now = new Date();
+    const until = new Date(blockedUntil);
+    const diff = until - now;
+    
+    if (diff <= 0) return 'Déblocage imminent';
+    
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}min`;
+    }
+    return `${minutes}min`;
+  };
+
+  // Bouton flottant pour ouvrir le moniteur
   if (!showMonitor) {
     return (
       <button 
         onClick={() => setShowMonitor(true)}
         className="monitor-toggle-btn"
+        title="Surveiller les clés API Groq"
         style={{
           position: 'fixed',
           bottom: '20px',
           right: '20px',
-          background: '#4CAF50',
+          background: detailedStatus?.availableKeys > 0 ? '#4CAF50' : '#f44336',
           color: 'white',
           border: 'none',
           borderRadius: '50%',
@@ -45,14 +100,32 @@ const GroqKeyMonitor = ({ groqService }) => {
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
           transition: 'all 0.3s ease'
         }}
-        onMouseOver={(e) => e.target.style.transform = 'scale(1.1)'}
-        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
       >
         🔑
+        {detailedStatus && (
+          <div style={{
+            position: 'absolute',
+            top: '-8px',
+            right: '-8px',
+            background: detailedStatus.availableKeys > 0 ? '#4CAF50' : '#f44336',
+            color: 'white',
+            borderRadius: '50%',
+            width: '24px',
+            height: '24px',
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px solid white'
+          }}>
+            {detailedStatus.availableKeys}
+          </div>
+        )}
       </button>
     );
   }
 
+  // Interface complète du moniteur
   return (
     <div style={{
       position: 'fixed',
@@ -62,22 +135,23 @@ const GroqKeyMonitor = ({ groqService }) => {
       border: '2px solid #4CAF50',
       borderRadius: '12px',
       padding: '20px',
-      maxWidth: '400px',
+      maxWidth: '450px',
       maxHeight: '70vh',
       overflowY: 'auto',
       zIndex: 1000,
       boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+      fontFamily: 'Arial, sans-serif'
     }}>
+      {/* Header */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
         marginBottom: '15px',
-        borderBottom: '2px solid #4CAF50',
+        borderBottom: '1px solid #eee',
         paddingBottom: '10px'
       }}>
-        <h3 style={{ margin: 0, color: '#4CAF50', fontSize: '16px' }}>
+        <h3 style={{ margin: 0, color: '#4CAF50', fontSize: '18px' }}>
           🔑 Moniteur Clés Groq
         </h3>
         <button 
@@ -85,17 +159,43 @@ const GroqKeyMonitor = ({ groqService }) => {
           style={{ 
             background: 'none', 
             border: 'none', 
-            fontSize: '18px', 
+            fontSize: '20px', 
             cursor: 'pointer',
-            color: '#666',
-            padding: '5px'
+            color: '#666'
           }}
+          title="Fermer"
         >
           ✕
         </button>
       </div>
 
-      <div style={{ marginBottom: '15px' }}>
+      {/* Statistiques globales */}
+      {detailedStatus && (
+        <div style={{
+          background: '#f8f9fa',
+          padding: '12px',
+          borderRadius: '8px',
+          marginBottom: '15px',
+          fontSize: '14px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span><strong>Total clés:</strong> {detailedStatus.totalKeys}</span>
+            <span><strong>Disponibles:</strong> {detailedStatus.availableKeys}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span><strong>Clé active:</strong> {detailedStatus.currentKeyIndex}</span>
+            <span><strong>Dernière MAJ:</strong> {formatDate(lastUpdate)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Boutons d'action */}
+      <div style={{ 
+        marginBottom: '15px',
+        display: 'flex',
+        gap: '10px',
+        flexWrap: 'wrap'
+      }}>
         <button 
           onClick={resetAllKeys}
           style={{
@@ -105,87 +205,85 @@ const GroqKeyMonitor = ({ groqService }) => {
             borderRadius: '6px',
             padding: '8px 16px',
             cursor: 'pointer',
-            fontSize: '12px',
-            fontWeight: '600',
-            transition: 'all 0.3s ease',
-            width: '100%'
+            fontSize: '14px',
+            fontWeight: '600'
           }}
-          onMouseOver={(e) => e.target.style.background = '#FF5722'}
-          onMouseOut={(e) => e.target.style.background = '#FF6B35'}
+          title="Réinitialiser toutes les clés"
         >
-          🔄 Reset toutes les clés
+          🔄 Reset tout
+        </button>
+        
+        <button 
+          onClick={() => {
+            setStats(groqService.getStatistics());
+            setDetailedStatus(groqService.getDetailedStatus());
+            setLastUpdate(new Date());
+          }}
+          style={{
+            background: '#6366F1',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '8px 16px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600'
+          }}
+          title="Actualiser les données"
+        >
+          🔄 Actualiser
         </button>
       </div>
 
-      <div style={{ fontSize: '12px' }}>
-        {stats.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            color: '#666', 
-            padding: '20px',
-            fontStyle: 'italic'
+      {/* Liste des clés */}
+      <div style={{ fontSize: '14px' }}>
+        <h4 style={{ margin: '0 0 10px 0', color: '#333', fontSize: '16px' }}>
+          État des clés API
+        </h4>
+        
+        {stats.map((key, index) => (
+          <div key={key.keyId} style={{
+            padding: '12px',
+            margin: '8px 0',
+            background: key.isBlocked ? '#ffebee' : '#e8f5e8',
+            borderRadius: '8px',
+            border: `2px solid ${key.isBlocked ? '#f44336' : '#4CAF50'}`,
+            position: 'relative'
           }}>
-            Aucune clé API configurée
-          </div>
-        ) : (
-          stats.map((key) => (
-            <div key={key.keyId} style={{
-              padding: '12px',
-              margin: '8px 0',
-              background: key.isBlocked ? '#ffebee' : '#e8f5e8',
-              borderRadius: '8px',
-              border: `2px solid ${key.isBlocked ? '#f44336' : '#4CAF50'}`,
-              transition: 'all 0.3s ease'
+            {/* En-tête de la clé */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '8px'
             }}>
               <div style={{ 
                 fontWeight: 'bold', 
                 color: key.isBlocked ? '#f44336' : '#4CAF50',
-                marginBottom: '8px',
-                fontSize: '14px'
+                fontSize: '15px'
               }}>
-                🔑 Clé {key.keyId} {key.isBlocked ? '🚫 BLOQUÉE' : '✅ ACTIVE'}
-              </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '11px' }}>
-                <div><strong>Requêtes:</strong> {key.requestCount}</div>
-                <div><strong>Erreurs:</strong> {key.errorCount}</div>
-              </div>
-              
-              <div style={{ marginTop: '6px', fontSize: '11px', color: '#666' }}>
-                <div><strong>Dernière utilisation:</strong></div>
-                <div>{formatDate(key.lastUsed)}</div>
+                🔑 Clé {key.keyId} {key.isBlocked ? '🚫' : '✅'}
               </div>
               
               {key.isBlocked && (
-                <div style={{ 
-                  marginTop: '6px', 
-                  color: '#f44336', 
-                  fontSize: '11px',
-                  background: 'rgba(244, 67, 54, 0.1)',
-                  padding: '4px 8px',
-                  borderRadius: '4px'
-                }}>
-                  <strong>Bloquée jusqu'à:</strong><br/>
-                  {formatDate(key.blockedUntil)}
-                </div>
+                <button
+                  onClick={() => resetSingleKey(index)}
+                  style={{
+                    background: '#f44336',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '4px 8px',
+                    cursor: 'pointer',
+                    fontSize: '12px'
+                  }}
+                  title="Débloquer cette clé"
+                >
+                  🔓 Débloquer
+                </button>
               )}
             </div>
-          ))
-        )}
-      </div>
-      
-      <div style={{ 
-        marginTop: '15px', 
-        paddingTop: '10px', 
-        borderTop: '1px solid #eee',
-        fontSize: '10px',
-        color: '#666',
-        textAlign: 'center'
-      }}>
-        Mise à jour automatique toutes les 5s
-      </div>
-    </div>
-  );
-};
 
-export default GroqKeyMonitor;
+            {/* Statistiques de la clé */}
+            <div style={{ fontSize: '13px', lineHeight: '1.4' }}>
+              <div style={{ display: 'flex', justifyContent:
