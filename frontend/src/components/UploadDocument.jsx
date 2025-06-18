@@ -1,4 +1,4 @@
-// UploadDocument.js - VERSION FINALE COMPLÈTE ET CORRIGÉE
+  // UploadDocument.js - VERSION FINALE COMPLÈTE ET CORRIGÉE
 import React, { useState, useRef } from 'react';
 
 const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
@@ -331,19 +331,6 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
                 <li>✅ Résolution minimum 300 DPI</li>
                 <li>❌ Éviter les images floues</li>
                 <li>❌ Pas de reflets ou ombres</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="tip-card performance">
-            <div className="tip-icon">⚡</div>
-            <div className="tip-content">
-              <h4>Performance OCR</h4>
-              <ul>
-                <li>✅ Documents scannés en 300+ DPI</li>
-                <li>✅ Fond blanc uniforme</li>
-                <li>❌ Éviter les filigranes</li>
-                <li>❌ Pas de texte sur images</li>
               </ul>
             </div>
           </div>
