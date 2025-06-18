@@ -1,4 +1,4 @@
-// App.js - VERSION UX/UI RÉVOLUTIONNAIRE AVEC RESPONSIVE PARFAIT + AMÉLIORATIONS
+  // App.js - VERSION UX/UI RÉVOLUTIONNAIRE AVEC RESPONSIVE PARFAIT + AMÉLIORATIONS
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import UploadDocument from './components/UploadDocument';
@@ -861,33 +861,47 @@ function App() {
   // 🔧 CORRECTION App.js - handleDocumentProcessed SIMPLIFIÉE
 
 const handleDocumentProcessed = (extractedText, documentData) => {
-  console.log('📄 DOCUMENT TRAITÉ - Début liaison:', {
+  console.log('📄 DOCUMENT TRAITÉ V2 - Début liaison:', {
     document_name: documentData?.nom_original,
     text_length: extractedText?.length,
-    document_id: documentData?.id
+    document_id: documentData?.id,
+    timestamp: new Date().toISOString()
   });
 
-  // ✅ MISE À JOUR IMMÉDIATE DU CONTEXTE
+  // ✅ MISE À JOUR IMMÉDIATE ET FORCÉE
   setDocumentContext(extractedText);
   setCurrentStep(3);
   
-  // ✅ MISE À JOUR LISTE DOCUMENTS
-  if (documentData) {
+  // ✅ MISE À JOUR LISTE DOCUMENTS AVEC VALIDATION
+  if (documentData && documentData.id) {
     const newDocument = {
       id: documentData.id,
-      nom_original: documentData.nom_original,
+      nom_original: documentData.nom_original || 'Document sans nom',
       matiere: documentData.matiere || 'Général',
-      texte_extrait: extractedText,
-      date_upload: new Date().toISOString()
+      texte_extrait: extractedText || '',
+      date_upload: documentData.date_upload || new Date().toISOString(),
+      // 🔧 NOUVEAUX CHAMPS DE VALIDATION
+      has_valid_text: !!(extractedText && extractedText.length > 50),
+      text_preview: extractedText ? extractedText.substring(0, 100) + '...' : 'Vide'
     };
     
-    // Ajouter en début de liste
-    setAllDocuments(prev => [newDocument, ...prev.filter(doc => doc.id !== newDocument.id)]);
+    // Supprimer doublons et ajouter en début
+    setAllDocuments(prev => {
+      const filtered = prev.filter(doc => doc.id !== newDocument.id);
+      return [newDocument, ...filtered];
+    });
     
-    // Sélectionner automatiquement
+    // Sélectionner automatiquement le nouveau document
     setSelectedDocumentId(documentData.id);
     
-    console.log('✅ Document ajouté et sélectionné:', newDocument.nom_original);
+    console.log('✅ Document ajouté avec validation:', {
+      id: newDocument.id,
+      name: newDocument.nom_original,
+      has_text: newDocument.has_valid_text,
+      selected: true
+    });
+  } else {
+    console.warn('⚠️ Document data incomplète:', documentData);
   }
   
   // ✅ MISE À JOUR STATS UTILISATEUR
@@ -895,36 +909,44 @@ const handleDocumentProcessed = (extractedText, documentData) => {
     updateUserStats(student.id);
   }
   
-  // ✅ MESSAGE DE CONFIRMATION DÉTAILLÉ
-  showTemporaryMessage(
-    `🎉 Document "${documentData?.nom_original || 'Document'}" analysé avec succès !
+  // ✅ MESSAGE DE CONFIRMATION AMÉLIORÉ
+  const successMessage = documentData?.nom_original ? 
+    `🎉 "${documentData.nom_original}" analysé avec succès !
     
 📊 ${extractedText?.length || 0} caractères extraits
-🤖 ÉtudIA est maintenant prêt à t'aider !
-
-➡️ Direction le chat automatique...`, 
-    'success', 
-    4000
-  );
+🤖 ÉtudIA peut maintenant t'aider avec ce document !
+    
+➡️ Redirection automatique vers le chat...` :
+    
+    `🎉 Document analysé avec succès !
+    
+📊 ${extractedText?.length || 0} caractères extraits  
+🤖 ÉtudIA est prêt à t'aider !`;
   
-  // ✅ REDIRECTION AUTOMATIQUE AVEC FEEDBACK
+  showTemporaryMessage(successMessage, 'success', 5000);
+  
+  // ✅ REDIRECTION AUTOMATIQUE AVEC RESET
   setTimeout(() => {
-    setActiveTab('chat');
     console.log('🎯 Redirection vers chat avec document:', documentData?.nom_original);
     
-    // Force un nouveau message d'accueil pour prendre en compte le document
+    // Reset le message d'accueil pour prendre en compte le nouveau document
     setWelcomeMessageSent(false);
     
-    // Message additionnel de confirmation
-    setTimeout(() => {
-      showTemporaryMessage(
-        `📄 Document "${documentData?.nom_original}" chargé ! Pose tes questions !`, 
-        'info', 
-        3000
-      );
-    }, 1000);
+    // Changer d'onglet
+    setActiveTab('chat');
     
-  }, 2000);
+    // Message de confirmation après redirection
+    setTimeout(() => {
+      if (documentData?.nom_original) {
+        showTemporaryMessage(
+          `📄 Document "${documentData.nom_original}" chargé ! Pose tes questions !`, 
+          'info', 
+          3000
+        );
+      }
+    }, 1500);
+    
+  }, 2500);
 };
 
   {/* HEADER RÉVOLUTIONNAIRE ÉPURÉ - NE PAS MODIFIER */}
