@@ -335,15 +335,15 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
             </div>
           </div>
 
-          <div className="tip-card text">
-            <div className="tip-icon">📝</div>
+          <div className="tip-card performance">
+            <div className="tip-icon">⚡</div>
             <div className="tip-content">
-              <h4>Texte lisible</h4>
+              <h4>Performance OCR</h4>
               <ul>
-                <li>✅ Texte droit et bien cadré</li>
-                <li>✅ Contraste élevé (noir sur blanc)</li>
-                <li>❌ Éviter l'écriture manuscrite</li>
-                <li>❌ Pas de texte trop petit</li>
+                <li>✅ Documents scannés en 300+ DPI</li>
+                <li>✅ Fond blanc uniforme</li>
+                <li>❌ Éviter les filigranes</li>
+                <li>❌ Pas de texte sur images</li>
               </ul>
             </div>
           </div>
