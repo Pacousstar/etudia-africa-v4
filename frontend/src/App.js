@@ -1431,7 +1431,7 @@ const handleDocumentProcessed = (extractedText, documentData) => {
           </div>
         </div>
       </footer>
-    </div>
+    
   );
 }
 
