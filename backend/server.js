@@ -446,17 +446,34 @@ app.use((req, res, next) => {
   next();
 });
 
-// Logs pour debugging
-app.use((req, res, next) => {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${req.method} ${req.path} - IP: ${req.ip}`);
-  next();
-});
+// ===================================================================
+// 🔧 CORRECTION 5: ROUTE DEBUG (optionnelle)
+// ===================================================================
 
-// Servir fichiers statiques si frontend inclus
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'build')));
-}
+app.get('/debug', (req, res) => {
+  res.json({
+    message: '🔍 Debug ÉtudIA Render',
+    timestamp: new Date().toISOString(),
+    url_called: req.originalUrl,
+    method: req.method,
+    headers: {
+      host: req.get('host'),
+      origin: req.get('origin'),
+      'user-agent': req.get('user-agent')?.substring(0, 100)
+    },
+    environment: {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: PORT,
+      platform: 'Render.com'
+    },
+    service_info: {
+      render_url: 'https://etudia-v4-revolutionary.onrender.com',
+      health_endpoint: '/health',
+      api_base: '/api',
+      memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB'
+    }
+  });
+});
 
 // ===================================================================
 // 🔗 ROUTES DE BASE
