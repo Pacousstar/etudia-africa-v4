@@ -255,104 +255,140 @@ Je suis ÉtudIA, ton tuteur IA révolutionnaire ! 🤖✨
   }, [isLoading]);
 
   // 🔧 CORRECTION 4: ENVOI MESSAGE CORRIGÉ
-  const handleSendMessage = async (messageText = inputMessage, mode = chatMode) => {
-    if (!messageText.trim() || isLoading) return;
+ // 🔧 CORRECTION CHATIA.JS - LIGNE ~200 (fonction handleSendMessage)
+// Remplace la section "Construire payload selon le mode" par ceci :
 
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      content: messageText.trim(),
-      timestamp: new Date().toISOString(),
-      tokens: 0,
-      mode: mode
+const handleSendMessage = async (messageText = inputMessage, mode = chatMode) => {
+  if (!messageText.trim() || isLoading) return;
+
+  const userMessage = {
+    id: Date.now(),
+    type: 'user',
+    content: messageText.trim(),
+    timestamp: new Date().toISOString(),
+    tokens: 0,
+    mode: mode
+  };
+
+  setMessages(prev => [...prev, userMessage]);
+  setInputMessage('');
+  setIsLoading(true);
+
+  try {
+    // 🔧 CORRECTION 1: RÉCUPÉRATION AUTOMATIQUE DU DOCUMENT ACTIF
+    const activeDocument = selectedDocumentId ? 
+      allDocuments.find(doc => doc.id === selectedDocumentId) : 
+      (allDocuments.length > 0 ? allDocuments[0] : null);
+
+    const finalDocumentContext = activeDocument ? 
+      activeDocument.texte_extrait || documentContext : 
+      documentContext;
+
+    console.log('📄 Document actif:', activeDocument?.nom_original || 'Aucun');
+    console.log('📝 Contexte final:', finalDocumentContext ? 'Présent' : 'Absent');
+
+    // 🔧 CORRECTION 2: PAYLOAD ENRICHI AVEC DOCUMENT GARANTI
+    const payload = {
+      message: messageText.trim(),
+      user_id: student.id,
+      document_context: finalDocumentContext, // ✅ TOUJOURS REMPLI !
+      mode: mode,
+      // 🔧 NOUVEAUX CHAMPS POUR GARANTIR LE CONTEXTE
+      selected_document_id: selectedDocumentId,
+      document_name: activeDocument?.nom_original || '',
+      has_document: !!finalDocumentContext
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
-
-    try {
-      // Construire payload selon le mode
-      const payload = {
-        message: messageText.trim(),
-        user_id: student.id,
-        document_context: documentContext,
-        mode: mode
+    // Ajouter info étapes si mode step_by_step
+    if (mode === 'step_by_step') {
+      payload.step_info = {
+        current_step: currentStep,
+        total_steps: totalSteps
       };
+    }
 
-      // Ajouter info étapes si mode step_by_step
-      if (mode === 'step_by_step') {
-        payload.step_info = {
-          current_step: currentStep,
-          total_steps: totalSteps
-        };
-      }
+    console.log('🚀 Payload envoyé:', {
+      mode: payload.mode,
+      has_document: payload.has_document,
+      document_name: payload.document_name,
+      context_length: payload.document_context?.length || 0
+    });
 
-      const response = await fetch(`${apiUrl}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    const response = await fetch(`${apiUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (response.ok) {
-        const aiMessage = {
-          id: Date.now() + 1,
-          type: 'ai',
-          content: data.response,
-          timestamp: data.timestamp,
-          tokens: data.tokens_used || 0,
-          model: data.model,
-          hasContext: data.has_context,
-          mode: mode,
-          nextStep: data.next_step
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
-        setConversationCount(prev => prev + 1);
-        setTotalTokens(prev => prev + (data.tokens_used || 0));
-        setConnectionStatus('online');
-
-        // CORRECTION: Mise à jour tokens en temps réel
-        if (data.tokens_used) {
-          updateTokenUsage(data.tokens_used, totalTokens + (data.tokens_used || 0));
-        }
-
-        // Gérer progression étapes
-        if (mode === 'step_by_step' && data.next_step?.next) {
-          setCurrentStep(data.next_step.next);
-        }
-
-        // Synthèse vocale si mode audio ACTIVÉ
-        if (isAudioMode && data.response) {
-          setTimeout(() => speakResponse(data.response), 500);
-        }
-
-      } else {
-        throw new Error(data.error || 'Erreur communication IA');
-      }
-    } catch (error) {
-      console.error('❌ Erreur chat:', error);
-      setConnectionStatus('error');
-      
-      const errorMessage = {
+    if (response.ok) {
+      const aiMessage = {
         id: Date.now() + 1,
         type: 'ai',
-        content: `Désolé ${prenomEleve}, je rencontre des difficultés techniques ! 😅
+        content: data.response,
+        timestamp: data.timestamp,
+        tokens: data.tokens_used || 0,
+        model: data.model,
+        hasContext: data.has_context || !!finalDocumentContext, // ✅ GARANTIE !
+        mode: mode,
+        nextStep: data.next_step,
+        // 🔧 NOUVEAUX INDICATEURS
+        documentUsed: activeDocument?.nom_original || null,
+        contextLength: finalDocumentContext?.length || 0
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
+      setConversationCount(prev => prev + 1);
+      setTotalTokens(prev => prev + (data.tokens_used || 0));
+      setConnectionStatus('online');
+
+      // CORRECTION: Mise à jour tokens en temps réel
+      if (data.tokens_used) {
+        updateTokenUsage(data.tokens_used, totalTokens + (data.tokens_used || 0));
+      }
+
+      // Gérer progression étapes
+      if (mode === 'step_by_step' && data.next_step?.next) {
+        setCurrentStep(data.next_step.next);
+      }
+
+      // Synthèse vocale si mode audio ACTIVÉ
+      if (isAudioMode && data.response) {
+        setTimeout(() => speakResponse(data.response), 500);
+      }
+
+      // 🔧 FEEDBACK VISUEL DOCUMENT UTILISÉ
+      if (aiMessage.documentUsed) {
+        console.log(`✅ IA a utilisé le document: "${aiMessage.documentUsed}" (${aiMessage.contextLength} chars)`);
+      } else {
+        console.warn('⚠️ IA sans contexte document !');
+      }
+
+    } else {
+      throw new Error(data.error || 'Erreur communication IA');
+    }
+  } catch (error) {
+    console.error('❌ Erreur chat:', error);
+    setConnectionStatus('error');
+    
+    const errorMessage = {
+      id: Date.now() + 1,
+      type: 'ai',
+      content: `Désolé ${prenomEleve}, je rencontre des difficultés techniques ! 😅
 
 Veuillez réessayer dans quelques instants.
 
 🤖 ÉtudIA sera bientôt de retour pour t'aider !`,
-        timestamp: new Date().toISOString(),
-        tokens: 0,
-        isError: true
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      timestamp: new Date().toISOString(),
+      tokens: 0,
+      isError: true
+    };
+    setMessages(prev => [...prev, errorMessage]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // 🎯 BOUTON 1: MODE ÉTAPE PAR ÉTAPE 
   const activateStepByStepMode = () => {
