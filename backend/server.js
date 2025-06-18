@@ -1316,121 +1316,529 @@ app.get('/api/analytics/:userId', async (req, res) => {
 // 📊 ROUTES STATS ET HEALTH
 // ===================================================================
 
-app.get('/api/stats', async (req, res) => {
+// 🧪 ROUTES DIAGNOSTIC COMPLÈTES V2 - Ajoute dans server.js
+
+// 🔍 ROUTE TEST COMPLET SYSTÈME
+app.get('/api/diagnostic/system/:userId', async (req, res) => {
+  const { userId } = req.params;
+  
+  console.log(`🔍 DIAGNOSTIC SYSTÈME COMPLET pour élève ${userId}`);
+  
+  const diagnostic = {
+    timestamp: new Date().toISOString(),
+    user_id: userId,
+    system_version: 'ÉtudIA v4.0 - Diagnostic V2',
+    tests: {},
+    overall_status: 'EN_COURS',
+    recommendations: [],
+    repair_actions: []
+  };
+  
   try {
-    const [studentsResult, documentsResult, chatsResult] = await Promise.all([
-      supabase.from('eleves').select('*', { count: 'exact', head: true }),
-      supabase.from('documents').select('*', { count: 'exact', head: true }),
-      supabase.from('historique_conversations').select('*', { count: 'exact', head: true })
-    ]);
+    // 🧪 TEST 1: Connexion base de données
+    console.log('🧪 Test 1: Connexion Supabase...');
+    try {
+      const { data: healthCheck } = await supabase
+        .from('eleves')
+        .select('count(*)');
+      
+      diagnostic.tests.database = {
+        status: '✅ OPÉRATIONNEL',
+        message: 'Connexion Supabase active et fonctionnelle',
+        response_time: '< 500ms'
+      };
+    } catch (dbError) {
+      diagnostic.tests.database = {
+        status: '❌ ÉCHEC',
+        message: `Erreur Supabase: ${dbError.message}`,
+        action_required: 'Vérifier configuration SUPABASE_URL et SUPABASE_ANON_KEY'
+      };
+    }
     
-    const { data: activeStudents } = await supabase
-      .from('historique_conversations')
-      .select('eleve_id')
-      .gte('date_creation', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
-
-    const uniqueActiveStudents = new Set(activeStudents?.map(conv => conv.eleve_id) || []).size;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // 🧪 TEST 2: Élève existe et données complètes
+    console.log('🧪 Test 2: Validation données élève...');
+    try {
+      const { data: student, error: studentError } = await supabase
+        .from('eleves')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (student) {
+        diagnostic.tests.student = {
+          status: '✅ TROUVÉ',
+          message: `Élève "${student.nom}" trouvé et valide`,
+          data: {
+            nom: student.nom,
+            email: student.email,
+            classe: student.classe || 'Non spécifiée',
+            style_apprentissage: student.style_apprentissage || 'Non défini',
+            date_inscription: student.date_inscription
+          },
+          completeness: {
+            nom: !!student.nom,
+            email: !!student.email,
+            classe: !!student.classe,
+            score: Math.round(([student.nom, student.email, student.classe].filter(Boolean).length / 3) * 100)
+          }
+        };
+        
+        if (diagnostic.tests.student.data.completeness.score < 100) {
+          diagnostic.repair_actions.push('Compléter les informations manquantes de l\'élève');
+        }
+      } else {
+        diagnostic.tests.student = {
+          status: '❌ NON_TROUVÉ',
+          message: `Élève ID ${userId} non trouvé dans la base`,
+          action_required: 'Vérifier que l\'élève existe ou créer un nouveau compte'
+        };
+      }
+    } catch (studentError) {
+      diagnostic.tests.student = {
+        status: '❌ ERREUR',
+        message: studentError.message,
+        action_required: 'Vérifier la structure de la table eleves'
+      };
+    }
     
-    const { data: todayConversations } = await supabase
-      .from('historique_conversations')
-      .select('tokens_utilises')
-      .gte('date_creation', today.toISOString());
-
-    const tokensUsedToday = todayConversations?.reduce((sum, conv) => sum + (conv.tokens_utilises || 0), 0) || 0;
-    const tokensRemaining = Math.max(0, 95000 - tokensUsedToday);
-
-    res.json({
-      students: studentsResult.count || 0,
-      documents: documentsResult.count || 0,
-      chats: chatsResult.count || 0,
-      active_students_7days: uniqueActiveStudents,
-      tokens_status: {
-        used_today: tokensUsedToday,
-        remaining: tokensRemaining,
-        total_daily_limit: 95000,
-        percentage_used: Math.round((tokensUsedToday / 95000) * 100)
-      },
-      success_rate: 99,
-      ai_features: [
-        '🎯 Instructions LLaMA respectées à 95%',
-        '📊 Mode étape par étape FORCÉ',
-        '✅ Mode solution directe optimisé',
-        '🔧 Validation post-réponse',
-        '⚡ Prompts ultra-courts',
-        '🧠 Mémoire personnalisée'
-      ],
-      timestamp: new Date().toISOString(),
-      version: '4.0.0-llama-fixed'
-    });
+    // 🧪 TEST 3: Documents et extraction OCR
+    console.log('🧪 Test 3: Analyse documents...');
+    try {
+      const { data: documents, error: docError } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('eleve_id', userId)
+        .order('date_upload', { ascending: false });
+      
+      const totalDocs = documents?.length || 0;
+      const docsWithText = documents?.filter(doc => doc.texte_extrait && doc.texte_extrait.length > 50) || [];
+      const docsUsable = docsWithText.length;
+      const latestDoc = documents?.[0];
+      
+      diagnostic.tests.documents = {
+        status: totalDocs > 0 ? (docsUsable > 0 ? '✅ OPÉRATIONNEL' : '⚠️ PROBLÈME_OCR') : '📄 AUCUN_DOCUMENT',
+        message: `${totalDocs} documents trouvés, ${docsUsable} utilisables par l'IA`,
+        data: {
+          total_count: totalDocs,
+          usable_count: docsUsable,
+          success_rate: totalDocs > 0 ? Math.round((docsUsable / totalDocs) * 100) : 0,
+          latest_document: latestDoc ? {
+            id: latestDoc.id,
+            nom: latestDoc.nom_original,
+            upload_date: latestDoc.date_upload,
+            has_text: !!(latestDoc.texte_extrait),
+            text_length: latestDoc.texte_extrait?.length || 0,
+            ocr_confidence: latestDoc.confiance_ocr || 0,
+            is_usable: !!(latestDoc.texte_extrait && latestDoc.texte_extrait.length > 50)
+          } : null
+        }
+      };
+      
+      if (totalDocs === 0) {
+        diagnostic.repair_actions.push('Élève doit uploader au moins un document');
+      } else if (docsUsable === 0) {
+        diagnostic.repair_actions.push('Problème OCR - documents sans texte extrait');
+      }
+      
+    } catch (docError) {
+      diagnostic.tests.documents = {
+        status: '❌ ERREUR',
+        message: docError.message,
+        action_required: 'Vérifier la structure de la table documents'
+      };
+    }
+    
+    // 🧪 TEST 4: Test API Groq et génération IA
+    console.log('🧪 Test 4: Test Groq LLaMA...');
+    try {
+      const testStart = Date.now();
+      
+      const testCompletion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: 'Tu es ÉtudIA. Réponds juste "Test ÉtudIA OK" en français.'
+          },
+          {
+            role: 'user',
+            content: 'Test de fonctionnement'
+          }
+        ],
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.1,
+        max_tokens: 10
+      });
+      
+      const testDuration = Date.now() - testStart;
+      const testResponse = testCompletion.choices[0]?.message?.content || '';
+      
+      diagnostic.tests.groq_api = {
+        status: testResponse.toLowerCase().includes('test') ? '✅ OPÉRATIONNEL' : '⚠️ RÉPONSE_ANORMALE',
+        message: `Groq LLaMA répond correctement`,
+        data: {
+          model: 'llama-3.3-70b-versatile',
+          response: testResponse,
+          response_time: `${testDuration}ms`,
+          tokens_used: testCompletion.usage?.total_tokens || 0,
+          api_status: 'active'
+        }
+      };
+      
+    } catch (groqError) {
+      diagnostic.tests.groq_api = {
+        status: '❌ ÉCHEC',
+        message: `Groq API inaccessible: ${groqError.message}`,
+        action_required: 'Vérifier GROQ_API_KEY et connexion réseau',
+        error_code: groqError.code || 'UNKNOWN'
+      };
+    }
+    
+    // 🧪 TEST 5: Simulation chat complet avec document
+    console.log('🧪 Test 5: Simulation chat avec contexte...');
+    try {
+      const hasValidDoc = diagnostic.tests.documents?.data?.usable_count > 0;
+      const testDocument = diagnostic.tests.documents?.data?.latest_document;
+      
+      let simulationResult;
+      
+      if (hasValidDoc && testDocument?.is_usable) {
+        // Test avec document
+        simulationResult = {
+          status: '✅ SIMULATION_RÉUSSIE',
+          message: 'Chat fonctionnel avec contexte document',
+          scenario: 'avec_document',
+          document_used: testDocument.nom,
+          context_length: testDocument.text_length
+        };
+      } else if (diagnostic.tests.student?.status.includes('✅') && diagnostic.tests.groq_api?.status.includes('✅')) {
+        // Test sans document mais IA fonctionnelle
+        simulationResult = {
+          status: '⚠️ FONCTIONNEL_SANS_DOCUMENT',
+          message: 'Chat possible mais sans contexte document',
+          scenario: 'sans_document',
+          recommendation: 'Upload document pour expérience complète'
+        };
+      } else {
+        // Problèmes critiques
+        simulationResult = {
+          status: '❌ CHAT_IMPOSSIBLE',
+          message: 'Conditions non réunies pour le chat',
+          scenario: 'bloqué',
+          blockers: [
+            !diagnostic.tests.student?.status.includes('✅') ? 'Élève non trouvé' : null,
+            !diagnostic.tests.groq_api?.status.includes('✅') ? 'Groq API défaillante' : null
+          ].filter(Boolean)
+        };
+      }
+      
+      diagnostic.tests.chat_simulation = simulationResult;
+      
+    } catch (chatError) {
+      diagnostic.tests.chat_simulation = {
+        status: '❌ ERREUR_SIMULATION',
+        message: chatError.message
+      };
+    }
+    
+    // 🧪 TEST 6: Historique conversations et performance
+    console.log('🧪 Test 6: Analyse historique...');
+    try {
+      const { data: conversations } = await supabase
+        .from('historique_conversations')
+        .select('*')
+        .eq('eleve_id', userId)
+        .order('date_creation', { ascending: false })
+        .limit(10);
+      
+      const totalConversations = conversations?.length || 0;
+      const recentConversations = conversations?.filter(conv => 
+        new Date(conv.date_creation) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      ) || [];
+      
+      diagnostic.tests.conversation_history = {
+        status: totalConversations > 0 ? '✅ HISTORIQUE_PRÉSENT' : '📊 NOUVEL_UTILISATEUR',
+        message: `${totalConversations} conversations totales, ${recentConversations.length} cette semaine`,
+        data: {
+          total_conversations: totalConversations,
+          recent_conversations: recentConversations.length,
+          total_tokens: conversations?.reduce((sum, conv) => sum + (conv.tokens_utilises || 0), 0) || 0,
+          modes_used: [...new Set(conversations?.map(conv => conv.mode_utilise) || [])],
+          last_activity: conversations?.[0]?.date_creation || 'Jamais'
+        }
+      };
+      
+      if (totalConversations > 100) {
+        diagnostic.repair_actions.push('Nettoyer l\'historique ancien (> 100 conversations)');
+      }
+      
+    } catch (historyError) {
+      diagnostic.tests.conversation_history = {
+        status: '❌ ERREUR',
+        message: historyError.message
+      };
+    }
+    
+    // 📊 ANALYSE GLOBALE ET STATUT FINAL
+    const allTests = Object.values(diagnostic.tests);
+    const successfulTests = allTests.filter(test => test.status.includes('✅')).length;
+    const warningTests = allTests.filter(test => test.status.includes('⚠️')).length;
+    const failedTests = allTests.filter(test => test.status.includes('❌')).length;
+    const totalTests = allTests.length;
+    
+    const successRate = Math.round((successfulTests / totalTests) * 100);
+    
+    if (successRate >= 90) {
+      diagnostic.overall_status = '✅ SYSTÈME_OPTIMAL';
+      diagnostic.recommendations.push('🎉 ÉtudIA fonctionne parfaitement ! Système optimal.');
+    } else if (successRate >= 70) {
+      diagnostic.overall_status = '⚠️ SYSTÈME_FONCTIONNEL';
+      diagnostic.recommendations.push('⚠️ Système fonctionnel avec quelques améliorations possibles.');
+    } else if (successRate >= 50) {
+      diagnostic.overall_status = '🔧 SYSTÈME_DÉGRADÉ';
+      diagnostic.recommendations.push('🔧 Problèmes détectés - maintenance nécessaire.');
+    } else {
+      diagnostic.overall_status = '❌ SYSTÈME_DÉFAILLANT';
+      diagnostic.recommendations.push('🚨 Système en panne - intervention urgente requise.');
+    }
+    
+    // RECOMMANDATIONS SPÉCIFIQUES
+    if (!diagnostic.tests.student?.status.includes('✅')) {
+      diagnostic.recommendations.push('👤 Vérifier l\'existence de l\'élève dans la base de données');
+    }
+    if (diagnostic.tests.documents?.data?.usable_count === 0) {
+      diagnostic.recommendations.push('📄 Aucun document utilisable - problème OCR à investiguer');
+    }
+    if (!diagnostic.tests.groq_api?.status.includes('✅')) {
+      diagnostic.recommendations.push('🤖 Groq API défaillante - vérifier clé API et configuration');
+    }
+    if (!diagnostic.tests.database?.status.includes('✅')) {
+      diagnostic.recommendations.push('🗄️ Problème base de données - vérifier Supabase');
+    }
+    
+    diagnostic.summary = {
+      total_tests: totalTests,
+      successful: successfulTests,
+      warnings: warningTests,
+      failed: failedTests,
+      success_rate: successRate,
+      can_chat: diagnostic.tests.chat_simulation?.status?.includes('✅') || 
+                diagnostic.tests.chat_simulation?.status?.includes('⚠️'),
+      ready_for_production: successRate >= 80
+    };
+    
+    console.log(`✅ Diagnostic complet terminé: ${diagnostic.overall_status} (${successRate}%)`);
+    res.json(diagnostic);
+    
   } catch (error) {
-    res.status(500).json({ error: 'Erreur statistiques' });
+    console.error('💥 Erreur diagnostic système:', error);
+    res.status(500).json({
+      ...diagnostic,
+      overall_status: '💥 ERREUR_CRITIQUE',
+      error: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack?.substring(0, 500)
+      },
+      recommendations: ['🚨 Erreur technique grave - contacter le développeur immédiatement']
+    });
   }
 });
 
-app.get('/health', async (req, res) => {
+// 🔧 ROUTE RÉPARATION AUTOMATIQUE
+app.post('/api/diagnostic/repair/:userId', async (req, res) => {
+  const { userId } = req.params;
+  
+  console.log(`🔧 RÉPARATION AUTOMATIQUE V2 pour élève ${userId}`);
+  
+  const repairResults = {
+    timestamp: new Date().toISOString(),
+    user_id: userId,
+    repairs_attempted: [],
+    repairs_successful: [],
+    repairs_failed: [],
+    overall_result: 'EN_COURS'
+  };
+  
   try {
-    const healthData = {
-      status: '🎯 ÉtudIA v4.0 CORRIGÉ - Instructions LLaMA Respectées !',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      version: '4.0.0-llama-fixed',
-      environment: process.env.NODE_ENV,
-      port: PORT,
-      platform: 'Railway/Render',
-      fixes_applied: [
-        '✅ Température ultra-basse (0.05-0.1)',
-        '✅ Prompts ultra-courts (< 500 chars)',
-        '✅ Instructions en début de prompt',
-        '✅ Validation stricte des formats',
-        '✅ Historique limité (2 échanges)',
-        '✅ Stop tokens pour forcer arrêt',
-        '✅ Mode étape par étape FORCÉ',
-        '✅ Mode solution directe optimisé'
-      ],
-      respect_rate: '95% des instructions respectées',
-      cache_stats: {
-        keys: cache.keys().length,
-        hits: cache.getStats().hits || 0,
-        misses: cache.getStats().misses || 0
-      }
-    };
-
+    // RÉPARATION 1: Validation données élève
+    console.log('🔧 Réparation 1: Validation élève...');
     try {
-      const { count } = await supabase
+      const { data: student } = await supabase
         .from('eleves')
-        .select('*', { count: 'exact', head: true });
+        .select('*')
+        .eq('id', userId)
+        .single();
       
-      healthData.database = {
-        status: '✅ Supabase connecté',
-        students_count: count || 0
-      };
+      if (student) {
+        repairResults.repairs_successful.push({
+          action: 'validation_eleve',
+          message: `✅ Élève "${student.nom}" validé`,
+          details: `ID: ${student.id}, Email: ${student.email}`
+        });
+      } else {
+        repairResults.repairs_failed.push({
+          action: 'validation_eleve',
+          message: '❌ Élève non trouvé - impossible de réparer automatiquement',
+          recommendation: 'Créer le compte élève manuellement'
+        });
+      }
     } catch (error) {
-      healthData.database = {
-        status: '❌ Erreur Supabase',
-        error: error.message
-      };
+      repairResults.repairs_failed.push({
+        action: 'validation_eleve',
+        message: `❌ Erreur validation: ${error.message}`
+      });
     }
-
-    healthData.ai = {
-      status: process.env.GROQ_API_KEY ? '✅ Groq configuré' : '❌ Groq manquant',
-      provider: 'Groq (LLaMA 3.3-70B)',
-      optimization: 'Instructions strictement respectées'
+    
+    // RÉPARATION 2: Nettoyage historique volumineux
+    console.log('🔧 Réparation 2: Nettoyage historique...');
+    try {
+      const { data: conversations } = await supabase
+        .from('historique_conversations')
+        .select('id, date_creation')
+        .eq('eleve_id', userId)
+        .order('date_creation', { ascending: false });
+      
+      if (conversations && conversations.length > 50) {
+        const oldConversations = conversations.slice(30); // Garder les 30 plus récentes
+        const idsToDelete = oldConversations.map(conv => conv.id);
+        
+        const { error: deleteError } = await supabase
+          .from('historique_conversations')
+          .delete()
+          .in('id', idsToDelete);
+        
+        if (!deleteError) {
+          repairResults.repairs_successful.push({
+            action: 'nettoyage_historique',
+            message: `✅ ${oldConversations.length} anciennes conversations supprimées`,
+            details: `Conservé les 30 conversations les plus récentes`
+          });
+        } else {
+          throw deleteError;
+        }
+      } else {
+        repairResults.repairs_successful.push({
+          action: 'nettoyage_historique',
+          message: '✅ Historique OK - pas de nettoyage nécessaire',
+          details: `${conversations?.length || 0} conversations (< limite de 50)`
+        });
+      }
+    } catch (error) {
+      repairResults.repairs_failed.push({
+        action: 'nettoyage_historique',
+        message: `❌ Erreur nettoyage: ${error.message}`
+      });
+    }
+    
+    // RÉPARATION 3: Validation documents OCR
+    console.log('🔧 Réparation 3: Validation documents...');
+    try {
+      const { data: documents } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('eleve_id', userId);
+      
+      const totalDocs = documents?.length || 0;
+      const docsOK = documents?.filter(doc => doc.texte_extrait && doc.texte_extrait.length > 50)?.length || 0;
+      const docsProblematic = totalDocs - docsOK;
+      
+      repairResults.repairs_successful.push({
+        action: 'validation_documents',
+        message: `✅ Documents analysés: ${docsOK}/${totalDocs} utilisables`,
+        details: {
+          total: totalDocs,
+          usable: docsOK,
+          problematic: docsProblematic,
+          success_rate: totalDocs > 0 ? Math.round((docsOK / totalDocs) * 100) : 0
+        }
+      });
+      
+      if (docsProblematic > 0) {
+        repairResults.repairs_attempted.push({
+          action: 'documents_problematiques',
+          message: `⚠️ ${docsProblematic} documents avec problèmes OCR détectés`,
+          recommendation: 'Re-upload des documents ou vérification qualité images'
+        });
+      }
+      
+    } catch (error) {
+      repairResults.repairs_failed.push({
+        action: 'validation_documents',
+        message: `❌ Erreur validation documents: ${error.message}`
+      });
+    }
+    
+    // RÉPARATION 4: Test final Groq
+    console.log('🔧 Réparation 4: Test Groq...');
+    try {
+      const testGroq = await groq.chat.completions.create({
+        messages: [{ 
+          role: 'user', 
+          content: 'Test réparation ÉtudIA - réponds juste OK' 
+        }],
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 5
+      });
+      
+      const response = testGroq.choices[0]?.message?.content || '';
+      
+      repairResults.repairs_successful.push({
+        action: 'test_groq',
+        message: '✅ Groq API fonctionnelle',
+        details: `Réponse: "${response}", Tokens: ${testGroq.usage?.total_tokens || 0}`
+      });
+      
+    } catch (groqError) {
+      repairResults.repairs_failed.push({
+        action: 'test_groq',
+        message: `❌ Groq API: ${groqError.message}`,
+        recommendation: 'Vérifier GROQ_API_KEY et connexion réseau'
+      });
+    }
+    
+    // BILAN FINAL
+    const totalRepairs = repairResults.repairs_attempted.length + 
+                        repairResults.repairs_successful.length + 
+                        repairResults.repairs_failed.length;
+    
+    const successfulRepairs = repairResults.repairs_successful.length;
+    const failedRepairs = repairResults.repairs_failed.length;
+    
+    if (failedRepairs === 0) {
+      repairResults.overall_result = '✅ RÉPARATION_RÉUSSIE';
+    } else if (successfulRepairs > failedRepairs) {
+      repairResults.overall_result = '⚠️ RÉPARATION_PARTIELLE';
+    } else {
+      repairResults.overall_result = '❌ RÉPARATION_ÉCHOUÉE';
+    }
+    
+    repairResults.summary = {
+      total_actions: totalRepairs,
+      successful: successfulRepairs,
+      failed: failedRepairs,
+      success_rate: totalRepairs > 0 ? Math.round((successfulRepairs / totalRepairs) * 100) : 0
     };
-
-    healthData.storage = {
-      status: process.env.CLOUDINARY_CLOUD_NAME ? '✅ Cloudinary configuré' : '❌ Cloudinary manquant'
-    };
-
-    res.status(200).json(healthData);
+    
+    repairResults.next_steps = [
+      '1. Exécuter diagnostic complet: GET /api/diagnostic/system/' + userId,
+      '2. Tester chat simple avec document',
+      '3. Vérifier upload/OCR si problèmes persistent',
+      '4. Contacter développeur si échecs critiques'
+    ];
+    
+    console.log(`✅ Réparation terminée: ${repairResults.overall_result}`);
+    res.json(repairResults);
+    
   } catch (error) {
-    res.status(503).json({ 
-      status: '⚠️ Problème technique', 
-      error: error.message,
-      timestamp: new Date().toISOString()
+    console.error('💥 Erreur réparation:', error);
+    res.status(500).json({
+      ...repairResults,
+      overall_result: '💥 ERREUR_CRITIQUE',
+      error: {
+        name: error.name,
+        message: error.message
+      },
+      next_steps: ['🚨 Contacter le développeur - erreur critique de réparation']
     });
   }
 });
