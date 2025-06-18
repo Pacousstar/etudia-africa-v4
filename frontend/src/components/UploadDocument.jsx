@@ -260,7 +260,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
                 <div className="step active">🧠 Analyse IA</div>
                 <div className="step">✅ Finalisation</div>
               </div>
-              <p>ÉtudIA analyse votre document avec Llama 3.3...</p>
+              <p>ÉtudIA analyse votre document ...</p>
             </div>
           )}
 
