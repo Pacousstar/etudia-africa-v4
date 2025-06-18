@@ -1968,3 +1968,296 @@ body {
 }
 
 }
+/* =================================================================
+   🔴 BOUTON DÉCONNEXION ROUGE + FOOTER AVIS ORANGE
+   Ajout CSS pour ÉtudIA v4.0 par MonAP
+   ================================================================= */
+
+/* =================================================================
+   🔴 BOUTON DÉCONNEXION RÉVOLUTIONNAIRE
+   ================================================================= */
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  border: 2px solid #EF4444;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+  min-width: 160px;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.logout-button:hover {
+  background: linear-gradient(135deg, #DC2626, #B91C1C);
+  border-color: #DC2626;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+  color: white;
+}
+
+.logout-button:active {
+  transform: translateY(0px);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+/* Icône déconnexion */
+.logout-icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.logout-button:hover .logout-icon {
+  transform: rotate(-15deg) scale(1.1);
+}
+
+/* Label déconnexion */
+.logout-label {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* =================================================================
+   📱 NAVIGATION ONGLETS AVEC DÉCONNEXION
+   ================================================================= */
+
+.tab-navigation {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  flex-wrap: wrap; /* Pour permettre le passage à la ligne si nécessaire */
+}
+
+/* Assurer que tous les boutons ont la même hauteur */
+.tab-button,
+.logout-button {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* =================================================================
+   🍊 FOOTER LIEN AVIS TESTEUR ORANGE
+   ================================================================= */
+
+.footer-feedback-link {
+  font-size: 16px !important;
+  color: #FF8C00 !important;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  display: inline-block;
+  border: 1px solid transparent;
+}
+
+.footer-feedback-link:hover {
+  color: #FF6B35 !important;
+  background: rgba(255, 140, 0, 0.1);
+  border-color: rgba(255, 140, 0, 0.3);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+/* Si le lien est dans une liste */
+.footer-links .footer-feedback-link,
+.footer-content .footer-feedback-link {
+  font-size: 16px !important;
+  color: #FF8C00 !important;
+}
+
+/* =================================================================
+   📱 RESPONSIVE POUR BOUTON DÉCONNEXION
+   ================================================================= */
+
+@media (max-width: 768px) {
+  .tab-navigation {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  
+  .tab-button,
+  .logout-button {
+    min-width: auto;
+    width: 100%;
+    max-width: 300px;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .logout-button {
+    font-size: 0.9rem;
+    padding: 0.75rem;
+    min-height: 50px;
+  }
+  
+  .logout-icon {
+    font-size: 1rem;
+  }
+  
+  .footer-feedback-link {
+    font-size: 14px !important;
+  }
+}
+
+/* =================================================================
+   🌙 MODE SOMBRE POUR NOUVEAUX ÉLÉMENTS
+   ================================================================= */
+
+.dark-mode .logout-button {
+  background: linear-gradient(135deg, #B91C1C, #991B1B);
+  border-color: #B91C1C;
+  box-shadow: 0 4px 15px rgba(185, 28, 28, 0.4);
+}
+
+.dark-mode .logout-button:hover {
+  background: linear-gradient(135deg, #991B1B, #7F1D1D);
+  border-color: #991B1B;
+  box-shadow: 0 8px 25px rgba(185, 28, 28, 0.5);
+}
+
+.dark-mode .footer-feedback-link {
+  color: #FFA726 !important;
+}
+
+.dark-mode .footer-feedback-link:hover {
+  color: #FF8C00 !important;
+  background: rgba(255, 167, 38, 0.15);
+  border-color: rgba(255, 167, 38, 0.4);
+}
+
+/* =================================================================
+   ✨ ANIMATIONS DÉCONNEXION SPÉCIALES
+   ================================================================= */
+
+/* Animation au clic pour confirmer l'action */
+.logout-button.confirming {
+  animation: logoutConfirm 0.6s ease-in-out;
+}
+
+@keyframes logoutConfirm {
+  0% { transform: scale(1); }
+  25% { transform: scale(0.95); }
+  50% { transform: scale(1.05); }
+  75% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+/* Effet de pulsation subtile */
+.logout-button {
+  animation: logoutPulse 3s ease-in-out infinite;
+}
+
+@keyframes logoutPulse {
+  0%, 100% { 
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); 
+  }
+  50% { 
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); 
+  }
+}
+
+/* =================================================================
+   🎯 CLASSES UTILITAIRES POUR L'INTÉGRATION
+   ================================================================= */
+
+/* Pour aligner parfaitement avec les autres boutons */
+.buttons-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.buttons-row .tab-button,
+.buttons-row .logout-button {
+  flex: 0 0 auto;
+}
+
+/* Pour séparer visuellement le bouton déconnexion */
+.logout-separator {
+  width: 2px;
+  height: 40px;
+  background: rgba(239, 68, 68, 0.3);
+  margin: 0 0.5rem;
+}
+
+/* =================================================================
+   🎨 VARIANTES DE COULEUR ROUGE
+   ================================================================= */
+
+/* Rouge doux */
+.logout-button.soft {
+  background: linear-gradient(135deg, #F87171, #EF4444);
+}
+
+/* Rouge intense */
+.logout-button.intense {
+  background: linear-gradient(135deg, #DC2626, #991B1B);
+}
+
+/* Rouge avec transparence */
+.logout-button.transparent {
+  background: rgba(239, 68, 68, 0.9);
+  backdrop-filter: blur(10px);
+}
+
+/* =================================================================
+   📊 ÉTATS DU BOUTON DÉCONNEXION
+   ================================================================= */
+
+.logout-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #9CA3AF;
+  border-color: #9CA3AF;
+  box-shadow: none;
+}
+
+.logout-button.loading {
+  pointer-events: none;
+}
+
+.logout-button.loading .logout-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* =================================================================
+   🏆 SIGNATURE MonAP POUR CES AJOUTS
+   ================================================================= */
+
+/*
+🔴 BOUTON DÉCONNEXION + 🍊 FOOTER AVIS
+Créé par MonAP - CHEFFE PROJET ÉtudIA
+
+✅ Design cohérent avec l'interface existante
+✅ Rouge agréable et professionnel
+✅ Responsive mobile parfait
+✅ Animations fluides
+✅ Mode sombre intégré
+✅ Footer orange police 16px
+
+Pour le bonheur des élèves ivoiriens ! 🇨🇮✨
+*/
