@@ -170,73 +170,110 @@ const ChatIA = ({ student, apiUrl, documentContext = '', allDocuments = [] }) =>
   };
 
   // 🔧 CORRECTION 3: MESSAGE D'ACCUEIL CORRIGÉ
-  const triggerWelcomeMessage = async () => {
-    if (welcomeMessageSent) return;
+ const triggerWelcomeMessage = async () => {
+  if (welcomeMessageSent) return;
+  
+  try {
+    setIsLoading(true);
+    setConnectionStatus('connecting');
     
-    try {
-      setIsLoading(true);
-      setConnectionStatus('connecting');
-      
-      const response = await fetch(`${apiUrl}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: 'Connexion',
-          user_id: student.id,
-          document_context: documentContext,
-          is_welcome: true
-        }),
-      });
+    // 🔧 FIX: Vérifier si on a un document sélectionné
+    const currentDocument = selectedDocumentId ? 
+      allDocuments.find(doc => doc.id === selectedDocumentId) : 
+      (allDocuments.length > 0 ? allDocuments[0] : null);
+    
+    const contextToSend = currentDocument?.texte_extrait || documentContext || '';
+    
+    console.log('🎯 Message accueil avec document:', {
+      document_name: currentDocument?.nom_original,
+      context_length: contextToSend.length,
+      selected_id: selectedDocumentId
+    });
+    
+    const response = await fetch(`${apiUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'Connexion',
+        user_id: student.id,
+        document_context: contextToSend, // ✅ CONTEXTE GARANTI
+        is_welcome: true,
+        // 🔧 NOUVEAUX CHAMPS
+        selected_document_id: selectedDocumentId,
+        document_name: currentDocument?.nom_original || '',
+        has_document: !!contextToSend
+      }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (response.ok) {
-        const welcomeMessage = {
-          id: Date.now(),
-          type: 'ai',
-          content: data.response,
-          timestamp: data.timestamp,
-          tokens: data.tokens_used || 0,
-          model: data.model,
-          hasContext: data.has_context,
-          isWelcome: true
-        };
-
-        setMessages([welcomeMessage]);
-        setWelcomeMessageSent(true);
-        setTotalTokens(data.tokens_used || 0);
-        setLearningProfile(data.learning_profile);
-        setConnectionStatus('online');
-
-        // CORRECTION: Mise à jour tokens correcte
-        if (data.tokens_used) {
-          updateTokenUsage(data.tokens_used);
-        }
-      }
-    } catch (error) {
-      console.error('❌ Erreur message d\'accueil:', error);
-      setConnectionStatus('offline');
-      
-      const fallbackWelcome = {
+    if (response.ok) {
+      const welcomeMessage = {
         id: Date.now(),
         type: 'ai',
-        content: `Salut ${prenomEleve} ! 🎓
+        content: data.response,
+        timestamp: data.timestamp,
+        tokens: data.tokens_used || 0,
+        model: data.model,
+        hasContext: data.has_context || !!contextToSend, // ✅ INDICATEUR FIABLE
+        isWelcome: true,
+        // 🔧 NOUVEAUX CHAMPS
+        documentUsed: data.document_name,
+        contextLength: data.context_length || contextToSend.length
+      };
+
+      setMessages([welcomeMessage]);
+      setWelcomeMessageSent(true);
+      setTotalTokens(data.tokens_used || 0);
+      setLearningProfile(data.learning_profile);
+      setConnectionStatus('online');
+
+      // Mise à jour tokens
+      if (data.tokens_used) {
+        updateTokenUsage(data.tokens_used);
+      }
+      
+      // 🔧 LOG DE CONFIRMATION
+      console.log(`✅ Message d'accueil envoyé avec document: "${data.document_name}" (${data.context_length || 0} chars)`);
+      
+    } else {
+      throw new Error(data.error || 'Erreur serveur');
+    }
+  } catch (error) {
+    console.error('❌ ERREUR DÉTAILLÉE message d\'accueil:', {
+      message: error.message,
+      stack: error.stack,
+      student_id: student?.id,
+      document_context_length: documentContext?.length || 0,
+      selected_document: selectedDocumentId
+    });
+    
+    setConnectionStatus('offline');
+    
+    const fallbackWelcome = {
+      id: Date.now(),
+      type: 'ai',
+      content: `Salut ${prenomEleve} ! 🎓
 
 Je suis ÉtudIA, ton tuteur IA révolutionnaire ! 🤖✨
 
-⚠️ Mode hors ligne activé. Reconnecte-toi pour l'expérience complète !`,
-        timestamp: new Date().toISOString(),
-        tokens: 0,
-        isWelcome: true,
-        isOffline: true
-      };
+⚠️ Mode hors ligne activé temporairement.
 
-      setMessages([fallbackWelcome]);
-      setWelcomeMessageSent(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+📄 Document détecté : ${allDocuments.length > 0 ? `"${allDocuments[0].nom_original}"` : 'Aucun'}
+
+Reconnecte-toi pour l'expérience complète !`,
+      timestamp: new Date().toISOString(),
+      tokens: 0,
+      isWelcome: true,
+      isOffline: true
+    };
+
+    setMessages([fallbackWelcome]);
+    setWelcomeMessageSent(true);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     if (student?.id && !welcomeMessageSent) {
