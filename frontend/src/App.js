@@ -1369,6 +1369,11 @@ function App() {
           <a href="https://etudia-v4.gsnexpertises.com" target="_blank">
            📝 Donner votre avis testeur
           </a>
+
+// Dans le footer, applique la classe :
+<a href="#feedback" className="footer-feedback-link">
+  📝 Donner votre avis testeur
+</a>
         
           <div className="footer-stats">
             <span>🚀 {stats.students.toLocaleString()}+ élèves</span>
