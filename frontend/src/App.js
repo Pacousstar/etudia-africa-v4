@@ -1038,11 +1038,10 @@ function App() {
           onClick={setActiveTab}
           disabled={!student}
         />
-            // Dans la navigation des onglets, ajoute :
-<button className="logout-button" onClick={handleLogout}>
-  <span className="logout-icon">🚪</span>
-  <span className="logout-label">Déconnexion</span>
-</button>
+          <button className="logout-button" onClick={handleLogout}>
+          <span className="logout-icon">🚪</span>
+          <span className="logout-label">Déconnexion</span>
+          </button>
       </nav>
 
       {/* CONTENU PRINCIPAL */}
@@ -1370,8 +1369,7 @@ function App() {
            📝 Donner votre avis testeur
           </a>
 
-// Dans le footer, applique la classe :
-<a href="#feedback" className="footer-feedback-link">
+<a href="https://etudia-v4.gsnexpertises.com" className="footer-feedback-link">
   📝 Donner votre avis testeur
 </a>
         
