@@ -859,47 +859,52 @@ function App() {
 
   // Gestion documents
   const handleDocumentProcessed = (extractedText, documentData) => {
-    setDocumentContext(extractedText);
-    setCurrentStep(3);
-    
-    // Ajouter le nouveau document à la liste
-    if (documentData) {
-      setAllDocuments(prev => [documentData, ...prev]);
-      setSelectedDocumentId(documentData.id);
-    }
-    
-    // Mettre à jour les statistiques utilisateur
-    if (student?.id) {
-      updateUserStats(student.id);
-    }
-    
-    showTemporaryMessage('📄 Document analysé avec ÉtudIA ! Passons au chat IA !');
-    setTimeout(() => setActiveTab('chat'), 1500);
-  };
+  console.log('📄 Document traité reçu:', {
+    document_name: documentData?.nom_original,
+    text_length: extractedText?.length,
+    document_id: documentData?.id
+  });
 
-  // Composant bouton navigation
-  const TabButton = ({ id, label, icon, isActive, onClick, disabled = false }) => (
-    <button
-      className={`tab-button ${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
-      onClick={() => !disabled && onClick(id)}
-      disabled={disabled}
-      title={disabled ? 'Complétez les étapes précédentes' : `Aller à ${label}`}
-    >
-      <span className="tab-icon">{icon}</span>
-      <span className="tab-label">{label}</span>
-      {currentStep > getStepNumber(id) && <span className="tab-check">✓</span>}
-      {disabled && <span className="tab-lock">🔒</span>}
-    </button>
+  // 🔧 FIX 1: Mise à jour immédiate du contexte
+  setDocumentContext(extractedText);
+  setCurrentStep(3);
+  
+  // 🔧 FIX 2: Mise à jour de la liste des documents
+  if (documentData) {
+    const newDocument = {
+      id: documentData.id,
+      nom_original: documentData.nom_original,
+      matiere: documentData.matiere || 'Général',
+      texte_extrait: extractedText,
+      date_upload: documentData.date_upload || new Date().toISOString()
+    };
+    
+    // Ajouter en début de liste
+    setAllDocuments(prev => [newDocument, ...prev]);
+    
+    // 🔧 FIX 3: Sélectionner automatiquement le nouveau document
+    setSelectedDocumentId(documentData.id);
+    
+    console.log('✅ Document ajouté à la liste:', newDocument.nom_original);
+  }
+  
+  // 🔧 FIX 4: Mettre à jour les statistiques utilisateur
+  if (student?.id) {
+    updateUserStats(student.id);
+  }
+  
+  // 🔧 FIX 5: Message de confirmation avec détails
+  showTemporaryMessage(
+    `📄 "${documentData?.nom_original || 'Document'}" analysé ! (${extractedText?.length || 0} caractères) ✅`, 
+    'success'
   );
-
-  return (
-    <div className={`app ${isDarkMode ? 'dark-mode' : ''}`}>
-      {/* Message flottant */}
-      {connectionMessage.show && (
-        <div className={`floating-message ${connectionMessage.type}`}>
-          {connectionMessage.text}
-        </div>
-      )}
+  
+  // 🔧 FIX 6: Transition automatique vers le chat avec délai
+  setTimeout(() => {
+    setActiveTab('chat');
+    console.log('🎯 Redirection vers chat avec document:', documentData?.nom_original);
+  }, 2000);
+};
 
       {/* HEADER RÉVOLUTIONNAIRE ÉPURÉ - NE PAS MODIFIER */}
 <header className="app-header revolutionary">
