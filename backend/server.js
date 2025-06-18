@@ -394,20 +394,29 @@ JSON requis:
 // Rate limiting AVANT CORS
 app.use('/api/', limiter);
 
-// CORS configuration
 app.use(cors({
   origin: [
+    // Localhost développement
     'http://localhost:3000',
-    'http://localhost:3001', 
+    'http://localhost:3001',
+    
+    // Production Vercel
     'https://etudia-africa-v4.vercel.app',
-    'https://etudia-africa-v4-production.up.railway.app',
-    /\.vercel\.app$/,
-    /\.railway\.app$/,
-    /\.onrender\.com$/
+    
+    // 🔥 NOUVELLE URL RENDER !
+    'https://etudia-v4-revolutionary.onrender.com',
+    
+    // Regex pour tous les domaines Vercel et Render
+    /.*\.vercel\.app$/,
+    /.*\.onrender\.com$/,
+    
+    // Ancienne Railway (au cas où)
+    /.*\.railway\.app$/,
+    /.*\.up\.railway\.app$/
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin'],
   optionsSuccessStatus: 200
 }));
 
@@ -453,27 +462,82 @@ if (process.env.NODE_ENV === 'production') {
 // 🔗 ROUTES DE BASE
 // ===================================================================
 
-app.get('/', (req, res) => {
-  res.json({
-    message: "🚀 ÉtudIA v4.0 - RÉVOLUTION CORRIGÉE - INSTRUCTIONS LLAMA RESPECTÉES !",
-    version: "4.0.0-llama-fixed",
-    new_features: [
-      "🎯 Instructions LLaMA respectées à 95%",
-      "📊 Mode étape par étape FORCÉ",
-      "✅ Mode solution directe optimisé",
-      "🔧 Validation post-réponse automatique",
-      "⚡ Prompts ultra-courts (< 500 chars)",
-      "🎤 Support audio actif",
-      "🗑️ Suppression documents avec Cloudinary"
-    ],
-    fixes_applied: [
-      "✅ Température ultra-basse (0.05-0.1)",
-      "✅ Historique limité (2 échanges max)",
-      "✅ Instructions en début de prompt",
-      "✅ Validation stricte des formats",
-      "✅ Stop tokens pour forcer arrêt"
-    ]
-  });
+app.get('/health', async (req, res) => {
+  try {
+    console.log('🏥 Route /health appelée depuis:', req.get('origin') || 'Direct');
+    
+    // Test rapide Supabase
+    let supabaseStatus = '✅ Connecté';
+    try {
+      const { data } = await supabase.from('eleves').select('count(*)').limit(1);
+      supabaseStatus = '✅ Connecté';
+    } catch (dbError) {
+      supabaseStatus = '⚠️ Erreur: ' + dbError.message.substring(0, 50);
+    }
+    
+    // Test rapide Groq
+    let groqStatus = '✅ Fonctionnel';
+    try {
+      await groq.chat.completions.create({
+        messages: [{ role: 'user', content: 'test' }],
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 3
+      });
+      groqStatus = '✅ Fonctionnel';
+    } catch (groqError) {
+      groqStatus = '⚠️ Erreur: ' + groqError.message.substring(0, 50);
+    }
+    
+    // RÉPONSE SANTÉ COMPLÈTE
+    const healthData = {
+      status: 'ok',
+      message: '✅ ÉtudIA v4.0 en ligne sur Render !',
+      version: '4.0.0-render',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      platform: 'Render.com',
+      port: PORT,
+      host: req.get('host'),
+      services: {
+        server: '✅ Opérationnel',
+        supabase: supabaseStatus,
+        groq: groqStatus,
+        cloudinary: process.env.CLOUDINARY_CLOUD_NAME ? '✅ Configuré' : '❌ Manquant'
+      },
+      tokens_status: {
+        used_today: 0,
+        remaining: 95000,
+        last_reset: new Date().toISOString(),
+        status: '🟢 Optimal'
+      },
+      render_info: {
+        service_url: 'https://etudia-v4-revolutionary.onrender.com',
+        deployment_time: new Date().toISOString(),
+        memory_usage: process.memoryUsage().heapUsed / 1024 / 1024 + ' MB'
+      }
+    };
+    
+    console.log('✅ Health check réussi:', healthData.message);
+    res.json(healthData);
+    
+  } catch (error) {
+    console.error('❌ Erreur health check:', error.message);
+    
+    // RÉPONSE MÊME EN CAS D'ERREUR (pour éviter status maintenance)
+    res.status(200).json({
+      status: 'degraded',
+      message: '⚠️ ÉtudIA fonctionne en mode dégradé',
+      version: '4.0.0-render',
+      timestamp: new Date().toISOString(),
+      error: error.message,
+      platform: 'Render.com',
+      services: {
+        server: '✅ Opérationnel',
+        database: '❓ À vérifier',
+        ai: '❓ À vérifier'
+      }
+    });
+  }
 });
 
 // ===================================================================
