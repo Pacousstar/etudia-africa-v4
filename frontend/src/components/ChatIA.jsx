@@ -173,41 +173,49 @@ const ChatIA = ({ student, apiUrl, documentContext = '', allDocuments = [] }) =>
  const triggerWelcomeMessage = async () => {
   if (welcomeMessageSent) return;
   
+  console.log('🎉 Déclenchement message d\'accueil...');
+  
   try {
     setIsLoading(true);
     setConnectionStatus('connecting');
     
-    // 🔧 FIX: Vérifier si on a un document sélectionné
-    const currentDocument = selectedDocumentId ? 
-      allDocuments.find(doc => doc.id === selectedDocumentId) : 
-      (allDocuments.length > 0 ? allDocuments[0] : null);
-    
+    // 🔧 RÉCUPÉRATION DOCUMENT SIMPLE
+    const currentDocument = allDocuments.length > 0 ? allDocuments[0] : null;
     const contextToSend = currentDocument?.texte_extrait || documentContext || '';
     
-    console.log('🎯 Message accueil avec document:', {
+    console.log('📄 Contexte pour accueil:', {
+      document_found: !!currentDocument,
       document_name: currentDocument?.nom_original,
-      context_length: contextToSend.length,
-      selected_id: selectedDocumentId
+      context_length: contextToSend.length
     });
     
+    // ✅ APPEL SIMPLIFIÉ À L'API
     const response = await fetch(`${apiUrl}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: 'Connexion',
+        message: 'connexion',
         user_id: student.id,
-        document_context: contextToSend, // ✅ CONTEXTE GARANTI
+        document_context: contextToSend,
         is_welcome: true,
-        // 🔧 NOUVEAUX CHAMPS
-        selected_document_id: selectedDocumentId,
-        document_name: currentDocument?.nom_original || '',
-        has_document: !!contextToSend
+        mode: 'normal'
       }),
     });
 
+    console.log('📡 Réponse API accueil:', response.status, response.ok);
+    
+    if (!response.ok) {
+      throw new Error(`Erreur serveur: ${response.status}`);
+    }
+    
     const data = await response.json();
+    console.log('📊 Données accueil reçues:', {
+      success: data.success,
+      has_context: data.has_context,
+      document_name: data.document_name
+    });
 
-    if (response.ok) {
+    if (data.success !== false) {
       const welcomeMessage = {
         id: Date.now(),
         type: 'ai',
@@ -215,61 +223,52 @@ const ChatIA = ({ student, apiUrl, documentContext = '', allDocuments = [] }) =>
         timestamp: data.timestamp,
         tokens: data.tokens_used || 0,
         model: data.model,
-        hasContext: data.has_context || !!contextToSend, // ✅ INDICATEUR FIABLE
+        hasContext: data.has_context,
         isWelcome: true,
-        // 🔧 NOUVEAUX CHAMPS
-        documentUsed: data.document_name,
-        contextLength: data.context_length || contextToSend.length
+        documentUsed: data.document_name
       };
 
       setMessages([welcomeMessage]);
       setWelcomeMessageSent(true);
-      setTotalTokens(data.tokens_used || 0);
-      setLearningProfile(data.learning_profile);
       setConnectionStatus('online');
 
-      // Mise à jour tokens
       if (data.tokens_used) {
         updateTokenUsage(data.tokens_used);
       }
       
-      // 🔧 LOG DE CONFIRMATION
-      console.log(`✅ Message d'accueil envoyé avec document: "${data.document_name}" (${data.context_length || 0} chars)`);
+      console.log(`✅ Message d'accueil OK avec document: "${data.document_name}"`);
       
     } else {
-      throw new Error(data.error || 'Erreur serveur');
+      throw new Error(data.error || 'Erreur réponse API');
     }
-  } catch (error) {
-    console.error('❌ ERREUR DÉTAILLÉE message d\'accueil:', {
-      message: error.message,
-      stack: error.stack,
-      student_id: student?.id,
-      document_context_length: documentContext?.length || 0,
-      selected_document: selectedDocumentId
-    });
     
+  } catch (error) {
+    console.error('❌ Erreur message d\'accueil:', error.message);
     setConnectionStatus('offline');
     
-    const fallbackWelcome = {
+    // FALLBACK LOCAL ROBUSTE
+    const fallbackMessage = {
       id: Date.now(),
       type: 'ai',
-      content: `Salut ${prenomEleve} ! 🎓
+      content: `Salut ${prenomEleve} ! 🤖
 
-Je suis ÉtudIA, ton tuteur IA révolutionnaire ! 🤖✨
+Je suis ÉtudIA, ton tuteur IA !
 
-⚠️ Mode hors ligne activé temporairement.
+${allDocuments.length > 0 ? 
+  `📄 Document détecté : "${allDocuments[0].nom_original}"` : 
+  '📄 Aucun document - Upload en pour commencer !'}
 
-📄 Document détecté : ${allDocuments.length > 0 ? `"${allDocuments[0].nom_original}"` : 'Aucun'}
-
-Reconnecte-toi pour l'expérience complète !`,
+🎯 Mode hors ligne temporaire activé.
+Pose-moi tes questions, je ferai de mon mieux ! ✨`,
       timestamp: new Date().toISOString(),
       tokens: 0,
       isWelcome: true,
       isOffline: true
     };
 
-    setMessages([fallbackWelcome]);
+    setMessages([fallbackMessage]);
     setWelcomeMessageSent(true);
+    
   } finally {
     setIsLoading(false);
   }
