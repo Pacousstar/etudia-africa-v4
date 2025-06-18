@@ -1038,6 +1038,11 @@ function App() {
           onClick={setActiveTab}
           disabled={!student}
         />
+            // Dans la navigation des onglets, ajoute :
+<button className="logout-button" onClick={handleLogout}>
+  <span className="logout-icon">🚪</span>
+  <span className="logout-label">Déconnexion</span>
+</button>
       </nav>
 
       {/* CONTENU PRINCIPAL */}
