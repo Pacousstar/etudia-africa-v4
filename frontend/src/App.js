@@ -1405,7 +1405,7 @@ const handleDocumentProcessed = (extractedText, documentData) => {
         )}
       </main>
 
-      {/* Footer */}
+{/* Footer */}
       <footer className="app-footer">
         <div className="footer-content">
           <div className="footer-main">
@@ -1413,10 +1413,16 @@ const handleDocumentProcessed = (extractedText, documentData) => {
             <p>Développé avec ❤️ par <strong>@Pacousstar</strong> - Côte d'Ivoire</p>
           </div>
         
-          
-          <a href="https://etudia-v4.gsnexpertises.com" className="footer-feedback-link">
-           📝 Donner votre avis testeur
-          </a>
+          <div className="footer-feedback">
+            <a 
+              href="https://etudia-v4.gsnexpertises.com" 
+              className="footer-feedback-link"
+              target="_blank"
+              rel="noreferrer"
+            >
+              📝 Donner votre avis testeur
+            </a>
+          </div>
         
           <div className="footer-stats">
             <span>🚀 {stats.students.toLocaleString()}+ élèves</span>
@@ -1426,12 +1432,11 @@ const handleDocumentProcessed = (extractedText, documentData) => {
           </div>
           
           <div className="footer-tech">
-            
             <span>Status: {backendStatus === 'online' ? '🟢 En ligne' : '🔴 Maintenance'}</span>
           </div>
         </div>
       </footer>
-    
+    </div>
   );
 }
 
