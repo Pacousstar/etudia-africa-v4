@@ -858,52 +858,179 @@ function App() {
   };
 
   // Gestion documents
-  const handleDocumentProcessed = (extractedText, documentData) => {
-  console.log('📄 Document traité reçu:', {
+  // 🔧 CORRECTION App.js - handleDocumentProcessed SIMPLIFIÉE
+
+const handleDocumentProcessed = (extractedText, documentData) => {
+  console.log('📄 DOCUMENT TRAITÉ - Début liaison:', {
     document_name: documentData?.nom_original,
     text_length: extractedText?.length,
     document_id: documentData?.id
   });
 
-  // 🔧 FIX 1: Mise à jour immédiate du contexte
+  // ✅ MISE À JOUR IMMÉDIATE DU CONTEXTE
   setDocumentContext(extractedText);
   setCurrentStep(3);
   
-  // 🔧 FIX 2: Mise à jour de la liste des documents
+  // ✅ MISE À JOUR LISTE DOCUMENTS
   if (documentData) {
     const newDocument = {
       id: documentData.id,
       nom_original: documentData.nom_original,
       matiere: documentData.matiere || 'Général',
       texte_extrait: extractedText,
-      date_upload: documentData.date_upload || new Date().toISOString()
+      date_upload: new Date().toISOString()
     };
     
     // Ajouter en début de liste
-    setAllDocuments(prev => [newDocument, ...prev]);
+    setAllDocuments(prev => [newDocument, ...prev.filter(doc => doc.id !== newDocument.id)]);
     
-    // 🔧 FIX 3: Sélectionner automatiquement le nouveau document
+    // Sélectionner automatiquement
     setSelectedDocumentId(documentData.id);
     
-    console.log('✅ Document ajouté à la liste:', newDocument.nom_original);
+    console.log('✅ Document ajouté et sélectionné:', newDocument.nom_original);
   }
   
-  // 🔧 FIX 4: Mettre à jour les statistiques utilisateur
+  // ✅ MISE À JOUR STATS UTILISATEUR
   if (student?.id) {
     updateUserStats(student.id);
   }
   
-  // 🔧 FIX 5: Message de confirmation avec détails
+  // ✅ MESSAGE DE CONFIRMATION DÉTAILLÉ
   showTemporaryMessage(
-    `📄 "${documentData?.nom_original || 'Document'}" analysé ! (${extractedText?.length || 0} caractères) ✅`, 
-    'success'
+    `🎉 Document "${documentData?.nom_original || 'Document'}" analysé avec succès !
+    
+📊 ${extractedText?.length || 0} caractères extraits
+🤖 ÉtudIA est maintenant prêt à t'aider !
+
+➡️ Direction le chat automatique...`, 
+    'success', 
+    4000
   );
   
-  // 🔧 FIX 6: Transition automatique vers le chat avec délai
+  // ✅ REDIRECTION AUTOMATIQUE AVEC FEEDBACK
   setTimeout(() => {
     setActiveTab('chat');
     console.log('🎯 Redirection vers chat avec document:', documentData?.nom_original);
+    
+    // Force un nouveau message d'accueil pour prendre en compte le document
+    setWelcomeMessageSent(false);
+    
+    // Message additionnel de confirmation
+    setTimeout(() => {
+      showTemporaryMessage(
+        `📄 Document "${documentData?.nom_original}" chargé ! Pose tes questions !`, 
+        'info', 
+        3000
+      );
+    }, 1000);
+    
   }, 2000);
+};
+
+// 🔧 CORRECTION ChatIA.js - triggerWelcomeMessage SIMPLIFIÉE
+
+const triggerWelcomeMessage = async () => {
+  if (welcomeMessageSent) return;
+  
+  console.log('🎉 Déclenchement message d\'accueil...');
+  
+  try {
+    setIsLoading(true);
+    setConnectionStatus('connecting');
+    
+    // 🔧 RÉCUPÉRATION DOCUMENT SIMPLE
+    const currentDocument = allDocuments.length > 0 ? allDocuments[0] : null;
+    const contextToSend = currentDocument?.texte_extrait || documentContext || '';
+    
+    console.log('📄 Contexte pour accueil:', {
+      document_found: !!currentDocument,
+      document_name: currentDocument?.nom_original,
+      context_length: contextToSend.length
+    });
+    
+    // ✅ APPEL SIMPLIFIÉ À L'API
+    const response = await fetch(`${apiUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'connexion',
+        user_id: student.id,
+        document_context: contextToSend,
+        is_welcome: true,
+        mode: 'normal'
+      }),
+    });
+
+    console.log('📡 Réponse API accueil:', response.status, response.ok);
+    
+    if (!response.ok) {
+      throw new Error(`Erreur serveur: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('📊 Données accueil reçues:', {
+      success: data.success,
+      has_context: data.has_context,
+      document_name: data.document_name
+    });
+
+    if (data.success !== false) {
+      const welcomeMessage = {
+        id: Date.now(),
+        type: 'ai',
+        content: data.response,
+        timestamp: data.timestamp,
+        tokens: data.tokens_used || 0,
+        model: data.model,
+        hasContext: data.has_context,
+        isWelcome: true,
+        documentUsed: data.document_name
+      };
+
+      setMessages([welcomeMessage]);
+      setWelcomeMessageSent(true);
+      setConnectionStatus('online');
+
+      if (data.tokens_used) {
+        updateTokenUsage(data.tokens_used);
+      }
+      
+      console.log(`✅ Message d'accueil OK avec document: "${data.document_name}"`);
+      
+    } else {
+      throw new Error(data.error || 'Erreur réponse API');
+    }
+    
+  } catch (error) {
+    console.error('❌ Erreur message d\'accueil:', error.message);
+    setConnectionStatus('offline');
+    
+    // FALLBACK LOCAL ROBUSTE
+    const fallbackMessage = {
+      id: Date.now(),
+      type: 'ai',
+      content: `Salut ${prenomEleve} ! 🤖
+
+Je suis ÉtudIA, ton tuteur IA !
+
+${allDocuments.length > 0 ? 
+  `📄 Document détecté : "${allDocuments[0].nom_original}"` : 
+  '📄 Aucun document - Upload en pour commencer !'}
+
+🎯 Mode hors ligne temporaire activé.
+Pose-moi tes questions, je ferai de mon mieux ! ✨`,
+      timestamp: new Date().toISOString(),
+      tokens: 0,
+      isWelcome: true,
+      isOffline: true
+    };
+
+    setMessages([fallbackMessage]);
+    setWelcomeMessageSent(true);
+    
+  } finally {
+    setIsLoading(false);
+  }
 };
 
       {/* HEADER RÉVOLUTIONNAIRE ÉPURÉ - NE PAS MODIFIER */}
