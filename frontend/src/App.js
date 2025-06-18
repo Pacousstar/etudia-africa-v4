@@ -1,17 +1,17 @@
-// App.js - VERSION UX/UI RÉVOLUTIONNAIRE AVEC RESPONSIVE PARFAIT + AMÉLIORATIONS
+// App.js - VERSION UX/UI RÉVOLUTIONNAIRE AVEC RESPONSIVE PARFAIT + CORRECTIONS MonAP
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import UploadDocument from './components/UploadDocument';
 import ChatIA from './components/ChatIA';
 
-// Configuration API pour Render
+// Configuration API pour Railway
 const API_URL = process.env.REACT_APP_API_URL || 
   (process.env.NODE_ENV === 'production'  
-  ? 'https://etudia-v4-revolutionary.onrender.com'  // NOUVELLE URL RENDER
-  : 'http://localhost:10000');  // Port local changé
+  ? 'https://etudia-africa-v4-production.up.railway.app'  // URL RAILWAY CORRIGÉE
+  : 'http://localhost:10000');
 
-console.log('🔗 API_URL:', API_URL || 'PROXY LOCAL ACTIVÉ');
-console.log('🏢 Hébergement: Render.com (Frankfurt)');
+console.log('🔗 API_URL:', API_URL);
+console.log('🏢 Hébergement: Railway (Backend) + Vercel (Frontend)');
 
 function App() {
   // États principaux
@@ -32,7 +32,7 @@ function App() {
     tokens_status: { used_today: 0, remaining: 95000 }
   });
   
-  // 🔋 NOUVEAUX ÉTATS POUR STATISTIQUES UTILISATEUR
+  // États statistiques utilisateur
   const [userStats, setUserStats] = useState({
     conversations: 0,
     documents: 0,
@@ -42,7 +42,6 @@ function App() {
   
   // États UI/UX
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [connectionMessage, setConnectionMessage] = useState({
     show: false,
     text: '',
@@ -59,9 +58,9 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  // 📍 1. AJOUTEZ CES NOUVEAUX ÉTATS APRÈS LES AUTRES useState
-const [chatHistory, setChatHistory] = useState([]); // Nouveau : historique chat
-const [chatTokensUsed, setChatTokensUsed] = useState(0); // Nouveau : tokens chat session
+  // 🔧 NOUVEAUX ÉTATS POUR CHAT FONCTIONNEL
+  const [chatHistory, setChatHistory] = useState([]);
+  const [chatTokensUsed, setChatTokensUsed] = useState(0);
 
   // Données statiques
   const schools = [
@@ -99,619 +98,43 @@ const [chatTokensUsed, setChatTokensUsed] = useState(0); // Nouveau : tokens cha
     }
   };
 
-  // 📍 MODIFIEZ LA FONCTION loadFromStorage POUR INCLURE LE CHAT
-const loadFromStorage = (key) => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const stored = localStorage.getItem(`etudia_${key}`);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Vérifier que les données ne sont pas trop anciennes (7 jours max)
-        const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 jours
-        if (Date.now() - parsed.timestamp < maxAge) {
-          console.log(`📂 Chargement ${key}:`, parsed.data);
-          return parsed.data;
-        } else {
-          // Supprimer données expirées
-          localStorage.removeItem(`etudia_${key}`);
-          console.log(`🗑️ Données ${key} expirées et supprimées`);
+  const loadFromStorage = (key) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = localStorage.getItem(`etudia_${key}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 jours
+          if (Date.now() - parsed.timestamp < maxAge) {
+            console.log(`📂 Chargement ${key}:`, parsed.data);
+            return parsed.data;
+          } else {
+            localStorage.removeItem(`etudia_${key}`);
+            console.log(`🗑️ Données ${key} expirées et supprimées`);
+          }
         }
       }
+    } catch (error) {
+      console.warn('⚠️ Erreur chargement localStorage:', error);
     }
-  } catch (error) {
-    console.warn('⚠️ Erreur chargement localStorage:', error);
-  }
-  return null;
-};
+    return null;
+  };
 
-// 📍 MODIFIEZ LA FONCTION clearAllStorage POUR INCLURE LE CHAT
-const clearAllStorage = () => {
-  try {
-    const keys = [
-      'student', 'currentStep', 'activeTab', 'documentContext', 
-      'allDocuments', 'selectedDocumentId', 'userStats', 'formData',
-      'chatHistory', 'chatTokensUsed' // AJOUT NOUVEAU
-    ];
-    keys.forEach(key => {
-      localStorage.removeItem(`etudia_${key}`);
-    });
-    console.log('🗑️ Tout le storage ÉtudIA vidé');
-  } catch (error) {
-    console.warn('⚠️ Erreur nettoyage storage:', error);
-  }
-};
-
-  // 📍 4. MODIFIEZ LE useEffect DE RESTAURATION POUR LE CHAT
-useEffect(() => {
-  console.log('🚀 Chargement données sauvegardées...');
-  
-  // Vérifier si on est dans le navigateur
-  if (typeof window === 'undefined') return;
-  
-  try {
-    // Charger toutes les données sauvegardées
-    const savedStudent = loadFromStorage('student');
-    const savedCurrentStep = loadFromStorage('currentStep');
-    const savedActiveTab = loadFromStorage('activeTab');
-    const savedDocumentContext = loadFromStorage('documentContext');
-    const savedAllDocuments = loadFromStorage('allDocuments');
-    const savedSelectedDocumentId = loadFromStorage('selectedDocumentId');
-    const savedUserStats = loadFromStorage('userStats');
-    const savedFormData = loadFromStorage('formData');
-    const savedChatHistory = loadFromStorage('chatHistory'); // NOUVEAU
-    const savedChatTokensUsed = loadFromStorage('chatTokensUsed'); // NOUVEAU
-
-    // Restaurer l'élève si connecté
-    if (savedStudent && savedStudent.id) {
-      console.log('✅ Élève trouvé en localStorage:', savedStudent.nom);
-      setStudent(savedStudent);
-      
-      // Restaurer l'étape (minimum 2 si connecté)
-      const stepToRestore = savedCurrentStep || 2;
-      setCurrentStep(stepToRestore);
-      
-      // Restaurer l'onglet actif (upload par défaut si connecté)
-      const tabToRestore = savedActiveTab || (stepToRestore >= 3 ? 'chat' : 'upload');
-      setActiveTab(tabToRestore);
-      
-      // Restaurer le contexte document
-      if (savedDocumentContext) {
-        setDocumentContext(savedDocumentContext);
-        console.log('📄 Contexte document restauré');
-      }
-      
-      // Restaurer la liste des documents
-      if (savedAllDocuments && Array.isArray(savedAllDocuments)) {
-        setAllDocuments(savedAllDocuments);
-        console.log(`📚 ${savedAllDocuments.length} documents restaurés`);
-      }
-      
-      // Restaurer le document sélectionné
-      if (savedSelectedDocumentId) {
-        setSelectedDocumentId(savedSelectedDocumentId);
-      }
-      
-      // 🔧 NOUVEAU : Restaurer l'historique du chat
-      if (savedChatHistory && Array.isArray(savedChatHistory)) {
-        setChatHistory(savedChatHistory);
-        console.log(`💬 ${savedChatHistory.length} messages de chat restaurés`);
-      }
-      
-      // 🔧 NOUVEAU : Restaurer les tokens du chat
-      if (savedChatTokensUsed) {
-        setChatTokensUsed(savedChatTokensUsed);
-        console.log(`🔋 ${savedChatTokensUsed} tokens de chat restaurés`);
-      }
-      
-      // Restaurer les stats utilisateur
-      if (savedUserStats) {
-        setUserStats(savedUserStats);
-      } else {
-        // Charger stats depuis serveur
-        updateUserStats(savedStudent.id);
-      }
-      
-      // Recharger documents depuis serveur si cache vide
-      if (!savedAllDocuments || savedAllDocuments.length === 0) {
-        loadUserDocuments(savedStudent.id);
-      }
-      
-      showTemporaryMessage(
-        `👋 Re-bienvenue ${savedStudent.nom.split(' ')[0]} ! Session complète restaurée !`, 
-        'success'
-      );
-    } else {
-      console.log('📝 Aucune session sauvegardée');
-      
-      // Restaurer le formulaire d'inscription si rempli
-      if (savedFormData) {
-        setFormData(savedFormData);
-        console.log('📝 Formulaire d\'inscription restauré');
-      }
+  const clearAllStorage = () => {
+    try {
+      const keys = [
+        'student', 'currentStep', 'activeTab', 'documentContext', 
+        'allDocuments', 'selectedDocumentId', 'userStats', 'formData',
+        'chatHistory', 'chatTokensUsed'
+      ];
+      keys.forEach(key => {
+        localStorage.removeItem(`etudia_${key}`);
+      });
+      console.log('🗑️ Tout le storage ÉtudIA vidé');
+    } catch (error) {
+      console.warn('⚠️ Erreur nettoyage storage:', error);
     }
-  } catch (error) {
-    console.error('❌ Erreur restauration données:', error);
-    // En cas d'erreur, nettoyer le storage corrompu
-    clearAllStorage();
-  }
-}, []); // Se déclenche une seule fois au montage
-
-// 📍 AJOUTEZ CES useEffect POUR SAUVEGARDER LE CHAT
-useEffect(() => {
-  if (chatHistory.length > 0) {
-    saveToStorage('chatHistory', chatHistory);
-  }
-}, [chatHistory]);
-
-useEffect(() => {
-  if (chatTokensUsed > 0) {
-    saveToStorage('chatTokensUsed', chatTokensUsed);
-  }
-}, [chatTokensUsed]);
-
-  // 🔄 SAUVEGARDER À CHAQUE CHANGEMENT D'ÉTAT
-  useEffect(() => {
-    if (student) {
-      saveToStorage('student', student);
-    }
-  }, [student]);
-
-  useEffect(() => {
-    if (currentStep) {
-      saveToStorage('currentStep', currentStep);
-    }
-  }, [currentStep]);
-
-  useEffect(() => {
-    if (activeTab) {
-      saveToStorage('activeTab', activeTab);
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (documentContext) {
-      saveToStorage('documentContext', documentContext);
-    }
-  }, [documentContext]);
-
-  useEffect(() => {
-    if (allDocuments.length > 0) {
-      saveToStorage('allDocuments', allDocuments);
-    }
-  }, [allDocuments]);
-
-  useEffect(() => {
-    if (selectedDocumentId) {
-      saveToStorage('selectedDocumentId', selectedDocumentId);
-    }
-  }, [selectedDocumentId]);
-
-  useEffect(() => {
-    if (userStats) {
-      saveToStorage('userStats', userStats);
-    }
-  }, [userStats]);
-
-  useEffect(() => {
-    // Sauvegarder formulaire seulement si partiellement rempli
-    if (formData.name || formData.email) {
-      saveToStorage('formData', formData);
-    }
-  }, [formData]);
-
-  // 🔧 INJECTION STYLES CSS POUR FORMULAIRE CENTRÉ + COMPTEURS ORANGE
-  useEffect(() => {
-    const additionalStyles = `
-      /* 🟠 FORMULAIRE D'INSCRIPTION CENTRÉ */
-      .inscription-form {
-        background: linear-gradient(135deg, #FF6B35, #FF8C00) !important;
-        padding: 2.5rem;
-        border-radius: 1.5rem;
-        box-shadow: 0 12px 35px rgba(255, 107, 53, 0.3);
-        position: relative;
-        overflow: hidden;
-        margin: 2rem auto; /* 📐 CENTRAGE AJOUTÉ */
-        max-width: 600px; /* 📐 LARGEUR LIMITÉE POUR CENTRAGE */
-        animation: formSlideIn 0.6s ease-out;
-      }
-
-      /* 🟠 COMPTEURS HEADER EN ORANGE + VISIBILITÉ */
-      .stats-section .stat-number {
-        color: #FF8C00 !important;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
-        font-weight: 900 !important;
-        font-size: 1.1rem !important;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.5rem;
-        backdrop-filter: blur(10px);
-      }
-
-      .stats-section .stat-label {
-        color: rgba(255, 255, 255, 0.95) !important;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
-        font-weight: 600 !important;
-        background: rgba(0, 0, 0, 0.2);
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.5rem;
-        margin-top: 0.25rem;
-      }
-
-      .stats-section .stat-item {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 140, 0, 0.3);
-        border-radius: 0.75rem;
-        padding: 0.75rem;
-        backdrop-filter: blur(5px);
-      }
-
-      /* 🗑️ BOUTON SUPPRESSION DOCUMENTS */
-      .document-card {
-        position: relative;
-      }
-
-      .document-delete-btn {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        background: #EF4444;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 2rem;
-        height: 2rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        opacity: 0;
-        transition: all 0.3s ease;
-        font-size: 0.9rem;
-        z-index: 10;
-      }
-
-      .document-card:hover .document-delete-btn {
-        opacity: 1;
-      }
-
-      .document-delete-btn:hover {
-        background: #DC2626;
-        transform: scale(1.1);
-        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-      }
-
-      /* 🔋 GRAPHIQUE TOKENS UTILISATEUR */
-      .user-tokens-display {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(79, 70, 229, 0.05));
-        border: 2px solid rgba(99, 102, 241, 0.2);
-        border-radius: 1rem;
-        padding: 1rem;
-        margin: 1rem 0;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .user-tokens-display::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(45deg, rgba(99, 102, 241, 0.05) 25%, transparent 25%);
-        background-size: 10px 10px;
-        opacity: 0.3;
-      }
-
-      .tokens-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 0.75rem;
-        position: relative;
-        z-index: 2;
-      }
-
-      .tokens-title {
-        font-weight: 700;
-        color: #4F46E5;
-        font-size: 1.1rem;
-      }
-
-      .tokens-value {
-        background: rgba(99, 102, 241, 0.1);
-        color: #4F46E5;
-        padding: 0.25rem 0.75rem;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        font-size: 0.9rem;
-      }
-
-      .tokens-progress-container {
-        position: relative;
-        height: 8px;
-        background: rgba(99, 102, 241, 0.1);
-        border-radius: 4px;
-        overflow: hidden;
-        position: relative;
-        z-index: 2;
-      }
-
-      .tokens-progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #32CD32, #FFD700, #FF6B35);
-        border-radius: 4px;
-        transition: width 0.8s ease;
-        position: relative;
-      }
-
-      .tokens-progress-fill::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-        animation: tokensShimmer 2s infinite;
-      }
-
-      @keyframes tokensShimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-      }
-
-      .tokens-details {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 0.5rem;
-        font-size: 0.8rem;
-        color: #6B7280;
-        position: relative;
-        z-index: 2;
-      }
-
-      .inscription-form::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.1) 75%),
-                    linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.1) 75%);
-        background-size: 20px 20px;
-        background-position: 0 0, 10px 10px;
-        opacity: 0.3;
-        pointer-events: none;
-      }
-
-      .inscription-form .form-group {
-        position: relative;
-        margin-bottom: 2rem;
-        z-index: 2;
-      }
-
-      .inscription-form .form-label {
-        color: white;
-        font-weight: 700;
-        font-size: 1.1rem;
-        margin-bottom: 0.75rem;
-        display: block;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-      }
-
-      /* 🎯 EFFETS SUR LES CHAMPS DE SAISIE */
-      .inscription-form .form-input,
-      .inscription-form .form-select {
-        width: 100%;
-        padding: 1.25rem 1.5rem;
-        border: 3px solid rgba(255, 255, 255, 0.3);
-        border-radius: 1rem;
-        background: rgba(255, 255, 255, 0.95);
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        position: relative;
-        z-index: 3;
-      }
-
-      .inscription-form .form-input:focus,
-      .inscription-form .form-select:focus {
-        outline: none;
-        border-color: #FFF;
-        background: #FFF;
-        transform: translateY(-3px);
-        box-shadow: 
-          0 8px 25px rgba(0, 0, 0, 0.2),
-          0 0 0 4px rgba(255, 255, 255, 0.5),
-          inset 0 2px 5px rgba(255, 107, 53, 0.1);
-        border-width: 4px;
-        animation: fieldFocus 0.3s ease-out;
-      }
-
-      .inscription-form .form-input:hover,
-      .inscription-form .form-select:hover {
-        border-color: rgba(255, 255, 255, 0.6);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-      }
-
-      .inscription-form .form-input::placeholder {
-        color: #999;
-        font-style: italic;
-        transition: all 0.3s ease;
-      }
-
-      .inscription-form .form-input:focus::placeholder {
-        transform: translateY(-20px);
-        opacity: 0;
-      }
-
-      /* 🔥 BOUTON SUBMIT AMÉLIORÉ */
-      .inscription-form .submit-button {
-        width: 100%;
-        padding: 1.5rem 2rem;
-        background: linear-gradient(135deg, #4CAF50, #32CD32);
-        color: white;
-        border: none;
-        border-radius: 1rem;
-        font-size: 1.2rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        position: relative;
-        z-index: 3;
-        margin-top: 1rem;
-      }
-
-      .inscription-form .submit-button:hover:not(:disabled) {
-        background: linear-gradient(135deg, #45A049, #2EBF2E);
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(76, 175, 80, 0.5);
-      }
-
-      .inscription-form .submit-button::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 0;
-        height: 0;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
-        border-radius: 50%;
-        transition: all 0.3s ease;
-      }
-
-      .inscription-form .submit-button:hover::after {
-        width: 100px;
-        height: 100px;
-      }
-
-      .inscription-form .submit-button:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      /* 🔵 BOUTON MODE NORMAL AVEC STYLE IDENTIQUE AUX AUTRES */
-      .mode-button.normal {
-        border-color: #6366F1 !important;
-        background: white;
-        color: #1F2937;
-      }
-
-      .mode-button.normal::before {
-        background: linear-gradient(135deg, #6366F1, #4F46E5) !important;
-      }
-
-      .mode-button.normal:hover:not(:disabled) {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05)) !important;
-        border-color: #4F46E5 !important;
-      }
-
-      .mode-button.normal .mode-benefit {
-        background: rgba(99, 102, 241, 0.1);
-        color: #4F46E5;
-      }
-
-      /* 🌙 MODE SOMBRE */
-      .dark-mode .inscription-form {
-        background: linear-gradient(135deg, #D2691E, #FF6B35);
-        box-shadow: 0 12px 35px rgba(210, 105, 30, 0.4);
-      }
-
-      .dark-mode .inscription-form .form-input,
-      .dark-mode .inscription-form .form-select {
-        background: rgba(31, 41, 55, 0.95);
-        color: #F9FAFB;
-        border-color: rgba(255, 255, 255, 0.4);
-      }
-
-      .dark-mode .inscription-form .form-input:focus,
-      .dark-mode .inscription-form .form-select:focus {
-        background: #1F2937;
-        color: #F9FAFB;
-        border-color: #FFF;
-      }
-
-      .dark-mode .inscription-form .form-input::placeholder {
-        color: #9CA3AF;
-      }
-
-      /* 🎨 ANIMATIONS */
-      @keyframes formSlideIn {
-        0% {
-          opacity: 0;
-          transform: translateY(30px) scale(0.95);
-        }
-        100% {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-      }
-
-      @keyframes fieldFocus {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.02); }
-        100% { transform: scale(1); }
-      }
-
-      /* 📱 RESPONSIVE */
-      @media (max-width: 768px) {
-        .inscription-form {
-          padding: 2rem;
-          margin: 1.5rem auto;
-          max-width: 95%;
-        }
-
-        .inscription-form .form-input,
-        .inscription-form .form-select {
-          padding: 1rem 1.25rem;
-          font-size: 0.95rem;
-        }
-
-        .inscription-form .submit-button {
-          padding: 1.25rem 1.5rem;
-          font-size: 1.1rem;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .inscription-form {
-          padding: 1.5rem;
-          border-radius: 1rem;
-          margin: 1rem auto;
-          max-width: 90%;
-        }
-
-        .inscription-form .form-group {
-          margin-bottom: 1.5rem;
-        }
-
-        .inscription-form .form-input,
-        .inscription-form .form-select {
-          padding: 0.875rem 1rem;
-          font-size: 0.9rem;
-        }
-
-        .inscription-form .form-label {
-          font-size: 1rem;
-          margin-bottom: 0.5rem;
-        }
-      }
-    `;
-
-    // Injection des styles
-    if (!document.getElementById('enhanced-form-styles')) {
-      const styleElement = document.createElement('style');
-      styleElement.id = 'enhanced-form-styles';
-      styleElement.textContent = additionalStyles;
-      document.head.appendChild(styleElement);
-    }
-  }, []);
+  };
 
   // Fonctions utilitaires
   const showTemporaryMessage = (text, type = 'success', duration = 10000) => {
@@ -730,86 +153,78 @@ useEffect(() => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 📊 FONCTION MISE À JOUR STATISTIQUES UTILISATEUR
-  // 📍 6. MODIFIEZ LA FONCTION updateUserStats POUR ÊTRE PLUS ROBUSTE
-const updateUserStats = async (userId) => {
-  try {
-    const response = await fetch(`${API_URL}/api/student/profile/${userId}`);
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        const newStats = {
-          conversations: data.statistics.total_conversations || 0,
-          documents: data.statistics.documents_uploaded || allDocuments.length || 0,
-          tokens_used: data.statistics.total_tokens_used || chatTokensUsed || 0,
-          level: data.learning_profile?.level || Math.min(5, Math.max(1, Math.ceil((data.statistics.total_conversations || 0) / 10)))
+  // 📊 FONCTION MISE À JOUR STATISTIQUES UTILISATEUR CORRIGÉE
+  const updateUserStats = async (userId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/student/profile/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          const newStats = {
+            conversations: data.statistics.total_conversations || 0,
+            documents: data.statistics.documents_uploaded || allDocuments.length || 0,
+            tokens_used: data.statistics.total_tokens_used || chatTokensUsed || 0,
+            level: data.learning_profile?.level || Math.min(5, Math.max(1, Math.ceil((data.statistics.total_conversations || 0) / 10)))
+          };
+          
+          setUserStats(newStats);
+          saveToStorage('userStats', newStats);
+          console.log('📊 Stats utilisateur mises à jour:', newStats);
+        }
+      } else {
+        // Fallback avec données locales
+        const fallbackStats = {
+          conversations: chatHistory.length || 0,
+          documents: allDocuments.length || 0,
+          tokens_used: chatTokensUsed || 0,
+          level: Math.min(5, Math.max(1, Math.ceil((chatHistory.length || 0) / 10)))
         };
-        
-        setUserStats(newStats);
-        saveToStorage('userStats', newStats);
-        console.log('📊 Stats utilisateur mises à jour:', newStats);
+        setUserStats(fallbackStats);
+        saveToStorage('userStats', fallbackStats);
+        console.log('📊 Stats fallback utilisées:', fallbackStats);
       }
-    } else {
-      // Fallback avec données locales si serveur indisponible
-      const fallbackStats = {
+    } catch (error) {
+      console.warn('Erreur récupération stats utilisateur:', error);
+      const localStats = {
         conversations: chatHistory.length || 0,
         documents: allDocuments.length || 0,
         tokens_used: chatTokensUsed || 0,
         level: Math.min(5, Math.max(1, Math.ceil((chatHistory.length || 0) / 10)))
       };
-      setUserStats(fallbackStats);
-      saveToStorage('userStats', fallbackStats);
-      console.log('📊 Stats fallback utilisées:', fallbackStats);
+      setUserStats(localStats);
+      saveToStorage('userStats', localStats);
     }
-  } catch (error) {
-    console.warn('Erreur récupération stats utilisateur:', error);
-    // Utiliser données locales en cas d'erreur
-    const localStats = {
-      conversations: chatHistory.length || 0,
-      documents: allDocuments.length || 0,
-      tokens_used: chatTokensUsed || 0,
-      level: Math.min(5, Math.max(1, Math.ceil((chatHistory.length || 0) / 10)))
-    };
-    setUserStats(localStats);
-    saveToStorage('userStats', localStats);
-  }
-};
+  };
 
-  // 🔧 CORRECTION FONCTION LOGOUT AVEC NETTOYAGE COMPLET
-  // 📍 MODIFIEZ LA FONCTION handleLogout POUR NETTOYER LE CHAT
-const handleLogout = () => {
-  console.log('👋 Déconnexion en cours...');
-  
-  // Demander confirmation
-  if (!window.confirm('🚪 Êtes-vous sûr de vouloir vous déconnecter ?')) {
-    return;
-  }
-  
-  // Nettoyer les états React
-  setStudent(null);
-  setCurrentStep(1);
-  setActiveTab('inscription');
-  setDocumentContext('');
-  setAllDocuments([]);
-  setSelectedDocumentId(null);
-  setUserStats({ conversations: 0, documents: 0, tokens_used: 0, level: 1 });
-  setChatHistory([]); // NOUVEAU
-  setChatTokensUsed(0); // NOUVEAU
-  setFormData({
-    name: '',
-    email: '',
-    class_level: '',
-    school: ''
-  });
-  
-  // Nettoyer complètement le localStorage
-  clearAllStorage();
-  
-  // Message de confirmation
-  showTemporaryMessage('👋 Déconnexion réussie ! À bientôt sur ÉtudIA !', 'info');
-};
+  // 🔧 FONCTION LOGOUT CORRIGÉE
+  const handleLogout = () => {
+    console.log('👋 Déconnexion en cours...');
+    
+    if (!window.confirm('🚪 Êtes-vous sûr de vouloir vous déconnecter ?')) {
+      return;
+    }
+    
+    setStudent(null);
+    setCurrentStep(1);
+    setActiveTab('inscription');
+    setDocumentContext('');
+    setAllDocuments([]);
+    setSelectedDocumentId(null);
+    setUserStats({ conversations: 0, documents: 0, tokens_used: 0, level: 1 });
+    setChatHistory([]);
+    setChatTokensUsed(0);
+    setFormData({
+      name: '',
+      email: '',
+      class_level: '',
+      school: ''
+    });
+    
+    clearAllStorage();
+    showTemporaryMessage('👋 Déconnexion réussie ! À bientôt sur ÉtudIA !', 'info');
+  };
 
-  // 🔧 CORRECTION FONCTION LOGIN AVEC SAUVEGARDE IMMÉDIATE
+  // FONCTION LOGIN CORRIGÉE
   const handleLogin = async (email) => {
     if (!email?.trim()) {
       setMessage({ type: 'error', text: 'Veuillez saisir votre email' });
@@ -833,7 +248,6 @@ const handleLogout = () => {
       const data = JSON.parse(responseText);
 
       if (response.ok) {
-        // Sauvegarder IMMÉDIATEMENT après connexion réussie
         const studentData = data.student;
         
         setStudent(studentData);
@@ -842,12 +256,10 @@ const handleLogout = () => {
         setActiveTab('upload');
         setBackendStatus('online');
         
-        // Sauvegarde explicite immédiate
         saveToStorage('student', studentData);
         saveToStorage('currentStep', 2);
         saveToStorage('activeTab', 'upload');
         
-        // Charger les données utilisateur
         loadUserDocuments(studentData.id);
         updateUserStats(studentData.id);
         
@@ -871,7 +283,7 @@ const handleLogout = () => {
     }
   };
 
-  // 🔧 CORRECTION FONCTION INSCRIPTION AVEC SAUVEGARDE
+  // FONCTION INSCRIPTION CORRIGÉE
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -900,7 +312,6 @@ const handleLogout = () => {
       const data = JSON.parse(responseText);
 
       if (response.ok) {
-        // Sauvegarder IMMÉDIATEMENT après inscription réussie
         const studentData = data.student;
         
         setStudent(studentData);
@@ -908,11 +319,8 @@ const handleLogout = () => {
         setCurrentStep(2);
         setBackendStatus('online');
         
-        // Sauvegarde explicite immédiate
         saveToStorage('student', studentData);
         saveToStorage('currentStep', 2);
-        
-        // Nettoyer le formulaire du cache
         localStorage.removeItem('etudia_formData');
         
         showTemporaryMessage(`🎉 Bienvenue ${studentData.nom.split(' ')[0]} ! Inscription réussie !`);
@@ -945,25 +353,28 @@ const handleLogout = () => {
     }
   };
 
-  // 🔧 CORRECTION FONCTION DOCUMENT PROCESSÉ AVEC SAUVEGARDE
+  // 🔧 FONCTION DOCUMENT PROCESSÉ CORRIGÉE
   const handleDocumentProcessed = (extractedText, documentData) => {
+    console.log('📄 Document traité:', {
+      document_name: documentData?.nom_original,
+      text_length: extractedText?.length,
+      document_id: documentData?.id
+    });
+
     setDocumentContext(extractedText);
     setCurrentStep(3);
     
-    // Ajouter le nouveau document à la liste
     if (documentData) {
       const newDocuments = [documentData, ...allDocuments];
       setAllDocuments(newDocuments);
       setSelectedDocumentId(documentData.id);
       
-      // Sauvegarder immédiatement toutes les données
       saveToStorage('documentContext', extractedText);
       saveToStorage('currentStep', 3);
       saveToStorage('allDocuments', newDocuments);
       saveToStorage('selectedDocumentId', documentData.id);
     }
     
-    // Mettre à jour les statistiques utilisateur
     if (student?.id) {
       updateUserStats(student.id);
     }
@@ -975,17 +386,22 @@ const handleLogout = () => {
     }, 1500);
   };
 
-  // Charger tous les documents de l'utilisateur
+  // Charger documents utilisateur
   const loadUserDocuments = async (userId) => {
     try {
       const response = await fetch(`${API_URL}/api/documents/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        setAllDocuments(data.documents || []);
-        if (data.documents && data.documents.length > 0) {
-          const latestDoc = data.documents[0];
+        const documents = data.documents || [];
+        setAllDocuments(documents);
+        saveToStorage('allDocuments', documents);
+        
+        if (documents.length > 0) {
+          const latestDoc = documents[0];
           setSelectedDocumentId(latestDoc.id);
           setDocumentContext(latestDoc.texte_extrait);
+          saveToStorage('selectedDocumentId', latestDoc.id);
+          saveToStorage('documentContext', latestDoc.texte_extrait);
         }
       }
     } catch (error) {
@@ -999,11 +415,13 @@ const handleLogout = () => {
     if (selectedDoc) {
       setSelectedDocumentId(documentId);
       setDocumentContext(selectedDoc.texte_extrait);
+      saveToStorage('selectedDocumentId', documentId);
+      saveToStorage('documentContext', selectedDoc.texte_extrait);
       showTemporaryMessage(`📄 Document "${selectedDoc.nom_original}" sélectionné !`, 'success');
     }
   };
 
-  // 🗑️ FONCTION SUPPRESSION DOCUMENT AVEC CACHE
+  // 🗑️ FONCTION SUPPRESSION DOCUMENT
   const handleDeleteDocument = async (documentId, documentName) => {
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${documentName}" ?`)) {
       return;
@@ -1016,12 +434,10 @@ const handleLogout = () => {
       });
 
       if (response.ok) {
-        // Mettre à jour la liste locale ET le cache
         const newDocuments = allDocuments.filter(doc => doc.id !== documentId);
         setAllDocuments(newDocuments);
         saveToStorage('allDocuments', newDocuments);
         
-        // Si c'était le document sélectionné, sélectionner le suivant
         if (selectedDocumentId === documentId) {
           if (newDocuments.length > 0) {
             setSelectedDocumentId(newDocuments[0].id);
@@ -1046,72 +462,159 @@ const handleLogout = () => {
     }
   };
 
-  // Vérification statut serveur + PWA
+  // 🔧 RESTAURATION DONNÉES AU CHARGEMENT
+  useEffect(() => {
+    console.log('🚀 Chargement données sauvegardées...');
+    
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const savedStudent = loadFromStorage('student');
+      const savedCurrentStep = loadFromStorage('currentStep');
+      const savedActiveTab = loadFromStorage('activeTab');
+      const savedDocumentContext = loadFromStorage('documentContext');
+      const savedAllDocuments = loadFromStorage('allDocuments');
+      const savedSelectedDocumentId = loadFromStorage('selectedDocumentId');
+      const savedUserStats = loadFromStorage('userStats');
+      const savedFormData = loadFromStorage('formData');
+      const savedChatHistory = loadFromStorage('chatHistory');
+      const savedChatTokensUsed = loadFromStorage('chatTokensUsed');
+
+      if (savedStudent && savedStudent.id) {
+        console.log('✅ Élève trouvé en localStorage:', savedStudent.nom);
+        setStudent(savedStudent);
+        
+        const stepToRestore = savedCurrentStep || 2;
+        setCurrentStep(stepToRestore);
+        
+        const tabToRestore = savedActiveTab || (stepToRestore >= 3 ? 'chat' : 'upload');
+        setActiveTab(tabToRestore);
+        
+        if (savedDocumentContext) {
+          setDocumentContext(savedDocumentContext);
+          console.log('📄 Contexte document restauré');
+        }
+        
+        if (savedAllDocuments && Array.isArray(savedAllDocuments)) {
+          setAllDocuments(savedAllDocuments);
+          console.log(`📚 ${savedAllDocuments.length} documents restaurés`);
+        }
+        
+        if (savedSelectedDocumentId) {
+          setSelectedDocumentId(savedSelectedDocumentId);
+        }
+        
+        if (savedChatHistory && Array.isArray(savedChatHistory)) {
+          setChatHistory(savedChatHistory);
+          console.log(`💬 ${savedChatHistory.length} messages de chat restaurés`);
+        }
+        
+        if (savedChatTokensUsed) {
+          setChatTokensUsed(savedChatTokensUsed);
+          console.log(`🔋 ${savedChatTokensUsed} tokens de chat restaurés`);
+        }
+        
+        if (savedUserStats) {
+          setUserStats(savedUserStats);
+        } else {
+          updateUserStats(savedStudent.id);
+        }
+        
+        if (!savedAllDocuments || savedAllDocuments.length === 0) {
+          loadUserDocuments(savedStudent.id);
+        }
+        
+        showTemporaryMessage(
+          `👋 Re-bienvenue ${savedStudent.nom.split(' ')[0]} ! Session restaurée !`, 
+          'success'
+        );
+      } else {
+        console.log('📝 Aucune session sauvegardée');
+        
+        if (savedFormData) {
+          setFormData(savedFormData);
+          console.log('📝 Formulaire d\'inscription restauré');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erreur restauration données:', error);
+      clearAllStorage();
+    }
+  }, []);
+
+  // Sauvegarde états chat
+  useEffect(() => {
+    if (chatHistory.length > 0) {
+      saveToStorage('chatHistory', chatHistory);
+    }
+  }, [chatHistory]);
+
+  useEffect(() => {
+    if (chatTokensUsed > 0) {
+      saveToStorage('chatTokensUsed', chatTokensUsed);
+    }
+  }, [chatTokensUsed]);
+
+  // Sauvegarde autres états
+  useEffect(() => {
+    if (student) saveToStorage('student', student);
+  }, [student]);
+
+  useEffect(() => {
+    if (currentStep) saveToStorage('currentStep', currentStep);
+  }, [currentStep]);
+
+  useEffect(() => {
+    if (activeTab) saveToStorage('activeTab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (documentContext) saveToStorage('documentContext', documentContext);
+  }, [documentContext]);
+
+  useEffect(() => {
+    if (allDocuments.length > 0) saveToStorage('allDocuments', allDocuments);
+  }, [allDocuments]);
+
+  useEffect(() => {
+    if (selectedDocumentId) saveToStorage('selectedDocumentId', selectedDocumentId);
+  }, [selectedDocumentId]);
+
+  useEffect(() => {
+    if (userStats) saveToStorage('userStats', userStats);
+  }, [userStats]);
+
+  useEffect(() => {
+    if (formData.name || formData.email) {
+      saveToStorage('formData', formData);
+    }
+  }, [formData]);
+
+  // Vérification serveur
   useEffect(() => {
     const checkBackend = async () => {
-      console.log('🔍 Vérification backend...', API_URL);
       try {
         const response = await fetch(`${API_URL}/health`);
-        console.log('📡 Response status:', response.status, response.ok);
         
         if (response.ok) {
           const data = await response.json();
-          console.log('✅ Data reçue:', data);
-          console.log('🔄 Ancien état:', backendStatus, '→ Nouveau: online');
           setBackendStatus('online');
           
-          if (backendStatus !== 'online') {
-            showTemporaryMessage('🎉 ÉtudIA v4.0 est en ligne ! ✅');
-          }
-
           if (data.tokens_status) {
             setStats(prev => ({ ...prev, tokens_status: data.tokens_status }));
           }
         } else {
-          console.log('❌ Response not OK:', response.status);
           setBackendStatus('offline');
         }
       } catch (error) {
-        console.log('💥 Erreur fetch:', error.message);
         setBackendStatus('offline');
-        if (backendStatus === 'online') {
-          showTemporaryMessage('❌ Serveur temporairement hors ligne', 'error', 5000);
-        }
       }
     };
-
-    // PWA Service Worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(registration => {
-            console.log('✅ PWA: Service Worker ÉtudIA enregistré');
-          })
-          .catch(error => {
-            console.log('❌ PWA: Erreur Service Worker:', error);
-          });
-      });
-    }
-
-    // Détection installation PWA
-    let installPrompt;
-    
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      installPrompt = e;
-      console.log('📱 PWA: ÉtudIA peut être installée !');
-      showTemporaryMessage('📱 Installez ÉtudIA sur votre téléphone ! Menu → Installer', 'success', 8000);
-    });
-
-    window.addEventListener('appinstalled', () => {
-      console.log('🎉 PWA: ÉtudIA installé avec succès !');
-      showTemporaryMessage('🎉 ÉtudIA installé ! Trouvez l\'app sur votre écran d\'accueil', 'success');
-    });
 
     checkBackend();
     const interval = setInterval(checkBackend, 30000);
     return () => clearInterval(interval);
-  }, [backendStatus]);
+  }, []);
 
   // Récupération statistiques
   useEffect(() => {
@@ -1119,29 +622,16 @@ const handleLogout = () => {
       if (backendStatus !== 'online') return;
       
       try {
-        console.log('📊 Récupération stats...');
         const response = await fetch(`${API_URL}/api/stats`);
-        console.log('📡 Stats response:', response.status, response.ok);
         
         if (response.ok) {
-          const responseText = await response.text();
-          console.log('📄 Stats raw:', responseText);
-          
-          const data = JSON.parse(responseText);
-          console.log('📊 Stats parsed:', data);
-          
+          const data = await response.json();
           setStats({
             students: data.students || 0,
             documents: data.documents || 0,
             chats: data.chats || 0,
             active_students_7days: data.active_students_7days || 0,
             tokens_status: data.tokens_status || { used_today: 0, remaining: 95000 }
-          });
-          
-          console.log('✅ Stats mises à jour:', {
-            students: data.students,
-            documents: data.documents,
-            chats: data.chats
           });
         }
       } catch (error) {
@@ -1152,9 +642,9 @@ const handleLogout = () => {
     fetchStats();
     const interval = setInterval(fetchStats, 60000);
     return () => clearInterval(interval);
-  }, [backendStatus, API_URL]);
+  }, [backendStatus]);
 
-  // Charger documents utilisateur après connexion + stats utilisateur
+  // Charger données utilisateur après connexion
   useEffect(() => {
     if (student?.id) {
       loadUserDocuments(student.id);
@@ -1186,12 +676,11 @@ const handleLogout = () => {
         </div>
       )}
 
-      {/* HEADER RÉVOLUTIONNAIRE ÉPURÉ - NE PAS MODIFIER */}
+      {/* HEADER RÉVOLUTIONNAIRE */}
       <header className="app-header revolutionary">
         <div className="cosmic-background"></div>
         
         <div className="header-content">
-          {/* Section logo SEULE */}
           <div className="logo-section">
             <h1 className="app-title">
               <span className="title-etud">Étud</span>
@@ -1207,7 +696,7 @@ const handleLogout = () => {
         </div>
       </header>
 
-      {/* 🔋 AFFICHAGE STATISTIQUES UTILISATEUR */}
+      {/* Statistiques utilisateur */}
       {student && (
         <div className="user-tokens-display">
           <div className="tokens-header">
@@ -1230,7 +719,7 @@ const handleLogout = () => {
         </div>
       )}
 
-      {/* Sélecteur de documents AVEC BOUTON SUPPRESSION */}
+      {/* Sélecteur de documents */}
       {student && allDocuments.length > 0 && (
         <div className="document-selector">
           <h3>📄 Vos Documents Analysés</h3>
@@ -1241,7 +730,6 @@ const handleLogout = () => {
                 className={`document-card ${selectedDocumentId === doc.id ? 'active' : ''}`}
                 onClick={() => switchDocument(doc.id)}
               >
-                {/* 🗑️ BOUTON SUPPRESSION */}
                 <button
                   className="document-delete-btn"
                   onClick={(e) => {
@@ -1298,47 +786,44 @@ const handleLogout = () => {
         </div>
       </div>
 
-      // 📍 AJOUTEZ LE BOUTON DÉCONNEXION DANS LA NAVIGATION
-// Remplacez la section "Navigation onglets" par ceci :
-
-{/* Navigation onglets AVEC BOUTON DÉCONNEXION */}
-<nav className="tab-navigation">
-  <TabButton
-    id="inscription"
-    label="Inscription"
-    icon="👤"
-    isActive={activeTab === 'inscription'}
-    onClick={setActiveTab}
-  />
-  <TabButton
-    id="upload"
-    label="Upload OCR"
-    icon="📸"
-    isActive={activeTab === 'upload'}
-    onClick={setActiveTab}
-    disabled={!student}
-  />
-  <TabButton
-    id="chat"
-    label="Chat ÉtudIA"
-    icon="🦙"
-    isActive={activeTab === 'chat'}
-    onClick={setActiveTab}
-    disabled={!student}
-  />
-  
-  {/* 🚪 NOUVEAU BOUTON DÉCONNEXION */}
-  {student && (
-    <button
-      className="logout-tab-button"
-      onClick={handleLogout}
-      title="Se déconnecter de ÉtudIA"
-    >
-      <span className="tab-icon">🚪</span>
-      <span className="tab-label">Déconnexion</span>
-    </button>
-  )}
-</nav>
+      {/* 🔧 NAVIGATION ONGLETS AVEC BOUTON DÉCONNEXION STYLÉ */}
+      <nav className="tab-navigation">
+        <TabButton
+          id="inscription"
+          label="Inscription"
+          icon="👤"
+          isActive={activeTab === 'inscription'}
+          onClick={setActiveTab}
+        />
+        <TabButton
+          id="upload"
+          label="Upload OCR"
+          icon="📸"
+          isActive={activeTab === 'upload'}
+          onClick={setActiveTab}
+          disabled={!student}
+        />
+        <TabButton
+          id="chat"
+          label="Chat ÉtudIA"
+          icon="🦙"
+          isActive={activeTab === 'chat'}
+          onClick={setActiveTab}
+          disabled={!student}
+        />
+        
+        {/* 🚪 BOUTON DÉCONNEXION STYLÉ */}
+        {student && (
+          <button
+            className="logout-button"
+            onClick={handleLogout}
+            title="Se déconnecter de ÉtudIA"
+          >
+            <span className="logout-icon">🚪</span>
+            <span className="logout-label">Déconnexion</span>
+          </button>
+        )}
+      </nav>
 
       {/* CONTENU PRINCIPAL */}
       <main className="main-content enhanced">
@@ -1369,7 +854,7 @@ const handleLogout = () => {
               </div>
             )}
 
-            {/* 🟠 FORMULAIRE D'INSCRIPTION CENTRÉ */}
+            {/* Formulaire d'inscription */}
             <form onSubmit={handleSubmit} className="inscription-form">
               <div className="form-header">
                 <h3 style={{ color: 'white', textAlign: 'center', marginBottom: '1rem', fontSize: '1.3rem', fontWeight: '800' }}>
@@ -1568,7 +1053,7 @@ const handleLogout = () => {
               </div>
             </div>
 
-            {/* Section améliorations LlAMA 3.3 */}
+            {/* Section améliorations */}
             <div className="llama-improvements-section">
               <h3 className="section-title">🦙 Pourquoi ÉtudIA change tout ?</h3>
               <div className="improvements-grid">
@@ -1640,7 +1125,7 @@ const handleLogout = () => {
           />
         )}
 
-        {/* Onglet chat ÉtudIA */}
+        {/* 🔧 ONGLET CHAT IA CORRIGÉ AVEC TOUS LES PROPS */}
         {activeTab === 'chat' && student && (
           <ChatIA
             student={student}
@@ -1657,7 +1142,7 @@ const handleLogout = () => {
         )}
       </main>
 
-      {/* Footer */}
+      {/* 🔧 FOOTER CORRIGÉ SANS COMMENTAIRES */}
       <footer className="app-footer">
         <div className="footer-content">
           <div className="footer-main">
@@ -1665,41 +1150,16 @@ const handleLogout = () => {
             <p>Développé avec ❤️ par <strong>@Pacousstar</strong> - Côte d'Ivoire</p>
           </div>
         
-          // 🎨 DANS App.js - REMPLACEZ LE LIEN FOOTER PAR CECI :
-
-<a 
-  href="https://etudia-v4.gsnexpertises.com" 
-  target="_blank" 
-  rel="noopener noreferrer"
-  style={{
-    fontSize: '16px',
-    fontWeight: 'bold',
-    color: '#FF8C00',
-    textDecoration: 'none',
-    backgroundColor: 'rgba(255, 140, 0, 0.1)',
-    padding: '8px 16px',
-    borderRadius: '8px',
-    border: '2px solid #FF8C00',
-    transition: 'all 0.3s ease',
-    display: 'inline-block',
-    textTransform: 'uppercase',
-    letterSpacing: '1px'
-  }}
-  onMouseEnter={(e) => {
-    e.target.style.backgroundColor = '#FF8C00';
-    e.target.style.color = 'white';
-    e.target.style.transform = 'translateY(-2px)';
-    e.target.style.boxShadow = '0 4px 15px rgba(255, 140, 0, 0.4)';
-  }}
-  onMouseLeave={(e) => {
-    e.target.style.backgroundColor = 'rgba(255, 140, 0, 0.1)';
-    e.target.style.color = '#FF8C00';
-    e.target.style.transform = 'translateY(0)';
-    e.target.style.boxShadow = 'none';
-  }}
->
-  📝 DONNER VOTRE AVIS TESTEUR
-</a>
+          <div className="footer-feedback">
+            <a 
+              href="https://etudia-v4.gsnexpertises.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="footer-feedback-link"
+            >
+              📝 Donner votre avis testeur
+            </a>
+          </div>
         
           <div className="footer-stats">
             <span>🚀 {stats.students.toLocaleString()}+ élèves</span>
