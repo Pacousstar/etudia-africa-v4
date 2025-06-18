@@ -1236,7 +1236,7 @@ function App() {
                 <span className="feature-icon">✅</span>
                 <h3 className="feature-title">Mode Solution Directe</h3>
                 <p className="feature-description">
-                  Solutions complètes instantanées de vos exercices et devoirs avec ÉtudIA
+                  Solutions complètes instantanées de tous vos sujets d'examen, exercices et devoirs avec ÉtudIA
                 </p>
                 <div className="feature-status status-active">✅ Accéléré</div>
               </div>
