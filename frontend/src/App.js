@@ -1,4 +1,4 @@
-  // App.js - VERSION UX/UI RÉVOLUTIONNAIRE AVEC RESPONSIVE PARFAIT + AMÉLIORATIONS
+// App.js - VERSION UX/UI RÉVOLUTIONNAIRE AVEC RESPONSIVE PARFAIT + AMÉLIORATIONS
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import UploadDocument from './components/UploadDocument';
@@ -59,6 +59,10 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  // 📍 1. AJOUTEZ CES NOUVEAUX ÉTATS APRÈS LES AUTRES useState
+const [chatHistory, setChatHistory] = useState([]); // Nouveau : historique chat
+const [chatTokensUsed, setChatTokensUsed] = useState(0); // Nouveau : tokens chat session
+
   // Données statiques
   const schools = [
     'Lycée Classique d\'Abidjan',
@@ -77,6 +81,223 @@ function App() {
     '6ème', '5ème', '4ème', '3ème',
     'Seconde', 'Première', 'Terminale'
   ];
+
+  // 💾 FONCTIONS DE PERSISTANCE SÉCURISÉES
+  const saveToStorage = (key, data) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const jsonData = JSON.stringify({
+          data: data,
+          timestamp: Date.now(),
+          version: '4.0.0'
+        });
+        localStorage.setItem(`etudia_${key}`, jsonData);
+        console.log(`💾 Sauvegarde ${key}:`, data);
+      }
+    } catch (error) {
+      console.warn('⚠️ Erreur sauvegarde localStorage:', error);
+    }
+  };
+
+  // 📍 MODIFIEZ LA FONCTION loadFromStorage POUR INCLURE LE CHAT
+const loadFromStorage = (key) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = localStorage.getItem(`etudia_${key}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Vérifier que les données ne sont pas trop anciennes (7 jours max)
+        const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 jours
+        if (Date.now() - parsed.timestamp < maxAge) {
+          console.log(`📂 Chargement ${key}:`, parsed.data);
+          return parsed.data;
+        } else {
+          // Supprimer données expirées
+          localStorage.removeItem(`etudia_${key}`);
+          console.log(`🗑️ Données ${key} expirées et supprimées`);
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('⚠️ Erreur chargement localStorage:', error);
+  }
+  return null;
+};
+
+// 📍 MODIFIEZ LA FONCTION clearAllStorage POUR INCLURE LE CHAT
+const clearAllStorage = () => {
+  try {
+    const keys = [
+      'student', 'currentStep', 'activeTab', 'documentContext', 
+      'allDocuments', 'selectedDocumentId', 'userStats', 'formData',
+      'chatHistory', 'chatTokensUsed' // AJOUT NOUVEAU
+    ];
+    keys.forEach(key => {
+      localStorage.removeItem(`etudia_${key}`);
+    });
+    console.log('🗑️ Tout le storage ÉtudIA vidé');
+  } catch (error) {
+    console.warn('⚠️ Erreur nettoyage storage:', error);
+  }
+};
+
+  // 📍 4. MODIFIEZ LE useEffect DE RESTAURATION POUR LE CHAT
+useEffect(() => {
+  console.log('🚀 Chargement données sauvegardées...');
+  
+  // Vérifier si on est dans le navigateur
+  if (typeof window === 'undefined') return;
+  
+  try {
+    // Charger toutes les données sauvegardées
+    const savedStudent = loadFromStorage('student');
+    const savedCurrentStep = loadFromStorage('currentStep');
+    const savedActiveTab = loadFromStorage('activeTab');
+    const savedDocumentContext = loadFromStorage('documentContext');
+    const savedAllDocuments = loadFromStorage('allDocuments');
+    const savedSelectedDocumentId = loadFromStorage('selectedDocumentId');
+    const savedUserStats = loadFromStorage('userStats');
+    const savedFormData = loadFromStorage('formData');
+    const savedChatHistory = loadFromStorage('chatHistory'); // NOUVEAU
+    const savedChatTokensUsed = loadFromStorage('chatTokensUsed'); // NOUVEAU
+
+    // Restaurer l'élève si connecté
+    if (savedStudent && savedStudent.id) {
+      console.log('✅ Élève trouvé en localStorage:', savedStudent.nom);
+      setStudent(savedStudent);
+      
+      // Restaurer l'étape (minimum 2 si connecté)
+      const stepToRestore = savedCurrentStep || 2;
+      setCurrentStep(stepToRestore);
+      
+      // Restaurer l'onglet actif (upload par défaut si connecté)
+      const tabToRestore = savedActiveTab || (stepToRestore >= 3 ? 'chat' : 'upload');
+      setActiveTab(tabToRestore);
+      
+      // Restaurer le contexte document
+      if (savedDocumentContext) {
+        setDocumentContext(savedDocumentContext);
+        console.log('📄 Contexte document restauré');
+      }
+      
+      // Restaurer la liste des documents
+      if (savedAllDocuments && Array.isArray(savedAllDocuments)) {
+        setAllDocuments(savedAllDocuments);
+        console.log(`📚 ${savedAllDocuments.length} documents restaurés`);
+      }
+      
+      // Restaurer le document sélectionné
+      if (savedSelectedDocumentId) {
+        setSelectedDocumentId(savedSelectedDocumentId);
+      }
+      
+      // 🔧 NOUVEAU : Restaurer l'historique du chat
+      if (savedChatHistory && Array.isArray(savedChatHistory)) {
+        setChatHistory(savedChatHistory);
+        console.log(`💬 ${savedChatHistory.length} messages de chat restaurés`);
+      }
+      
+      // 🔧 NOUVEAU : Restaurer les tokens du chat
+      if (savedChatTokensUsed) {
+        setChatTokensUsed(savedChatTokensUsed);
+        console.log(`🔋 ${savedChatTokensUsed} tokens de chat restaurés`);
+      }
+      
+      // Restaurer les stats utilisateur
+      if (savedUserStats) {
+        setUserStats(savedUserStats);
+      } else {
+        // Charger stats depuis serveur
+        updateUserStats(savedStudent.id);
+      }
+      
+      // Recharger documents depuis serveur si cache vide
+      if (!savedAllDocuments || savedAllDocuments.length === 0) {
+        loadUserDocuments(savedStudent.id);
+      }
+      
+      showTemporaryMessage(
+        `👋 Re-bienvenue ${savedStudent.nom.split(' ')[0]} ! Session complète restaurée !`, 
+        'success'
+      );
+    } else {
+      console.log('📝 Aucune session sauvegardée');
+      
+      // Restaurer le formulaire d'inscription si rempli
+      if (savedFormData) {
+        setFormData(savedFormData);
+        console.log('📝 Formulaire d\'inscription restauré');
+      }
+    }
+  } catch (error) {
+    console.error('❌ Erreur restauration données:', error);
+    // En cas d'erreur, nettoyer le storage corrompu
+    clearAllStorage();
+  }
+}, []); // Se déclenche une seule fois au montage
+
+// 📍 AJOUTEZ CES useEffect POUR SAUVEGARDER LE CHAT
+useEffect(() => {
+  if (chatHistory.length > 0) {
+    saveToStorage('chatHistory', chatHistory);
+  }
+}, [chatHistory]);
+
+useEffect(() => {
+  if (chatTokensUsed > 0) {
+    saveToStorage('chatTokensUsed', chatTokensUsed);
+  }
+}, [chatTokensUsed]);
+
+  // 🔄 SAUVEGARDER À CHAQUE CHANGEMENT D'ÉTAT
+  useEffect(() => {
+    if (student) {
+      saveToStorage('student', student);
+    }
+  }, [student]);
+
+  useEffect(() => {
+    if (currentStep) {
+      saveToStorage('currentStep', currentStep);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    if (activeTab) {
+      saveToStorage('activeTab', activeTab);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (documentContext) {
+      saveToStorage('documentContext', documentContext);
+    }
+  }, [documentContext]);
+
+  useEffect(() => {
+    if (allDocuments.length > 0) {
+      saveToStorage('allDocuments', allDocuments);
+    }
+  }, [allDocuments]);
+
+  useEffect(() => {
+    if (selectedDocumentId) {
+      saveToStorage('selectedDocumentId', selectedDocumentId);
+    }
+  }, [selectedDocumentId]);
+
+  useEffect(() => {
+    if (userStats) {
+      saveToStorage('userStats', userStats);
+    }
+  }, [userStats]);
+
+  useEffect(() => {
+    // Sauvegarder formulaire seulement si partiellement rempli
+    if (formData.name || formData.email) {
+      saveToStorage('formData', formData);
+    }
+  }, [formData]);
 
   // 🔧 INJECTION STYLES CSS POUR FORMULAIRE CENTRÉ + COMPTEURS ORANGE
   useEffect(() => {
@@ -509,81 +730,249 @@ function App() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 🗑️ FONCTION SUPPRESSION DOCUMENT
-  const handleDeleteDocument = async (documentId, documentName) => {
-    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${documentName}" ?`)) {
+  // 📊 FONCTION MISE À JOUR STATISTIQUES UTILISATEUR
+  // 📍 6. MODIFIEZ LA FONCTION updateUserStats POUR ÊTRE PLUS ROBUSTE
+const updateUserStats = async (userId) => {
+  try {
+    const response = await fetch(`${API_URL}/api/student/profile/${userId}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        const newStats = {
+          conversations: data.statistics.total_conversations || 0,
+          documents: data.statistics.documents_uploaded || allDocuments.length || 0,
+          tokens_used: data.statistics.total_tokens_used || chatTokensUsed || 0,
+          level: data.learning_profile?.level || Math.min(5, Math.max(1, Math.ceil((data.statistics.total_conversations || 0) / 10)))
+        };
+        
+        setUserStats(newStats);
+        saveToStorage('userStats', newStats);
+        console.log('📊 Stats utilisateur mises à jour:', newStats);
+      }
+    } else {
+      // Fallback avec données locales si serveur indisponible
+      const fallbackStats = {
+        conversations: chatHistory.length || 0,
+        documents: allDocuments.length || 0,
+        tokens_used: chatTokensUsed || 0,
+        level: Math.min(5, Math.max(1, Math.ceil((chatHistory.length || 0) / 10)))
+      };
+      setUserStats(fallbackStats);
+      saveToStorage('userStats', fallbackStats);
+      console.log('📊 Stats fallback utilisées:', fallbackStats);
+    }
+  } catch (error) {
+    console.warn('Erreur récupération stats utilisateur:', error);
+    // Utiliser données locales en cas d'erreur
+    const localStats = {
+      conversations: chatHistory.length || 0,
+      documents: allDocuments.length || 0,
+      tokens_used: chatTokensUsed || 0,
+      level: Math.min(5, Math.max(1, Math.ceil((chatHistory.length || 0) / 10)))
+    };
+    setUserStats(localStats);
+    saveToStorage('userStats', localStats);
+  }
+};
+
+  // 🔧 CORRECTION FONCTION LOGOUT AVEC NETTOYAGE COMPLET
+  // 📍 MODIFIEZ LA FONCTION handleLogout POUR NETTOYER LE CHAT
+const handleLogout = () => {
+  console.log('👋 Déconnexion en cours...');
+  
+  // Demander confirmation
+  if (!window.confirm('🚪 Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    return;
+  }
+  
+  // Nettoyer les états React
+  setStudent(null);
+  setCurrentStep(1);
+  setActiveTab('inscription');
+  setDocumentContext('');
+  setAllDocuments([]);
+  setSelectedDocumentId(null);
+  setUserStats({ conversations: 0, documents: 0, tokens_used: 0, level: 1 });
+  setChatHistory([]); // NOUVEAU
+  setChatTokensUsed(0); // NOUVEAU
+  setFormData({
+    name: '',
+    email: '',
+    class_level: '',
+    school: ''
+  });
+  
+  // Nettoyer complètement le localStorage
+  clearAllStorage();
+  
+  // Message de confirmation
+  showTemporaryMessage('👋 Déconnexion réussie ! À bientôt sur ÉtudIA !', 'info');
+};
+
+  // 🔧 CORRECTION FONCTION LOGIN AVEC SAUVEGARDE IMMÉDIATE
+  const handleLogin = async (email) => {
+    if (!email?.trim()) {
+      setMessage({ type: 'error', text: 'Veuillez saisir votre email' });
       return;
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/documents/${documentId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
+      console.log('🚀 Tentative connexion...', email);
+      
+      const response = await fetch(`${API_URL}/api/students/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
       });
 
-      if (response.ok) {
-        // Mettre à jour la liste locale
-        setAllDocuments(prev => prev.filter(doc => doc.id !== documentId));
-        
-        // Si c'était le document sélectionné, sélectionner le suivant
-        if (selectedDocumentId === documentId) {
-          const remainingDocs = allDocuments.filter(doc => doc.id !== documentId);
-          if (remainingDocs.length > 0) {
-            setSelectedDocumentId(remainingDocs[0].id);
-            setDocumentContext(remainingDocs[0].texte_extrait);
-          } else {
-            setSelectedDocumentId(null);
-            setDocumentContext('');
-          }
-        }
+      const responseText = await response.text();
+      if (!responseText.trim()) {
+        throw new Error('Réponse serveur vide');
+      }
+      
+      const data = JSON.parse(responseText);
 
-        showTemporaryMessage(`🗑️ Document "${documentName}" supprimé avec succès !`, 'success');
+      if (response.ok) {
+        // Sauvegarder IMMÉDIATEMENT après connexion réussie
+        const studentData = data.student;
+        
+        setStudent(studentData);
+        setMessage({ type: 'success', text: data.message });
+        setCurrentStep(2);
+        setActiveTab('upload');
+        setBackendStatus('online');
+        
+        // Sauvegarde explicite immédiate
+        saveToStorage('student', studentData);
+        saveToStorage('currentStep', 2);
+        saveToStorage('activeTab', 'upload');
+        
+        // Charger les données utilisateur
+        loadUserDocuments(studentData.id);
+        updateUserStats(studentData.id);
+        
+        showTemporaryMessage(`🎉 Connexion réussie ! Bonjour ${studentData.nom.split(' ')[0]} !`);
       } else {
-        showTemporaryMessage('❌ Erreur lors de la suppression', 'error');
+        if (response.status === 404) {
+          setMessage({ 
+            type: 'error', 
+            text: '🔍 Email non trouvé. Inscrivez-vous d\'abord avec le formulaire ci-dessus.' 
+          });
+        } else {
+          setMessage({ type: 'error', text: data.error || data.message });
+        }
       }
     } catch (error) {
-      console.error('Erreur suppression:', error);
-      showTemporaryMessage('❌ Erreur technique lors de la suppression', 'error');
+      console.error('💥 Erreur connexion:', error);
+      setMessage({ 
+        type: 'error', 
+        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
+      });
     }
   };
 
-  // 📊 FONCTION MISE À JOUR STATISTIQUES UTILISATEUR
-  const updateUserStats = async (userId) => {
+  // 🔧 CORRECTION FONCTION INSCRIPTION AVEC SAUVEGARDE
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setMessage({ type: '', text: '' });
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.class_level) {
+      setMessage({ type: 'error', text: 'Veuillez remplir tous les champs obligatoires' });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      const response = await fetch(`${API_URL}/api/student/profile/${userId}`);
+      console.log('🚀 Tentative inscription...', formData);
+      
+      const response = await fetch(`${API_URL}/api/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      
+      const responseText = await response.text();
+      if (!responseText.trim()) {
+        throw new Error('Réponse serveur vide');
+      }
+      
+      const data = JSON.parse(responseText);
+
       if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUserStats({
-            conversations: data.statistics.total_conversations || 0,
-            documents: data.statistics.documents_uploaded || 0,
-            tokens_used: data.statistics.total_tokens_used || 0,
-            level: data.learning_profile.level || 1
+        // Sauvegarder IMMÉDIATEMENT après inscription réussie
+        const studentData = data.student;
+        
+        setStudent(studentData);
+        setMessage({ type: 'success', text: data.message });
+        setCurrentStep(2);
+        setBackendStatus('online');
+        
+        // Sauvegarde explicite immédiate
+        saveToStorage('student', studentData);
+        saveToStorage('currentStep', 2);
+        
+        // Nettoyer le formulaire du cache
+        localStorage.removeItem('etudia_formData');
+        
+        showTemporaryMessage(`🎉 Bienvenue ${studentData.nom.split(' ')[0]} ! Inscription réussie !`);
+        
+        setTimeout(() => {
+          setActiveTab('upload');
+          saveToStorage('activeTab', 'upload');
+        }, 2000);
+      } else {
+        if (data.error === 'EMAIL_EXISTS') {
+          setMessage({ 
+            type: 'error', 
+            text: '📧 Cet email est déjà inscrit ! Utilisez la connexion rapide ci-dessous.' 
+          });
+        } else {
+          setMessage({ 
+            type: 'error', 
+            text: data.message || data.error || `Erreur serveur: ${response.status}`
           });
         }
       }
     } catch (error) {
-      console.warn('Erreur récupération stats utilisateur:', error);
+      console.error('💥 Erreur inscription:', error);
+      setMessage({ 
+        type: 'error', 
+        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // 🔧 CORRECTION: Fonction déconnexion avec bon message
-  const handleLogout = () => {
-    setStudent(null);
-    setCurrentStep(1);
-    setActiveTab('inscription');
-    setDocumentContext('');
-    setAllDocuments([]);
-    setSelectedDocumentId(null);
-    setUserStats({ conversations: 0, documents: 0, tokens_used: 0, level: 1 });
-    setFormData({
-      name: '',
-      email: '',
-      class_level: '',
-      school: ''
-    });
-    // 🔧 CORRECTION: Message approprié pour déconnexion
-    showTemporaryMessage('👋 Déconnexion réussie ! À bientôt sur ÉtudIA !', 'info');
+  // 🔧 CORRECTION FONCTION DOCUMENT PROCESSÉ AVEC SAUVEGARDE
+  const handleDocumentProcessed = (extractedText, documentData) => {
+    setDocumentContext(extractedText);
+    setCurrentStep(3);
+    
+    // Ajouter le nouveau document à la liste
+    if (documentData) {
+      const newDocuments = [documentData, ...allDocuments];
+      setAllDocuments(newDocuments);
+      setSelectedDocumentId(documentData.id);
+      
+      // Sauvegarder immédiatement toutes les données
+      saveToStorage('documentContext', extractedText);
+      saveToStorage('currentStep', 3);
+      saveToStorage('allDocuments', newDocuments);
+      saveToStorage('selectedDocumentId', documentData.id);
+    }
+    
+    // Mettre à jour les statistiques utilisateur
+    if (student?.id) {
+      updateUserStats(student.id);
+    }
+    
+    showTemporaryMessage('📄 Document analysé avec ÉtudIA ! Passons au chat IA !');
+    setTimeout(() => {
+      setActiveTab('chat');
+      saveToStorage('activeTab', 'chat');
+    }, 1500);
   };
 
   // Charger tous les documents de l'utilisateur
@@ -611,6 +1000,49 @@ function App() {
       setSelectedDocumentId(documentId);
       setDocumentContext(selectedDoc.texte_extrait);
       showTemporaryMessage(`📄 Document "${selectedDoc.nom_original}" sélectionné !`, 'success');
+    }
+  };
+
+  // 🗑️ FONCTION SUPPRESSION DOCUMENT AVEC CACHE
+  const handleDeleteDocument = async (documentId, documentName) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${documentName}" ?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/documents/${documentId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        // Mettre à jour la liste locale ET le cache
+        const newDocuments = allDocuments.filter(doc => doc.id !== documentId);
+        setAllDocuments(newDocuments);
+        saveToStorage('allDocuments', newDocuments);
+        
+        // Si c'était le document sélectionné, sélectionner le suivant
+        if (selectedDocumentId === documentId) {
+          if (newDocuments.length > 0) {
+            setSelectedDocumentId(newDocuments[0].id);
+            setDocumentContext(newDocuments[0].texte_extrait);
+            saveToStorage('selectedDocumentId', newDocuments[0].id);
+            saveToStorage('documentContext', newDocuments[0].texte_extrait);
+          } else {
+            setSelectedDocumentId(null);
+            setDocumentContext('');
+            localStorage.removeItem('etudia_selectedDocumentId');
+            localStorage.removeItem('etudia_documentContext');
+          }
+        }
+
+        showTemporaryMessage(`🗑️ Document "${documentName}" supprimé avec succès !`, 'success');
+      } else {
+        showTemporaryMessage('❌ Erreur lors de la suppression', 'error');
+      }
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+      showTemporaryMessage('❌ Erreur technique lors de la suppression', 'error');
     }
   };
 
@@ -730,245 +1162,50 @@ function App() {
     }
   }, [student]);
 
-  // Gestion inscription
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setMessage({ type: '', text: '' });
+  // Composant bouton navigation
+  const TabButton = ({ id, label, icon, isActive, onClick, disabled = false }) => (
+    <button
+      className={`tab-button ${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
+      onClick={() => !disabled && onClick(id)}
+      disabled={disabled}
+      title={disabled ? 'Complétez les étapes précédentes' : `Aller à ${label}`}
+    >
+      <span className="tab-icon">{icon}</span>
+      <span className="tab-label">{label}</span>
+      {currentStep > getStepNumber(id) && <span className="tab-check">✓</span>}
+      {disabled && <span className="tab-lock">🔒</span>}
+    </button>
+  );
 
-    if (!formData.name.trim() || !formData.email.trim() || !formData.class_level) {
-      setMessage({ type: 'error', text: 'Veuillez remplir tous les champs obligatoires' });
-      setIsSubmitting(false);
-      return;
-    }
+  return (
+    <div className={`app ${isDarkMode ? 'dark-mode' : ''}`}>
+      {/* Message flottant */}
+      {connectionMessage.show && (
+        <div className={`floating-message ${connectionMessage.type}`}>
+          {connectionMessage.text}
+        </div>
+      )}
 
-    try {
-      console.log('🚀 Tentative inscription...', formData);
-      
-      const response = await fetch(`${API_URL}/api/students`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      
-      console.log('📡 Response status:', response.status, response.ok);
-      
-      const responseText = await response.text();
-      console.log('📄 Response raw:', responseText);
-      
-      if (!responseText.trim()) {
-        throw new Error('Réponse serveur vide');
-      }
-      
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('❌ Erreur parsing JSON:', parseError);
-        throw new Error('Réponse serveur invalide');
-      }
-      
-      console.log('📊 Data parsed:', data);
-
-      if (response.ok) {
-        setStudent(data.student);
-        setMessage({ type: 'success', text: data.message });
-        setCurrentStep(2);
-        setBackendStatus('online');
+      {/* HEADER RÉVOLUTIONNAIRE ÉPURÉ - NE PAS MODIFIER */}
+      <header className="app-header revolutionary">
+        <div className="cosmic-background"></div>
         
-        showTemporaryMessage(`🎉 Bienvenue ${data.student.nom} ! Inscription réussie avec ÉtudIA !`);
-        setTimeout(() => setActiveTab('upload'), 2000);
-      } else {
-        if (data.error === 'EMAIL_EXISTS') {
-          setMessage({ 
-            type: 'error', 
-            text: '📧 Cet email est déjà inscrit ! Utilisez la connexion rapide ci-dessous.' 
-          });
-        } else {
-          setMessage({ 
-            type: 'error', 
-            text: data.message || data.error || `Erreur serveur: ${response.status}`
-          });
-        }
-      }
-    } catch (error) {
-      console.error('💥 Erreur inscription:', error);
-      setMessage({ 
-        type: 'error', 
-        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Connexion rapide
-  const handleLogin = async (email) => {
-    if (!email?.trim()) {
-      setMessage({ type: 'error', text: 'Veuillez saisir votre email' });
-      return;
-    }
-
-    try {
-      console.log('🚀 Tentative connexion...', email);
-      
-      const response = await fetch(`${API_URL}/api/students/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-
-      console.log('📡 Response status:', response.status, response.ok);
-      
-      const responseText = await response.text();
-      console.log('📄 Response raw:', responseText);
-      
-      if (!responseText.trim()) {
-        throw new Error('Réponse serveur vide');
-      }
-      
-      const data = JSON.parse(responseText);
-      console.log('📊 Data parsed:', data);
-
-      if (response.ok) {
-        setStudent(data.student);
-        setMessage({ type: 'success', text: data.message });
-        setCurrentStep(2);
-        setActiveTab('upload');
-        setBackendStatus('online');
-        
-        showTemporaryMessage(`🎉 Connexion réussie ! Bonjour ${data.student.nom} !`);
-      } else {
-        if (response.status === 404) {
-          setMessage({ 
-            type: 'error', 
-            text: '🔍 Email non trouvé. Inscrivez-vous d\'abord avec le formulaire ci-dessus.' 
-          });
-        } else {
-          setMessage({ type: 'error', text: data.error || data.message });
-        }
-      }
-    } catch (error) {
-      console.error('💥 Erreur connexion:', error);
-      setMessage({ 
-        type: 'error', 
-        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
-      });
-    }
-  };
-
-  // Gestion documents
-  // 🔧 CORRECTION App.js - handleDocumentProcessed SIMPLIFIÉE
-
-const handleDocumentProcessed = (extractedText, documentData) => {
-  console.log('📄 DOCUMENT TRAITÉ V2 - Début liaison:', {
-    document_name: documentData?.nom_original,
-    text_length: extractedText?.length,
-    document_id: documentData?.id,
-    timestamp: new Date().toISOString()
-  });
-
-  // ✅ MISE À JOUR IMMÉDIATE ET FORCÉE
-  setDocumentContext(extractedText);
-  setCurrentStep(3);
-  
-  // ✅ MISE À JOUR LISTE DOCUMENTS AVEC VALIDATION
-  if (documentData && documentData.id) {
-    const newDocument = {
-      id: documentData.id,
-      nom_original: documentData.nom_original || 'Document sans nom',
-      matiere: documentData.matiere || 'Général',
-      texte_extrait: extractedText || '',
-      date_upload: documentData.date_upload || new Date().toISOString(),
-      // 🔧 NOUVEAUX CHAMPS DE VALIDATION
-      has_valid_text: !!(extractedText && extractedText.length > 50),
-      text_preview: extractedText ? extractedText.substring(0, 100) + '...' : 'Vide'
-    };
-    
-    // Supprimer doublons et ajouter en début
-    setAllDocuments(prev => {
-      const filtered = prev.filter(doc => doc.id !== newDocument.id);
-      return [newDocument, ...filtered];
-    });
-    
-    // Sélectionner automatiquement le nouveau document
-    setSelectedDocumentId(documentData.id);
-    
-    console.log('✅ Document ajouté avec validation:', {
-      id: newDocument.id,
-      name: newDocument.nom_original,
-      has_text: newDocument.has_valid_text,
-      selected: true
-    });
-  } else {
-    console.warn('⚠️ Document data incomplète:', documentData);
-  }
-  
-  // ✅ MISE À JOUR STATS UTILISATEUR
-  if (student?.id) {
-    updateUserStats(student.id);
-  }
-  
-  // ✅ MESSAGE DE CONFIRMATION AMÉLIORÉ
-  const successMessage = documentData?.nom_original ? 
-    `🎉 "${documentData.nom_original}" analysé avec succès !
-    
-📊 ${extractedText?.length || 0} caractères extraits
-🤖 ÉtudIA peut maintenant t'aider avec ce document !
-    
-➡️ Redirection automatique vers le chat...` :
-    
-    `🎉 Document analysé avec succès !
-    
-📊 ${extractedText?.length || 0} caractères extraits  
-🤖 ÉtudIA est prêt à t'aider !`;
-  
-  showTemporaryMessage(successMessage, 'success', 5000);
-  
-  // ✅ REDIRECTION AUTOMATIQUE AVEC RESET
-  setTimeout(() => {
-    console.log('🎯 Redirection vers chat avec document:', documentData?.nom_original);
-    
-    // Reset le message d'accueil pour prendre en compte le nouveau document
-    setWelcomeMessageSent(false);
-    
-    // Changer d'onglet
-    setActiveTab('chat');
-    
-    // Message de confirmation après redirection
-    setTimeout(() => {
-      if (documentData?.nom_original) {
-        showTemporaryMessage(
-          `📄 Document "${documentData.nom_original}" chargé ! Pose tes questions !`, 
-          'info', 
-          3000
-        );
-      }
-    }, 1500);
-    
-  }, 2500);
-};
-
-  {/* HEADER RÉVOLUTIONNAIRE ÉPURÉ - NE PAS MODIFIER */}
-<header className="app-header revolutionary">
-  <div className="cosmic-background"></div>
-  
-  <div className="header-content">
-    {/* Section logo SEULE */}
-    <div className="logo-section">
-      <h1 className="app-title">
-        <span className="title-etud">Étud</span>
-        <span className="title-ia">IA</span>
-        <span className="title-version">4.0</span>
-      </h1>
-      <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
-      <div className="made-in-ci">
-        <span className="flag">🇨🇮</span>
-        <span>Made with ❤️ in Côte d'Ivoire by @Pacousstar</span>
-      </div>
-    </div>
-  </div>
-</header>
+        <div className="header-content">
+          {/* Section logo SEULE */}
+          <div className="logo-section">
+            <h1 className="app-title">
+              <span className="title-etud">Étud</span>
+              <span className="title-ia">IA</span>
+              <span className="title-version">4.0</span>
+            </h1>
+            <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
+            <div className="made-in-ci">
+              <span className="flag">🇨🇮</span>
+              <span>Made with ❤️ in Côte d'Ivoire by @Pacousstar</span>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* 🔋 AFFICHAGE STATISTIQUES UTILISATEUR */}
       {student && (
@@ -1061,36 +1298,47 @@ const handleDocumentProcessed = (extractedText, documentData) => {
         </div>
       </div>
 
-      {/* Navigation onglets */}
-      <nav className="tab-navigation">
-        <TabButton
-          id="inscription"
-          label="Inscription"
-          icon="👤"
-          isActive={activeTab === 'inscription'}
-          onClick={setActiveTab}
-        />
-        <TabButton
-          id="upload"
-          label="Upload OCR"
-          icon="📸"
-          isActive={activeTab === 'upload'}
-          onClick={setActiveTab}
-          disabled={!student}
-        />
-        <TabButton
-          id="chat"
-          label="Chat ÉtudIA"
-          icon="🦙"
-          isActive={activeTab === 'chat'}
-          onClick={setActiveTab}
-          disabled={!student}
-        />
-          <button className="logout-button" onClick={handleLogout}>
-          <span className="logout-icon">🚪</span>
-          <span className="logout-label">Déconnexion</span>
-          </button>
-      </nav>
+      // 📍 AJOUTEZ LE BOUTON DÉCONNEXION DANS LA NAVIGATION
+// Remplacez la section "Navigation onglets" par ceci :
+
+{/* Navigation onglets AVEC BOUTON DÉCONNEXION */}
+<nav className="tab-navigation">
+  <TabButton
+    id="inscription"
+    label="Inscription"
+    icon="👤"
+    isActive={activeTab === 'inscription'}
+    onClick={setActiveTab}
+  />
+  <TabButton
+    id="upload"
+    label="Upload OCR"
+    icon="📸"
+    isActive={activeTab === 'upload'}
+    onClick={setActiveTab}
+    disabled={!student}
+  />
+  <TabButton
+    id="chat"
+    label="Chat ÉtudIA"
+    icon="🦙"
+    isActive={activeTab === 'chat'}
+    onClick={setActiveTab}
+    disabled={!student}
+  />
+  
+  {/* 🚪 NOUVEAU BOUTON DÉCONNEXION */}
+  {student && (
+    <button
+      className="logout-tab-button"
+      onClick={handleLogout}
+      title="Se déconnecter de ÉtudIA"
+    >
+      <span className="tab-icon">🚪</span>
+      <span className="tab-label">Déconnexion</span>
+    </button>
+  )}
+</nav>
 
       {/* CONTENU PRINCIPAL */}
       <main className="main-content enhanced">
@@ -1266,7 +1514,7 @@ const handleDocumentProcessed = (extractedText, documentData) => {
                 <span className="feature-icon">🧠</span>
                 <h3 className="feature-title">IA ÉtudIA Personnalisée</h3>
                 <p className="feature-description">
-                  Mémoire avancée en mathématique et compréhension française amélioréepour ÉtudIA
+                  Mémoire avancée en mathématique et compréhension française
                 </p>
                 <div className="feature-status status-active">✅ Actif</div>
               </div>
@@ -1284,7 +1532,7 @@ const handleDocumentProcessed = (extractedText, documentData) => {
                 <span className="feature-icon">✅</span>
                 <h3 className="feature-title">Mode Solution Directe</h3>
                 <p className="feature-description">
-                  Solutions complètes instantanées de tous vos sujets d'examen, exercices et devoirs avec ÉtudIA
+                  Solutions complètes instantanées avec ÉtudIA
                 </p>
                 <div className="feature-status status-active">✅ Accéléré</div>
               </div>
@@ -1348,7 +1596,6 @@ const handleDocumentProcessed = (extractedText, documentData) => {
                   </div>
                 </div>
                 
-                
                 <div className="improvement-item">
                   <span className="improvement-icon">🧠</span>
                   <div className="improvement-content">
@@ -1401,11 +1648,16 @@ const handleDocumentProcessed = (extractedText, documentData) => {
             documentContext={documentContext}
             allDocuments={allDocuments}
             selectedDocumentId={selectedDocumentId}
+            chatHistory={chatHistory}
+            setChatHistory={setChatHistory}
+            chatTokensUsed={chatTokensUsed}
+            setChatTokensUsed={setChatTokensUsed}
+            onStatsUpdate={updateUserStats}
           />
         )}
       </main>
 
-{/* Footer */}
+      {/* Footer */}
       <footer className="app-footer">
         <div className="footer-content">
           <div className="footer-main">
@@ -1413,16 +1665,41 @@ const handleDocumentProcessed = (extractedText, documentData) => {
             <p>Développé avec ❤️ par <strong>@Pacousstar</strong> - Côte d'Ivoire</p>
           </div>
         
-          <div className="footer-feedback">
-            <a 
-              href="https://etudia-v4.gsnexpertises.com" 
-              className="footer-feedback-link"
-              target="_blank"
-              rel="noreferrer"
-            >
-              📝 Donner votre avis testeur
-            </a>
-          </div>
+          // 🎨 DANS App.js - REMPLACEZ LE LIEN FOOTER PAR CECI :
+
+<a 
+  href="https://etudia-v4.gsnexpertises.com" 
+  target="_blank" 
+  rel="noopener noreferrer"
+  style={{
+    fontSize: '16px',
+    fontWeight: 'bold',
+    color: '#FF8C00',
+    textDecoration: 'none',
+    backgroundColor: 'rgba(255, 140, 0, 0.1)',
+    padding: '8px 16px',
+    borderRadius: '8px',
+    border: '2px solid #FF8C00',
+    transition: 'all 0.3s ease',
+    display: 'inline-block',
+    textTransform: 'uppercase',
+    letterSpacing: '1px'
+  }}
+  onMouseEnter={(e) => {
+    e.target.style.backgroundColor = '#FF8C00';
+    e.target.style.color = 'white';
+    e.target.style.transform = 'translateY(-2px)';
+    e.target.style.boxShadow = '0 4px 15px rgba(255, 140, 0, 0.4)';
+  }}
+  onMouseLeave={(e) => {
+    e.target.style.backgroundColor = 'rgba(255, 140, 0, 0.1)';
+    e.target.style.color = '#FF8C00';
+    e.target.style.transform = 'translateY(0)';
+    e.target.style.boxShadow = 'none';
+  }}
+>
+  📝 DONNER VOTRE AVIS TESTEUR
+</a>
         
           <div className="footer-stats">
             <span>🚀 {stats.students.toLocaleString()}+ élèves</span>
