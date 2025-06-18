@@ -311,28 +311,32 @@ const handleSendMessage = async (messageText = inputMessage, mode = chatMode) =>
   setIsLoading(true);
 
   try {
-    // 🔧 CORRECTION 1: RÉCUPÉRATION AUTOMATIQUE DU DOCUMENT ACTIF
+    // 🔧 RÉCUPÉRATION AUTOMATIQUE DU DOCUMENT ACTIF
     const activeDocument = selectedDocumentId ? 
       allDocuments.find(doc => doc.id === selectedDocumentId) : 
       (allDocuments.length > 0 ? allDocuments[0] : null);
 
-    const finalDocumentContext = activeDocument ? 
-      activeDocument.texte_extrait || documentContext : 
-      documentContext;
+    const finalDocumentContext = activeDocument?.texte_extrait || documentContext || '';
+    const hasValidContext = finalDocumentContext && finalDocumentContext.length > 50;
 
-    console.log('📄 Document actif:', activeDocument?.nom_original || 'Aucun');
-    console.log('📝 Contexte final:', finalDocumentContext ? 'Présent' : 'Absent');
+    console.log('📤 Envoi message avec contexte V2:', {
+      active_document: activeDocument?.nom_original || 'Aucun',
+      context_length: finalDocumentContext.length,
+      has_valid_context: hasValidContext,
+      mode: mode,
+      message_preview: messageText.substring(0, 50) + '...'
+    });
 
-    // 🔧 CORRECTION 2: PAYLOAD ENRICHI AVEC DOCUMENT GARANTI
+    // 🔧 PAYLOAD ENRICHI AVEC CONTEXTE GARANTI
     const payload = {
       message: messageText.trim(),
       user_id: student.id,
       document_context: finalDocumentContext, // ✅ TOUJOURS REMPLI !
       mode: mode,
-      // 🔧 NOUVEAUX CHAMPS POUR GARANTIR LE CONTEXTE
-      selected_document_id: selectedDocumentId,
+      // 🔧 CHAMPS ADDITIONNELS POUR GARANTIR LE CONTEXTE
+      selected_document_id: selectedDocumentId || null,
       document_name: activeDocument?.nom_original || '',
-      has_document: !!finalDocumentContext
+      has_document: hasValidContext
     };
 
     // Ajouter info étapes si mode step_by_step
@@ -343,13 +347,6 @@ const handleSendMessage = async (messageText = inputMessage, mode = chatMode) =>
       };
     }
 
-    console.log('🚀 Payload envoyé:', {
-      mode: payload.mode,
-      has_document: payload.has_document,
-      document_name: payload.document_name,
-      context_length: payload.document_context?.length || 0
-    });
-
     const response = await fetch(`${apiUrl}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -358,7 +355,7 @@ const handleSendMessage = async (messageText = inputMessage, mode = chatMode) =>
 
     const data = await response.json();
 
-    if (response.ok) {
+    if (response.ok && data.success !== false) {
       const aiMessage = {
         id: Date.now() + 1,
         type: 'ai',
@@ -366,12 +363,13 @@ const handleSendMessage = async (messageText = inputMessage, mode = chatMode) =>
         timestamp: data.timestamp,
         tokens: data.tokens_used || 0,
         model: data.model,
-        hasContext: data.has_context || !!finalDocumentContext, // ✅ GARANTIE !
+        hasContext: data.has_context || hasValidContext,
         mode: mode,
         nextStep: data.next_step,
-        // 🔧 NOUVEAUX INDICATEURS
-        documentUsed: activeDocument?.nom_original || null,
-        contextLength: finalDocumentContext?.length || 0
+        // 🔧 NOUVEAUX INDICATEURS V2
+        documentUsed: data.document_name || activeDocument?.nom_original,
+        contextLength: data.context_length || finalDocumentContext.length,
+        responseValidated: true
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -379,7 +377,7 @@ const handleSendMessage = async (messageText = inputMessage, mode = chatMode) =>
       setTotalTokens(prev => prev + (data.tokens_used || 0));
       setConnectionStatus('online');
 
-      // CORRECTION: Mise à jour tokens en temps réel
+      // Mise à jour tokens en temps réel
       if (data.tokens_used) {
         updateTokenUsage(data.tokens_used, totalTokens + (data.tokens_used || 0));
       }
@@ -389,37 +387,65 @@ const handleSendMessage = async (messageText = inputMessage, mode = chatMode) =>
         setCurrentStep(data.next_step.next);
       }
 
-      // Synthèse vocale si mode audio ACTIVÉ
+      // Synthèse vocale si mode audio activé
       if (isAudioMode && data.response) {
         setTimeout(() => speakResponse(data.response), 500);
       }
 
-      // 🔧 FEEDBACK VISUEL DOCUMENT UTILISÉ
-      if (aiMessage.documentUsed) {
-        console.log(`✅ IA a utilisé le document: "${aiMessage.documentUsed}" (${aiMessage.contextLength} chars)`);
+      // 🔧 FEEDBACK VISUEL DOCUMENT UTILISÉ V2
+      if (aiMessage.documentUsed && aiMessage.documentUsed !== 'Aucun') {
+        console.log(`✅ IA a utilisé le document V2: "${aiMessage.documentUsed}" (${aiMessage.contextLength} chars)`);
       } else {
-        console.warn('⚠️ IA sans contexte document !');
+        console.warn('⚠️ IA sans contexte document - Vérifier upload !');
       }
 
     } else {
       throw new Error(data.error || 'Erreur communication IA');
     }
   } catch (error) {
-    console.error('❌ Erreur chat:', error);
+    console.error('❌ Erreur chat V2:', {
+      error_name: error.name,
+      error_message: error.message,
+      student_id: student?.id,
+      has_document: !!(activeDocument?.texte_extrait)
+    });
+    
     setConnectionStatus('error');
+    
+    // Message d'erreur contextuel
+    const errorContent = activeDocument ? 
+      `Désolé ${prenomEleve}, problème technique ! 😅
+
+J'ai bien ton document "${activeDocument.nom_original}" mais je n'arrive pas à le traiter pour le moment.
+
+💡 Solutions :
+• Recharge la page (F5)
+• Réessaie dans 30 secondes
+• Vérifie ta connexion
+
+🤖 ÉtudIA sera bientôt de retour pour analyser ton document !` :
+      
+      `Désolé ${prenomEleve}, problème technique ! 😅
+
+Tu n'as pas encore uploadé de document, ce qui peut compliquer mes réponses.
+
+💡 Solutions :
+• Upload d'abord un document
+• Recharge la page (F5)  
+• Réessaie dans 30 secondes
+
+🤖 ÉtudIA sera bientôt de retour !`;
     
     const errorMessage = {
       id: Date.now() + 1,
       type: 'ai',
-      content: `Désolé ${prenomEleve}, je rencontre des difficultés techniques ! 😅
-
-Veuillez réessayer dans quelques instants.
-
-🤖 ÉtudIA sera bientôt de retour pour t'aider !`,
+      content: errorContent,
       timestamp: new Date().toISOString(),
       tokens: 0,
-      isError: true
+      isError: true,
+      hasContext: !!(activeDocument?.texte_extrait)
     };
+    
     setMessages(prev => [...prev, errorMessage]);
   } finally {
     setIsLoading(false);
