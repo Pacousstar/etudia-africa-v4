@@ -4,14 +4,14 @@ import './App.css';
 import UploadDocument from './components/UploadDocument';
 import ChatIA from './components/ChatIA';
 
-// Configuration API pour Railway
+// Configuration API pour Render
 const API_URL = process.env.REACT_APP_API_URL || 
   (process.env.NODE_ENV === 'production'  
-  ? 'https://etudia-africa-v4-production.up.railway.app'  // URL RAILWAY CORRIGÉE
+  ? 'https://etudia-v4-revolutionary.onrender.com'  // 🔥 NOUVELLE URL RENDER !
   : 'http://localhost:10000');
 
 console.log('🔗 API_URL:', API_URL);
-console.log('🏢 Hébergement: Railway (Backend) + Vercel (Frontend)');
+console.log('🏢 Hébergement: Render (Backend) + Vercel (Frontend)');
 
 function App() {
   // États principaux
