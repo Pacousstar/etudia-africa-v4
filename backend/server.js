@@ -778,16 +778,30 @@ app.delete('/api/documents/:documentId', async (req, res) => {
 // 🤖 CHAT IA AVEC INSTRUCTIONS LLAMA RESPECTÉES - VERSION CORRIGÉE
 // ===================================================================
 
+// 🔧 CORRECTION SERVER.JS - ROUTE /api/chat (LIGNE ~850)
+// Remplace la section de récupération des données par ceci :
+
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, user_id, document_context = '', is_welcome = false, mode = 'normal', step_info = null } = req.body;
+    const { 
+      message, 
+      user_id, 
+      document_context = '', 
+      is_welcome = false, 
+      mode = 'normal', 
+      step_info = null,
+      // 🔧 NOUVEAUX PARAMÈTRES POUR GARANTIR LE CONTEXTE
+      selected_document_id = null,
+      document_name = '',
+      has_document = false
+    } = req.body;
     
     if (!user_id) {
       return res.status(400).json({ error: 'ID utilisateur manquant' });
     }
 
     // 🔧 CACHE INTELLIGENT
-    const cacheKey = `chat_${user_id}_${Buffer.from(message.substring(0, 50)).toString('base64')}_${mode}`;
+    const cacheKey = `chat_${user_id}_${Buffer.from(message.substring(0, 50)).toString('base64')}_${mode}_${selected_document_id || 'no_doc'}`;
     const cachedResponse = cache.get(cacheKey);
     
     if (cachedResponse && !is_welcome) {
@@ -798,20 +812,73 @@ app.post('/api/chat', async (req, res) => {
       });
     }
 
-    console.log(`🎯 Chat OPTIMISÉ pour élève ${user_id} - Mode: ${mode}`);
+    console.log(`🎯 Chat OPTIMISÉ pour élève ${user_id} - Mode: ${mode} - Document: ${document_name || 'Auto'}`);
            
-    // ✅ RÉCUPÉRATION DONNÉES RAPIDE
-    const [studentResult, documentResult, profilResult] = await Promise.all([
+    // ✅ RÉCUPÉRATION DONNÉES RAPIDE + DOCUMENT GARANTI
+    const [studentResult, profilResult] = await Promise.all([
       supabase.from('eleves').select('nom, classe').eq('id', user_id).single(),
-      supabase.from('documents').select('nom_original, texte_extrait').eq('eleve_id', user_id).order('date_upload', { ascending: false }).limit(1).single(),
       supabase.from('eleves').select('style_apprentissage, matieres_difficiles, niveau_global').eq('id', user_id).single()
     ]);
 
     const studentInfo = studentResult.data;
     const prenomExact = (studentInfo?.nom || 'Élève').trim().split(' ')[0];
-    const nomDocumentExact = documentResult.data?.nom_original || 'Document';
-    const documentComplet = document_context || documentResult.data?.texte_extrait || '';
     const learningProfile = profilResult.data;
+
+    // 🔧 CORRECTION MAJEURE: RÉCUPÉRATION AUTOMATIQUE DU DOCUMENT
+    let finalDocumentContext = document_context;
+    let finalDocumentName = document_name;
+
+    // 🎯 STRATÉGIE 1: Document spécifique sélectionné
+    if (selected_document_id && !finalDocumentContext) {
+      console.log(`🔍 Récupération document ID: ${selected_document_id}`);
+      
+      const { data: specificDoc } = await supabase
+        .from('documents')
+        .select('nom_original, texte_extrait, matiere')
+        .eq('id', selected_document_id)
+        .eq('eleve_id', user_id)
+        .single();
+
+      if (specificDoc) {
+        finalDocumentContext = specificDoc.texte_extrait;
+        finalDocumentName = specificDoc.nom_original;
+        console.log(`✅ Document récupéré: "${finalDocumentName}" (${finalDocumentContext?.length || 0} chars)`);
+      }
+    }
+
+    // 🎯 STRATÉGIE 2: Document le plus récent si aucun contexte
+    if (!finalDocumentContext) {
+      console.log('🔍 Récupération document le plus récent...');
+      
+      const { data: latestDoc } = await supabase
+        .from('documents')
+        .select('nom_original, texte_extrait, matiere')
+        .eq('eleve_id', user_id)
+        .order('date_upload', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (latestDoc) {
+        finalDocumentContext = latestDoc.texte_extrait;
+        finalDocumentName = latestDoc.nom_original;
+        console.log(`✅ Document récent récupéré: "${finalDocumentName}" (${finalDocumentContext?.length || 0} chars)`);
+      }
+    }
+
+    // 🎯 STRATÉGIE 3: Fallback si vraiment aucun document
+    if (!finalDocumentContext) {
+      console.log('⚠️ Aucun document trouvé - Mode sans contexte');
+      finalDocumentName = 'Aucun document';
+      finalDocumentContext = '';
+    }
+
+    // 📊 LOG FINAL DU CONTEXTE
+    console.log(`📄 CONTEXTE FINAL:`, {
+      document_name: finalDocumentName,
+      context_length: finalDocumentContext?.length || 0,
+      has_context: !!finalDocumentContext,
+      strategy_used: selected_document_id ? 'specific' : (finalDocumentContext ? 'latest' : 'none')
+    });
 
     // ✅ HISTORIQUE LIMITÉ (2 échanges max)
     const { data: chatHistory } = await supabase
@@ -827,14 +894,14 @@ app.post('/api/chat', async (req, res) => {
 
 Je suis ÉtudIA, ton tuteur IA !
 
-Document : "${nomDocumentExact}"
+${finalDocumentName !== 'Aucun document' ? `Document : "${finalDocumentName}"` : '📄 Upload un document pour commencer !'}
 ${learningProfile?.style_apprentissage ? `Style : ${learningProfile.style_apprentissage}` : ''}
 
 🎯 Choisis ton mode :
 • Étape par étape 📊
 • Solution directe ✅
 
-Sur quoi veux-tu travailler ?`;
+${finalDocumentContext ? 'Sur quoi veux-tu travailler ?' : 'Upload d\'abord un document pour que je puisse t\'aider !'}`;
 
       await supabase.from('historique_conversations').insert([{
         eleve_id: parseInt(user_id),
@@ -842,14 +909,17 @@ Sur quoi veux-tu travailler ?`;
         reponse_ia: reponseAccueil,
         tokens_utilises: 0,
         modele_ia: 'etudia-accueil-optimized',
-        mode_utilise: 'accueil'
+        mode_utilise: 'accueil',
+        document_utilise: finalDocumentName
       }]);
 
       return res.json({
         response: reponseAccueil,
         timestamp: new Date().toISOString(),
         model: 'etudia-accueil-optimized',
-        student_name: prenomExact
+        student_name: prenomExact,
+        has_context: !!finalDocumentContext,
+        document_name: finalDocumentName
       });
     }
 
@@ -859,12 +929,12 @@ Sur quoi veux-tu travailler ?`;
       });
     }
 
-    // 🎯 CRÉATION PROMPT ULTRA-OPTIMISÉ
+    // 🎯 CRÉATION PROMPT ULTRA-OPTIMISÉ AVEC CONTEXTE GARANTI
     const basePromptData = MemoryManager.createPersonalizedPrompt(
       studentInfo, 
       learningProfile, 
-      nomDocumentExact, 
-      documentComplet,
+      finalDocumentName, 
+      finalDocumentContext, // ✅ TOUJOURS REMPLI !
       mode
     );
 
@@ -880,17 +950,17 @@ Sur quoi veux-tu travailler ?`;
     // 🎯 CONFIGURATION MODE STRICT
     const modeConfig = ChatModeManager.getModeConfig(mode);
 
-    console.log(`🔧 Prompt: ${basePromptData.prompt.length} chars | Tokens: ${maxTokens} | Temp: ${modeConfig.temperature}`);
+    console.log(`🔧 Prompt: ${basePromptData.prompt.length} chars | Tokens: ${maxTokens} | Temp: ${modeConfig.temperature} | Document: ${!!finalDocumentContext}`);
 
     // ✅ APPEL GROQ AVEC PARAMÈTRES STRICTS
     const completion = await groq.chat.completions.create({
       messages: messages,
       model: 'llama-3.3-70b-versatile',
-      temperature: modeConfig.temperature, // Ultra-strict !
+      temperature: modeConfig.temperature,
       max_tokens: Math.min(maxTokens, modeConfig.max_tokens),
       top_p: modeConfig.top_p,
       stream: false,
-      stop: mode === 'step_by_step' ? ['Exercice', 'Solution'] : null // Forcer arrêt
+      stop: mode === 'step_by_step' ? ['Exercice', 'Solution'] : null
     });
 
     let aiResponse = completion.choices[0]?.message?.content || `Désolé ${prenomExact}, erreur technique.`;
@@ -898,12 +968,12 @@ Sur quoi veux-tu travailler ?`;
     // 🔧 VALIDATION ET CORRECTION POST-RÉPONSE
     aiResponse = MemoryManager.validateAndFixResponse(aiResponse, mode, prenomExact, step_info);
 
-    console.log(`✅ Réponse VALIDÉE: ${aiResponse.length} chars | Mode: ${mode} | Format OK: ${
+    console.log(`✅ Réponse VALIDÉE: ${aiResponse.length} chars | Mode: ${mode} | Document: ${!!finalDocumentContext} | Format OK: ${
       mode === 'step_by_step' ? aiResponse.includes('📊') : 
       mode === 'direct_solution' ? !aiResponse.includes('📊') : true
     }`);
 
-    // ✅ SAUVEGARDE
+    // ✅ SAUVEGARDE AVEC DOCUMENT UTILISÉ
     await supabase.from('historique_conversations').insert([{
       eleve_id: parseInt(user_id),
       message_eleve: message.trim(),
@@ -911,10 +981,12 @@ Sur quoi veux-tu travailler ?`;
       tokens_utilises: completion.usage?.total_tokens || 0,
       modele_ia: `llama-3.3-optimized-${mode}`,
       mode_utilise: mode,
-      step_info: step_info
+      step_info: step_info,
+      document_utilise: finalDocumentName, // ✅ NOUVEAU CHAMP !
+      contexte_utilise: !!finalDocumentContext
     }]);
 
-    // 🔧 CRÉATION DE LA RÉPONSE AVEC CACHE
+    // 🔧 CRÉATION DE LA RÉPONSE AVEC CONTEXTE GARANTI
     const responseData = {
       response: aiResponse,
       timestamp: new Date().toISOString(),
@@ -923,6 +995,11 @@ Sur quoi veux-tu travailler ?`;
       tokens_used: completion.usage?.total_tokens || 0,
       mode_used: mode,
       format_validated: true,
+      // 🔧 NOUVEAUX CHAMPS DE CONFIRMATION
+      has_context: !!finalDocumentContext,
+      document_name: finalDocumentName,
+      context_length: finalDocumentContext?.length || 0,
+      context_strategy: selected_document_id ? 'specific' : (finalDocumentContext ? 'latest' : 'none'),
       next_step: step_info && mode === 'step_by_step' ? {
         current: step_info.current_step,
         total: step_info.total_steps,
@@ -930,10 +1007,10 @@ Sur quoi veux-tu travailler ?`;
       } : null
     };
 
-    // 🔧 METTRE EN CACHE
+    // 🔧 METTRE EN CACHE AVEC DOCUMENT ID
     if (!is_welcome && message.length > 5) {
       cache.set(cacheKey, responseData, 300);
-      console.log('💾 Réponse mise en cache:', cacheKey);
+      console.log('💾 Réponse mise en cache avec contexte document:', cacheKey);
     }
 
     res.json(responseData);
