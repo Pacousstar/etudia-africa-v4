@@ -1,846 +1,993 @@
-// ===================================================================
-// 🎓 APP.JS COMPLET DÉFINITIF - ÉtudIA v2.0 
-// Avec système Multi-Clés Groq intégré
-// ===================================================================
-
-import React, { useState, useEffect, useRef } from 'react';
+// App.js - VERSION UX/UI RÉVOLUTIONNAIRE AVEC RESPONSIVE PARFAIT + AMÉLIORATIONS
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import UploadDocument from './components/UploadDocument';
+import ChatIA from './components/ChatIA';
 
-// 🔑 Import des services Groq multi-clés
-import GroqService from './services/groqService';
-import GroqKeyMonitor from './components/GroqKeyMonitor';
+// Configuration API pour Render
+const API_URL = process.env.REACT_APP_API_URL || 
+  (process.env.NODE_ENV === 'production'  
+  ? 'https://etudia-v4-revolutionary.onrender.com'  // NOUVELLE URL RENDER
+  : 'http://localhost:10000');  // Port local changé
+
+console.log('🔗 API_URL:', API_URL || 'PROXY LOCAL ACTIVÉ');
+console.log('🏢 Hébergement: Render.com (Frankfurt)');
 
 function App() {
-  // ===================================================================
-  // 🔑 INITIALISATION DU SERVICE GROQ MULTI-CLÉS
-  // ===================================================================
-  const [groqService] = useState(() => {
-    try {
-      return new GroqService();
-    } catch (error) {
-      console.error('❌ Erreur initialisation GroqService:', error.message);
-      return null;
-    }
-  });
-
-  // ===================================================================
-  // 📊 ÉTATS DE L'APPLICATION
-  // ===================================================================
-  
-  // Navigation et interface
-  const [activeTab, setActiveTab] = useState('accueil');
+  // États principaux
+  const [activeTab, setActiveTab] = useState('inscription');
+  const [student, setStudent] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [documentContext, setDocumentContext] = useState('');
+  const [allDocuments, setAllDocuments] = useState([]);
+  const [selectedDocumentId, setSelectedDocumentId] = useState(null);
   
-  // Documents et fichiers
-  const [selectedDocument, setSelectedDocument] = useState(null);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [documentText, setDocumentText] = useState('');
+  // États serveur et connexion
+  const [backendStatus, setBackendStatus] = useState('checking');
+  const [stats, setStats] = useState({ 
+    students: 0, 
+    documents: 0, 
+    chats: 0,
+    active_students_7days: 0,
+    tokens_status: { used_today: 0, remaining: 95000 }
+  });
   
-  // Conversation et messages
-  const [messages, setMessages] = useState([]);
-  const [userInput, setUserInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState([]);
+  // 🔋 NOUVEAUX ÉTATS POUR STATISTIQUES UTILISATEUR
+  const [userStats, setUserStats] = useState({
+    conversations: 0,
+    documents: 0,
+    tokens_used: 0,
+    level: 1
+  });
   
-  // Résultats IA
-  const [summary, setSummary] = useState('');
-  const [generatedQuestions, setGeneratedQuestions] = useState('');
-  const [aiResponse, setAiResponse] = useState('');
-  
-  // Inscription et authentification
-  const [userInfo, setUserInfo] = useState({
-    nom: '',
-    prenom: '',
+  // États UI/UX
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [connectionMessage, setConnectionMessage] = useState({
+    show: false,
+    text: '',
+    type: 'success'
+  });
+
+  // États formulaire
+  const [formData, setFormData] = useState({
+    name: '',
     email: '',
-    etablissement: '',
-    niveau: '',
-    filiere: ''
+    class_level: '',
+    school: ''
   });
-  const [isRegistered, setIsRegistered] = useState(false);
-  const [quickLoginCode, setQuickLoginCode] = useState('');
-  
-  // 🔑 Statut des clés API
-  const [apiStatus, setApiStatus] = useState({
-    available: 0,
-    total: 0,
-    currentKey: 1
-  });
-  
-  // Messages et notifications
-  const [notification, setNotification] = useState({ show: false, message: '', type: 'info' });
-  
-  // Références pour le scroll
-  const messagesEndRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
 
-  // ===================================================================
-  // 🔄 EFFETS ET MISE À JOUR
-  // ===================================================================
-  
-  // Mise à jour du statut des clés API
+  // Données statiques
+  const schools = [
+    'Lycée Classique d\'Abidjan',
+    'Lycée Technique d\'Abidjan',
+    'Collège Notre-Dame d\'Afrique',
+    'Lycée Sainte-Marie de Cocody',
+    'Institution Sainte-Marie de Cocody',
+    'Cours Secondaire Catholique',
+    'Lycée Municipal d\'Abidjan',
+    'Groupe Scolaire Les Génies',
+    'École Internationale WASCAL',
+    'Autre'
+  ];
+
+  const classLevels = [
+    '6ème', '5ème', '4ème', '3ème',
+    'Seconde', 'Première', 'Terminale'
+  ];
+
+  // 🔧 INJECTION STYLES CSS POUR FORMULAIRE CENTRÉ + COMPTEURS ORANGE
   useEffect(() => {
-    if (groqService) {
-      const updateApiStatus = () => {
-        try {
-          const status = groqService.getDetailedStatus();
-          setApiStatus({
-            available: status.availableKeys,
-            total: status.totalKeys,
-            currentKey: status.currentKeyIndex
-          });
-        } catch (error) {
-          console.error('Erreur mise à jour statut API:', error);
+    const additionalStyles = `
+      /* 🟠 FORMULAIRE D'INSCRIPTION CENTRÉ */
+      .inscription-form {
+        background: linear-gradient(135deg, #FF6B35, #FF8C00) !important;
+        padding: 2.5rem;
+        border-radius: 1.5rem;
+        box-shadow: 0 12px 35px rgba(255, 107, 53, 0.3);
+        position: relative;
+        overflow: hidden;
+        margin: 2rem auto; /* 📐 CENTRAGE AJOUTÉ */
+        max-width: 600px; /* 📐 LARGEUR LIMITÉE POUR CENTRAGE */
+        animation: formSlideIn 0.6s ease-out;
+      }
+
+      /* 🟠 COMPTEURS HEADER EN ORANGE + VISIBILITÉ */
+      .stats-section .stat-number {
+        color: #FF8C00 !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+        font-weight: 900 !important;
+        font-size: 1.1rem !important;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .stats-section .stat-label {
+        color: rgba(255, 255, 255, 0.95) !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+        font-weight: 600 !important;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        margin-top: 0.25rem;
+      }
+
+      .stats-section .stat-item {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 140, 0, 0.3);
+        border-radius: 0.75rem;
+        padding: 0.75rem;
+        backdrop-filter: blur(5px);
+      }
+
+      /* 🗑️ BOUTON SUPPRESSION DOCUMENTS */
+      .document-card {
+        position: relative;
+      }
+
+      .document-delete-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: #EF4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        z-index: 10;
+      }
+
+      .document-card:hover .document-delete-btn {
+        opacity: 1;
+      }
+
+      .document-delete-btn:hover {
+        background: #DC2626;
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+      }
+
+      /* 🔋 GRAPHIQUE TOKENS UTILISATEUR */
+      .user-tokens-display {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(79, 70, 229, 0.05));
+        border: 2px solid rgba(99, 102, 241, 0.2);
+        border-radius: 1rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .user-tokens-display::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(99, 102, 241, 0.05) 25%, transparent 25%);
+        background-size: 10px 10px;
+        opacity: 0.3;
+      }
+
+      .tokens-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+        position: relative;
+        z-index: 2;
+      }
+
+      .tokens-title {
+        font-weight: 700;
+        color: #4F46E5;
+        font-size: 1.1rem;
+      }
+
+      .tokens-value {
+        background: rgba(99, 102, 241, 0.1);
+        color: #4F46E5;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      .tokens-progress-container {
+        position: relative;
+        height: 8px;
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+        z-index: 2;
+      }
+
+      .tokens-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #32CD32, #FFD700, #FF6B35);
+        border-radius: 4px;
+        transition: width 0.8s ease;
+        position: relative;
+      }
+
+      .tokens-progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: tokensShimmer 2s infinite;
+      }
+
+      @keyframes tokensShimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+
+      .tokens-details {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        color: #6B7280;
+        position: relative;
+        z-index: 2;
+      }
+
+      .inscription-form::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.1) 75%),
+                    linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.1) 75%);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+        opacity: 0.3;
+        pointer-events: none;
+      }
+
+      .inscription-form .form-group {
+        position: relative;
+        margin-bottom: 2rem;
+        z-index: 2;
+      }
+
+      .inscription-form .form-label {
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+        display: block;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      /* 🎯 EFFETS SUR LES CHAMPS DE SAISIE */
+      .inscription-form .form-input,
+      .inscription-form .form-select {
+        width: 100%;
+        padding: 1.25rem 1.5rem;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.95);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 3;
+      }
+
+      .inscription-form .form-input:focus,
+      .inscription-form .form-select:focus {
+        outline: none;
+        border-color: #FFF;
+        background: #FFF;
+        transform: translateY(-3px);
+        box-shadow: 
+          0 8px 25px rgba(0, 0, 0, 0.2),
+          0 0 0 4px rgba(255, 255, 255, 0.5),
+          inset 0 2px 5px rgba(255, 107, 53, 0.1);
+        border-width: 4px;
+        animation: fieldFocus 0.3s ease-out;
+      }
+
+      .inscription-form .form-input:hover,
+      .inscription-form .form-select:hover {
+        border-color: rgba(255, 255, 255, 0.6);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .inscription-form .form-input::placeholder {
+        color: #999;
+        font-style: italic;
+        transition: all 0.3s ease;
+      }
+
+      .inscription-form .form-input:focus::placeholder {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+
+      /* 🔥 BOUTON SUBMIT AMÉLIORÉ */
+      .inscription-form .submit-button {
+        width: 100%;
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #4CAF50, #32CD32);
+        color: white;
+        border: none;
+        border-radius: 1rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        position: relative;
+        z-index: 3;
+        margin-top: 1rem;
+      }
+
+      .inscription-form .submit-button:hover:not(:disabled) {
+        background: linear-gradient(135deg, #45A049, #2EBF2E);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(76, 175, 80, 0.5);
+      }
+
+      .inscription-form .submit-button::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 0;
+        height: 0;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+      }
+
+      .inscription-form .submit-button:hover::after {
+        width: 100px;
+        height: 100px;
+      }
+
+      .inscription-form .submit-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* 🔵 BOUTON MODE NORMAL AVEC STYLE IDENTIQUE AUX AUTRES */
+      .mode-button.normal {
+        border-color: #6366F1 !important;
+        background: white;
+        color: #1F2937;
+      }
+
+      .mode-button.normal::before {
+        background: linear-gradient(135deg, #6366F1, #4F46E5) !important;
+      }
+
+      .mode-button.normal:hover:not(:disabled) {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05)) !important;
+        border-color: #4F46E5 !important;
+      }
+
+      .mode-button.normal .mode-benefit {
+        background: rgba(99, 102, 241, 0.1);
+        color: #4F46E5;
+      }
+
+      /* 🌙 MODE SOMBRE */
+      .dark-mode .inscription-form {
+        background: linear-gradient(135deg, #D2691E, #FF6B35);
+        box-shadow: 0 12px 35px rgba(210, 105, 30, 0.4);
+      }
+
+      .dark-mode .inscription-form .form-input,
+      .dark-mode .inscription-form .form-select {
+        background: rgba(31, 41, 55, 0.95);
+        color: #F9FAFB;
+        border-color: rgba(255, 255, 255, 0.4);
+      }
+
+      .dark-mode .inscription-form .form-input:focus,
+      .dark-mode .inscription-form .form-select:focus {
+        background: #1F2937;
+        color: #F9FAFB;
+        border-color: #FFF;
+      }
+
+      .dark-mode .inscription-form .form-input::placeholder {
+        color: #9CA3AF;
+      }
+
+      /* 🎨 ANIMATIONS */
+      @keyframes formSlideIn {
+        0% {
+          opacity: 0;
+          transform: translateY(30px) scale(0.95);
         }
-      };
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
 
-      updateApiStatus();
-      const interval = setInterval(updateApiStatus, 30000); // Toutes les 30 secondes
+      @keyframes fieldFocus {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+      }
 
-      return () => clearInterval(interval);
+      /* 📱 RESPONSIVE */
+      @media (max-width: 768px) {
+        .inscription-form {
+          padding: 2rem;
+          margin: 1.5rem auto;
+          max-width: 95%;
+        }
+
+        .inscription-form .form-input,
+        .inscription-form .form-select {
+          padding: 1rem 1.25rem;
+          font-size: 0.95rem;
+        }
+
+        .inscription-form .submit-button {
+          padding: 1.25rem 1.5rem;
+          font-size: 1.1rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .inscription-form {
+          padding: 1.5rem;
+          border-radius: 1rem;
+          margin: 1rem auto;
+          max-width: 90%;
+        }
+
+        .inscription-form .form-group {
+          margin-bottom: 1.5rem;
+        }
+
+        .inscription-form .form-input,
+        .inscription-form .form-select {
+          padding: 0.875rem 1rem;
+          font-size: 0.9rem;
+        }
+
+        .inscription-form .form-label {
+          font-size: 1rem;
+          margin-bottom: 0.5rem;
+        }
+      }
+    `;
+
+    // Injection des styles
+    if (!document.getElementById('enhanced-form-styles')) {
+      const styleElement = document.createElement('style');
+      styleElement.id = 'enhanced-form-styles';
+      styleElement.textContent = additionalStyles;
+      document.head.appendChild(styleElement);
     }
-  }, [groqService]);
+  }, []);
 
-  // Auto-scroll des messages
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // ===================================================================
-  // 🛠️ FONCTIONS UTILITAIRES
-  // ===================================================================
-  
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const showNotification = (message, type = 'info') => {
-    setNotification({ show: true, message, type });
+  // Fonctions utilitaires
+  const showTemporaryMessage = (text, type = 'success', duration = 10000) => {
+    setConnectionMessage({ show: true, text, type });
     setTimeout(() => {
-      setNotification({ show: false, message: '', type: 'info' });
-    }, 5000);
+      setConnectionMessage(prev => ({ ...prev, show: false }));
+    }, duration);
   };
 
-  const resetForm = () => {
-    setUserInput('');
-    setDocumentText('');
-    setSummary('');
-    setGeneratedQuestions('');
-    setAiResponse('');
+  const getStepNumber = (tabId) => {
+    const steps = { 'inscription': 1, 'upload': 2, 'chat': 3 };
+    return steps[tabId] || 1;
   };
 
-  // ===================================================================
-  // 🔑 FONCTIONS API GROQ AVEC MULTI-CLÉS
-  // ===================================================================
-  
-  // 💬 Envoyer un message à l'IA
-  const handleSendMessage = async (message = userInput) => {
-    if (!message.trim()) return;
-    if (!groqService) {
-      showNotification('Service IA non disponible. Vérifiez vos clés API.', 'error');
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // 🗑️ FONCTION SUPPRESSION DOCUMENT
+  const handleDeleteDocument = async (documentId, documentName) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${documentName}" ?`)) {
       return;
     }
 
-    setIsLoading(true);
-    
     try {
-      // Ajouter le message utilisateur
-      const newUserMessage = { role: 'user', content: message, timestamp: new Date() };
-      const updatedHistory = [...conversationHistory, newUserMessage];
-      setMessages(prev => [...prev, newUserMessage]);
-      setConversationHistory(updatedHistory);
-      
-      // Appel à l'IA avec rotation automatique des clés
-      const response = await groqService.chat(message, updatedHistory, {
-        temperature: 0.7,
-        max_tokens: 1500
+      const response = await fetch(`${API_URL}/api/documents/${documentId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      const aiMessage = {
-        role: 'assistant',
-        content: response.choices[0].message.content,
-        timestamp: new Date()
-      };
+      if (response.ok) {
+        // Mettre à jour la liste locale
+        setAllDocuments(prev => prev.filter(doc => doc.id !== documentId));
+        
+        // Si c'était le document sélectionné, sélectionner le suivant
+        if (selectedDocumentId === documentId) {
+          const remainingDocs = allDocuments.filter(doc => doc.id !== documentId);
+          if (remainingDocs.length > 0) {
+            setSelectedDocumentId(remainingDocs[0].id);
+            setDocumentContext(remainingDocs[0].texte_extrait);
+          } else {
+            setSelectedDocumentId(null);
+            setDocumentContext('');
+          }
+        }
 
-      // Mettre à jour les messages et l'historique
-      setMessages(prev => [...prev, aiMessage]);
-      setConversationHistory(prev => [...prev, aiMessage]);
-      setAiResponse(response.choices[0].message.content);
-      
-      showNotification('✅ Réponse générée avec succès !', 'success');
-
+        showTemporaryMessage(`🗑️ Document "${documentName}" supprimé avec succès !`, 'success');
+      } else {
+        showTemporaryMessage('❌ Erreur lors de la suppression', 'error');
+      }
     } catch (error) {
-      console.error('❌ Erreur envoi message:', error);
+      console.error('Erreur suppression:', error);
+      showTemporaryMessage('❌ Erreur technique lors de la suppression', 'error');
+    }
+  };
+
+  // 📊 FONCTION MISE À JOUR STATISTIQUES UTILISATEUR
+  const updateUserStats = async (userId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/student/profile/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUserStats({
+            conversations: data.statistics.total_conversations || 0,
+            documents: data.statistics.documents_uploaded || 0,
+            tokens_used: data.statistics.total_tokens_used || 0,
+            level: data.learning_profile.level || 1
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('Erreur récupération stats utilisateur:', error);
+    }
+  };
+
+  // 🔧 CORRECTION: Fonction déconnexion avec bon message
+  const handleLogout = () => {
+    setStudent(null);
+    setCurrentStep(1);
+    setActiveTab('inscription');
+    setDocumentContext('');
+    setAllDocuments([]);
+    setSelectedDocumentId(null);
+    setUserStats({ conversations: 0, documents: 0, tokens_used: 0, level: 1 });
+    setFormData({
+      name: '',
+      email: '',
+      class_level: '',
+      school: ''
+    });
+    // 🔧 CORRECTION: Message approprié pour déconnexion
+    showTemporaryMessage('👋 Déconnexion réussie ! À bientôt sur ÉtudIA !', 'info');
+  };
+
+  // Charger tous les documents de l'utilisateur
+  const loadUserDocuments = async (userId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/documents/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAllDocuments(data.documents || []);
+        if (data.documents && data.documents.length > 0) {
+          const latestDoc = data.documents[0];
+          setSelectedDocumentId(latestDoc.id);
+          setDocumentContext(latestDoc.texte_extrait);
+        }
+      }
+    } catch (error) {
+      console.warn('📄 Erreur chargement documents:', error);
+    }
+  };
+
+  // Changer de document actif
+  const switchDocument = (documentId) => {
+    const selectedDoc = allDocuments.find(doc => doc.id === documentId);
+    if (selectedDoc) {
+      setSelectedDocumentId(documentId);
+      setDocumentContext(selectedDoc.texte_extrait);
+      showTemporaryMessage(`📄 Document "${selectedDoc.nom_original}" sélectionné !`, 'success');
+    }
+  };
+
+  // Vérification statut serveur + PWA
+  useEffect(() => {
+    const checkBackend = async () => {
+      console.log('🔍 Vérification backend...', API_URL);
+      try {
+        const response = await fetch(`${API_URL}/health`);
+        console.log('📡 Response status:', response.status, response.ok);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Data reçue:', data);
+          console.log('🔄 Ancien état:', backendStatus, '→ Nouveau: online');
+          setBackendStatus('online');
+          
+          if (backendStatus !== 'online') {
+            showTemporaryMessage('🎉 ÉtudIA v4.0 est en ligne ! ✅');
+          }
+
+          if (data.tokens_status) {
+            setStats(prev => ({ ...prev, tokens_status: data.tokens_status }));
+          }
+        } else {
+          console.log('❌ Response not OK:', response.status);
+          setBackendStatus('offline');
+        }
+      } catch (error) {
+        console.log('💥 Erreur fetch:', error.message);
+        setBackendStatus('offline');
+        if (backendStatus === 'online') {
+          showTemporaryMessage('❌ Serveur temporairement hors ligne', 'error', 5000);
+        }
+      }
+    };
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('✅ PWA: Service Worker ÉtudIA enregistré');
+          })
+          .catch(error => {
+            console.log('❌ PWA: Erreur Service Worker:', error);
+          });
+      });
+    }
+
+    // Détection installation PWA
+    let installPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      installPrompt = e;
+      console.log('📱 PWA: ÉtudIA peut être installée !');
+      showTemporaryMessage('📱 Installez ÉtudIA sur votre téléphone ! Menu → Installer', 'success', 8000);
+    });
+
+    window.addEventListener('appinstalled', () => {
+      console.log('🎉 PWA: ÉtudIA installé avec succès !');
+      showTemporaryMessage('🎉 ÉtudIA installé ! Trouvez l\'app sur votre écran d\'accueil', 'success');
+    });
+
+    checkBackend();
+    const interval = setInterval(checkBackend, 30000);
+    return () => clearInterval(interval);
+  }, [backendStatus]);
+
+  // Récupération statistiques
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (backendStatus !== 'online') return;
       
-      let errorMessage = 'Une erreur est survenue lors de la communication avec l\'IA.';
+      try {
+        console.log('📊 Récupération stats...');
+        const response = await fetch(`${API_URL}/api/stats`);
+        console.log('📡 Stats response:', response.status, response.ok);
+        
+        if (response.ok) {
+          const responseText = await response.text();
+          console.log('📄 Stats raw:', responseText);
+          
+          const data = JSON.parse(responseText);
+          console.log('📊 Stats parsed:', data);
+          
+          setStats({
+            students: data.students || 0,
+            documents: data.documents || 0,
+            chats: data.chats || 0,
+            active_students_7days: data.active_students_7days || 0,
+            tokens_status: data.tokens_status || { used_today: 0, remaining: 95000 }
+          });
+          
+          console.log('✅ Stats mises à jour:', {
+            students: data.students,
+            documents: data.documents,
+            chats: data.chats
+          });
+        }
+      } catch (error) {
+        console.warn('📊 Erreur récupération stats:', error.message);
+      }
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 60000);
+    return () => clearInterval(interval);
+  }, [backendStatus, API_URL]);
+
+  // Charger documents utilisateur après connexion + stats utilisateur
+  useEffect(() => {
+    if (student?.id) {
+      loadUserDocuments(student.id);
+      updateUserStats(student.id);
+    }
+  }, [student]);
+
+  // Gestion inscription
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setMessage({ type: '', text: '' });
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.class_level) {
+      setMessage({ type: 'error', text: 'Veuillez remplir tous les champs obligatoires' });
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      console.log('🚀 Tentative inscription...', formData);
       
-      if (error.message.includes('bloquées')) {
-        errorMessage = '🚫 Toutes les clés API sont temporairement bloquées. Veuillez réessayer dans quelques minutes.';
-      } else if (error.message.includes('quota')) {
-        errorMessage = '📊 Quota API atteint. Le système passe automatiquement à une autre clé.';
-      } else if (error.message.includes('disponible')) {
-        errorMessage = '🔑 Aucune clé API disponible. Vérifiez votre configuration.';
+      const response = await fetch(`${API_URL}/api/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      
+      console.log('📡 Response status:', response.status, response.ok);
+      
+      const responseText = await response.text();
+      console.log('📄 Response raw:', responseText);
+      
+      if (!responseText.trim()) {
+        throw new Error('Réponse serveur vide');
       }
       
-      showNotification(errorMessage, 'error');
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ Erreur parsing JSON:', parseError);
+        throw new Error('Réponse serveur invalide');
+      }
       
-      // Ajouter un message d'erreur dans la conversation
-      const errorMsg = {
-        role: 'assistant',
-        content: `❌ ${errorMessage}`,
-        timestamp: new Date(),
-        isError: true
-      };
-      setMessages(prev => [...prev, errorMsg]);
-      
+      console.log('📊 Data parsed:', data);
+
+      if (response.ok) {
+        setStudent(data.student);
+        setMessage({ type: 'success', text: data.message });
+        setCurrentStep(2);
+        setBackendStatus('online');
+        
+        showTemporaryMessage(`🎉 Bienvenue ${data.student.nom} ! Inscription réussie avec ÉtudIA !`);
+        setTimeout(() => setActiveTab('upload'), 2000);
+      } else {
+        if (data.error === 'EMAIL_EXISTS') {
+          setMessage({ 
+            type: 'error', 
+            text: '📧 Cet email est déjà inscrit ! Utilisez la connexion rapide ci-dessous.' 
+          });
+        } else {
+          setMessage({ 
+            type: 'error', 
+            text: data.message || data.error || `Erreur serveur: ${response.status}`
+          });
+        }
+      }
+    } catch (error) {
+      console.error('💥 Erreur inscription:', error);
+      setMessage({ 
+        type: 'error', 
+        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
+      });
     } finally {
-      setIsLoading(false);
-      setUserInput('');
+      setIsSubmitting(false);
     }
   };
 
-  // 📄 Traiter un document avec l'IA
-  const handleProcessDocument = async (instruction) => {
-    if (!documentText.trim()) {
-      showNotification('Veuillez d\'abord charger un document.', 'error');
-      return;
-    }
-    
-    if (!groqService) {
-      showNotification('Service IA non disponible.', 'error');
+  // Connexion rapide
+  const handleLogin = async (email) => {
+    if (!email?.trim()) {
+      setMessage({ type: 'error', text: 'Veuillez saisir votre email' });
       return;
     }
 
-    setIsLoading(true);
-    
     try {
-      const response = await groqService.processDocument(documentText, instruction, {
-        temperature: 0.5,
-        max_tokens: 2000
+      console.log('🚀 Tentative connexion...', email);
+      
+      const response = await fetch(`${API_URL}/api/students/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
       });
 
-      const result = response.choices[0].message.content;
-      setAiResponse(result);
+      console.log('📡 Response status:', response.status, response.ok);
       
-      // Ajouter à l'historique des messages
-      const userMsg = { role: 'user', content: `Document analysé avec instruction: ${instruction}`, timestamp: new Date() };
-      const aiMsg = { role: 'assistant', content: result, timestamp: new Date() };
+      const responseText = await response.text();
+      console.log('📄 Response raw:', responseText);
       
-      setMessages(prev => [...prev, userMsg, aiMsg]);
-      setConversationHistory(prev => [...prev, userMsg, aiMsg]);
+      if (!responseText.trim()) {
+        throw new Error('Réponse serveur vide');
+      }
       
-      showNotification('✅ Document traité avec succès !', 'success');
-      
+      const data = JSON.parse(responseText);
+      console.log('📊 Data parsed:', data);
+
+      if (response.ok) {
+        setStudent(data.student);
+        setMessage({ type: 'success', text: data.message });
+        setCurrentStep(2);
+        setActiveTab('upload');
+        setBackendStatus('online');
+        
+        showTemporaryMessage(`🎉 Connexion réussie ! Bonjour ${data.student.nom} !`);
+      } else {
+        if (response.status === 404) {
+          setMessage({ 
+            type: 'error', 
+            text: '🔍 Email non trouvé. Inscrivez-vous d\'abord avec le formulaire ci-dessus.' 
+          });
+        } else {
+          setMessage({ type: 'error', text: data.error || data.message });
+        }
+      }
     } catch (error) {
-      console.error('❌ Erreur traitement document:', error);
-      showNotification(`❌ Erreur lors du traitement: ${error.message}`, 'error');
-    } finally {
-      setIsLoading(false);
+      console.error('💥 Erreur connexion:', error);
+      setMessage({ 
+        type: 'error', 
+        text: `Erreur: ${error.message}. Réessayez dans quelques instants.`
+      });
     }
   };
 
-  // 📝 Générer un résumé
-  const handleGenerateSummary = async () => {
-    if (!documentText.trim()) {
-      showNotification('Aucun texte à résumer.', 'error');
-      return;
-    }
-
-    setIsLoading(true);
+  // Gestion documents
+  const handleDocumentProcessed = (extractedText, documentData) => {
+    setDocumentContext(extractedText);
+    setCurrentStep(3);
     
-    try {
-      const response = await groqService.generateSummary(documentText);
-      const summaryText = response.choices[0].message.content;
-      
-      setSummary(summaryText);
-      setAiResponse(summaryText);
-      
-      showNotification('✅ Résumé généré avec succès !', 'success');
-      
-    } catch (error) {
-      console.error('❌ Erreur génération résumé:', error);
-      showNotification(`❌ Erreur lors de la génération du résumé: ${error.message}`, 'error');
-    } finally {
-      setIsLoading(false);
+    // Ajouter le nouveau document à la liste
+    if (documentData) {
+      setAllDocuments(prev => [documentData, ...prev]);
+      setSelectedDocumentId(documentData.id);
     }
-  };
-
-  // ❓ Générer des questions
-  const handleGenerateQuestions = async (questionCount = 5) => {
-    if (!documentText.trim()) {
-      showNotification('Aucun texte pour générer des questions.', 'error');
-      return;
-    }
-
-    setIsLoading(true);
     
-    try {
-      const response = await groqService.generateQuestions(documentText, questionCount);
-      const questionsText = response.choices[0].message.content;
-      
-      setGeneratedQuestions(questionsText);
-      setAiResponse(questionsText);
-      
-      showNotification('✅ Questions générées avec succès !', 'success');
-      
-    } catch (error) {
-      console.error('❌ Erreur génération questions:', error);
-      showNotification(`❌ Erreur lors de la génération: ${error.message}`, 'error');
-    } finally {
-      setIsLoading(false);
+    // Mettre à jour les statistiques utilisateur
+    if (student?.id) {
+      updateUserStats(student.id);
     }
-  };
-
-  // ===================================================================
-  // 📁 GESTION DES FICHIERS
-  // ===================================================================
-  
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // Vérification du type de fichier
-    const allowedTypes = ['text/plain', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     
-    if (!allowedTypes.includes(file.type) && !file.name.endsWith('.txt')) {
-      showNotification('Type de fichier non supporté. Utilisez: .txt, .pdf, .doc, .docx', 'error');
-      return;
-    }
-
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      const text = e.target.result;
-      setDocumentText(text);
-      setSelectedDocument(file.name);
-      setUploadedFiles(prev => [...prev, { name: file.name, size: file.size, type: file.type }]);
-      showNotification(`✅ Fichier "${file.name}" chargé avec succès !`, 'success');
-      setCurrentStep(2);
-    };
-
-    reader.onerror = () => {
-      showNotification('❌ Erreur lors de la lecture du fichier.', 'error');
-    };
-
-    reader.readAsText(file);
+    showTemporaryMessage('📄 Document analysé avec ÉtudIA ! Passons au chat IA !');
+    setTimeout(() => setActiveTab('chat'), 1500);
   };
 
-  // ===================================================================
-  // 👤 GESTION UTILISATEUR
-  // ===================================================================
-  
-  const handleRegistration = (e) => {
-    e.preventDefault();
-    
-    if (!userInfo.nom || !userInfo.prenom || !userInfo.email) {
-      showNotification('Veuillez remplir tous les champs obligatoires.', 'error');
-      return;
-    }
+  // Composant bouton navigation
+  const TabButton = ({ id, label, icon, isActive, onClick, disabled = false }) => (
+    <button
+      className={`tab-button ${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
+      onClick={() => !disabled && onClick(id)}
+      disabled={disabled}
+      title={disabled ? 'Complétez les étapes précédentes' : `Aller à ${label}`}
+    >
+      <span className="tab-icon">{icon}</span>
+      <span className="tab-label">{label}</span>
+      {currentStep > getStepNumber(id) && <span className="tab-check">✓</span>}
+      {disabled && <span className="tab-lock">🔒</span>}
+    </button>
+  );
 
-    // Générer un code de connexion rapide
-    const quickCode = `EI${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-    setQuickLoginCode(quickCode);
-    setIsRegistered(true);
-    setCurrentStep(2);
-    
-    showNotification(`✅ Inscription réussie ! Votre code rapide: ${quickCode}`, 'success');
-  };
-
-  const handleQuickLogin = (code) => {
-    if (code === quickLoginCode) {
-      setIsRegistered(true);
-      setCurrentStep(2);
-      showNotification('✅ Connexion réussie !', 'success');
-    } else {
-      showNotification('❌ Code de connexion invalide.', 'error');
-    }
-  };
-
-  // ===================================================================
-  // 🎨 RENDU DU STATUT API
-  // ===================================================================
-  
-  const renderApiStatus = () => {
-    if (!groqService) {
-      return (
-        <div className="api-status error">
-          <span>❌</span>
-          <span>Service IA indisponible</span>
-        </div>
-      );
-    }
-
-    const statusColor = apiStatus.available > 0 ? '#4CAF50' : '#f44336';
-    
-    return (
-      <div className="api-status" style={{ backgroundColor: statusColor }}>
-        <span>🔑</span>
-        <span>Clés: {apiStatus.available}/{apiStatus.total}</span>
-        <span>Active: {apiStatus.currentKey}</span>
-      </div>
-    );
-  };
-
-  // ===================================================================
-  // 🧭 RENDU DES ONGLETS
-  // ===================================================================
-  
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'accueil':
-        return (
-          <div className="tab-content">
-            <div className="content-header">
-              <h2 className="main-title">Bienvenue sur ÉtudIA v2.0</h2>
-              <p className="main-subtitle">
-                Votre assistant IA révolutionnaire pour vos études, conçu spécialement pour les étudiants africains !
-              </p>
-            </div>
-
-            {!isRegistered ? (
-              <div className="inscription-section">
-                <form onSubmit={handleRegistration} className="inscription-form">
-                  <h3>📝 Inscription rapide</h3>
-                  
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Nom *</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={userInfo.nom}
-                        onChange={(e) => setUserInfo({...userInfo, nom: e.target.value})}
-                        placeholder="Votre nom"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label className="form-label">Prénom *</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={userInfo.prenom}
-                        onChange={(e) => setUserInfo({...userInfo, prenom: e.target.value})}
-                        placeholder="Votre prénom"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Email *</label>
-                    <input
-                      type="email"
-                      className="form-input"
-                      value={userInfo.email}
-                      onChange={(e) => setUserInfo({...userInfo, email: e.target.value})}
-                      placeholder="votre.email@exemple.com"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Établissement</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={userInfo.etablissement}
-                        onChange={(e) => setUserInfo({...userInfo, etablissement: e.target.value})}
-                        placeholder="Université, École..."
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label className="form-label">Niveau</label>
-                      <select
-                        className="form-select"
-                        value={userInfo.niveau}
-                        onChange={(e) => setUserInfo({...userInfo, niveau: e.target.value})}
-                      >
-                        <option value="">Sélectionnez</option>
-                        <option value="licence1">Licence 1</option>
-                        <option value="licence2">Licence 2</option>
-                        <option value="licence3">Licence 3</option>
-                        <option value="master1">Master 1</option>
-                        <option value="master2">Master 2</option>
-                        <option value="doctorat">Doctorat</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Filière</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={userInfo.filiere}
-                      onChange={(e) => setUserInfo({...userInfo, filiere: e.target.value})}
-                      placeholder="Informatique, Médecine, Droit..."
-                    />
-                  </div>
-
-                  <button type="submit" className="submit-button">
-                    🚀 Commencer avec ÉtudIA
-                  </button>
-                </form>
-
-                <div className="login-section">
-                  <h4>⚡ Connexion rapide</h4>
-                  <p>Vous avez déjà un code ? Connectez-vous rapidement !</p>
-                  <div className="quick-login">
-                    <input
-                      type="text"
-                      className="login-input"
-                      placeholder="Entrez votre code (ex: EI123ABC)"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleQuickLogin(e.target.value);
-                        }
-                      }}
-                    />
-                    <button 
-                      className="login-button"
-                      onClick={(e) => {
-                        const input = e.target.previousSibling;
-                        handleQuickLogin(input.value);
-                      }}
-                    >
-                      🔓 Se connecter
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="welcome-back">
-                <h3>👋 Bon retour, {userInfo.prenom} !</h3>
-                <p>Votre code de connexion rapide : <strong>{quickLoginCode}</strong></p>
-                <div className="features-grid">
-                  <div className="feature-card" onClick={() => setActiveTab('document')}>
-                    <div className="feature-icon">📄</div>
-                    <h4>Analyse de documents</h4>
-                    <p>Uploadez vos cours et obtenez des résumés, questions et explications.</p>
-                  </div>
-                  
-                  <div className="feature-card" onClick={() => setActiveTab('chat')}>
-                    <div className="feature-icon">💬</div>
-                    <h4>Assistant IA</h4>
-                    <p>Posez vos questions et obtenez de l'aide personnalisée pour vos études.</p>
-                  </div>
-                  
-                  <div className="feature-card" onClick={() => setActiveTab('outils')}>
-                    <div className="feature-icon">🛠️</div>
-                    <h4>Outils d'étude</h4>
-                    <p>Générateurs de résumés, de questions et d'exercices adaptatifs.</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-
-      case 'document':
-        return (
-          <div className="tab-content">
-            <div className="content-header">
-              <h2 className="main-title">📄 Analyse de Documents</h2>
-              <p className="main-subtitle">
-                Uploadez vos documents et laissez ÉtudIA les analyser pour vous !
-              </p>
-            </div>
-
-            <div className="document-upload-section">
-              <div className="upload-area">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  accept=".txt,.pdf,.doc,.docx"
-                  style={{ display: 'none' }}
-                />
-                
-                <button 
-                  className="upload-button"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  📁 Choisir un document
-                </button>
-                
-                <p className="upload-info">
-                  Formats supportés: .txt, .pdf, .doc, .docx
-                </p>
-              </div>
-
-              {selectedDocument && (
-                <div className="selected-document">
-                  <h4>📋 Document sélectionné: {selectedDocument}</h4>
-                  
-                  <div className="document-actions">
-                    <button 
-                      className="action-button"
-                      onClick={handleGenerateSummary}
-                      disabled={isLoading}
-                    >
-                      📝 Générer un résumé
-                    </button>
-                    
-                    <button 
-                      className="action-button"
-                      onClick={() => handleGenerateQuestions(5)}
-                      disabled={isLoading}
-                    >
-                      ❓ Générer des questions
-                    </button>
-                    
-                    <button 
-                      className="action-button"
-                      onClick={() => handleProcessDocument("Explique-moi les concepts clés de ce document")}
-                      disabled={isLoading}
-                    >
-                      💡 Expliquer les concepts
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {documentText && (
-                <div className="document-preview">
-                  <h4>👀 Aperçu du contenu:</h4>
-                  <div className="text-preview">
-                    {documentText.substring(0, 500)}...
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {aiResponse && (
-              <div className="ai-response">
-                <h4>🤖 Réponse d'ÉtudIA:</h4>
-                <div className="response-content">
-                  {aiResponse}
-                </div>
-              </div>
-            )}
-          </div>
-        );
-
-      case 'chat':
-        return (
-          <div className="tab-content">
-            <div className="content-header">
-              <h2 className="main-title">💬 Assistant IA</h2>
-              <p className="main-subtitle">
-                Discutez avec ÉtudIA et obtenez de l'aide pour vos études !
-              </p>
-            </div>
-
-            <div className="chat-container">
-              <div className="messages-container">
-                {messages.length === 0 ? (
-                  <div className="welcome-message">
-                    <div className="welcome-avatar">🤖</div>
-                    <div className="welcome-text">
-                      <h3>Salut {userInfo.prenom || 'étudiant'} ! 👋</h3>
-                      <p>Je suis ÉtudIA, votre assistant IA personnel. Comment puis-je vous aider aujourd'hui ?</p>
-                      <div className="suggestion-chips">
-                        <button 
-                          className="suggestion-chip"
-                          onClick={() => setUserInput("Explique-moi le concept de photosynthèse")}
-                        >
-                          🌱 Expliquer un concept
-                        </button>
-                        <button 
-                          className="suggestion-chip"
-                          onClick={() => setUserInput("Aide-moi à réviser pour mon examen de mathématiques")}
-                        >
-                          📚 Aide aux révisions
-                        </button>
-                        <button 
-                          className="suggestion-chip"
-                          onClick={() => setUserInput("Comment rédiger une dissertation ?")}
-                        >
-                          ✍️ Méthodes d'étude
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="messages-list">
-                    {messages.map((message, index) => (
-                      <div key={index} className={`message ${message.role} ${message.isError ? 'error' : ''}`}>
-                        <div className="message-avatar">
-                          {message.role === 'user' ? '👤' : '🤖'}
-                        </div>
-                        <div className="message-content">
-                          <div className="message-text">{message.content}</div>
-                          <div className="message-time">
-                            {message.timestamp?.toLocaleTimeString()}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
-                )}
-              </div>
-
-              <div className="chat-input-container">
-                {isLoading && (
-                  <div className="loading-indicator">
-                    <div className="loading-dots">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
-                    <span>ÉtudIA réfléchit... (Clé {apiStatus.currentKey})</span>
-                  </div>
-                )}
-                
-                <div className="chat-input-wrapper">
-                  <textarea
-                    className="chat-input"
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    placeholder="Tapez votre message..."
-                    rows="3"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                    disabled={isLoading}
-                  />
-                  <button 
-                    className="send-button"
-                    onClick={() => handleSendMessage()}
-                    disabled={isLoading || !userInput.trim()}
-                  >
-                    {isLoading ? '⏳' : '📤'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'outils':
-        return (
-          <div className="tab-content">
-            <div className="content-header">
-              <h2 className="main-title">🛠️ Outils d'Étude</h2>
-              <p className="main-subtitle">
-                Une collection d'outils IA pour optimiser votre apprentissage
-              </p>
-            </div>
-
-            <div className="tools-grid">
-              <div className="tool-card">
-                <div className="tool-icon">📝</div>
-                <h3>Générateur de Résumés</h3>
-                <p>Transformez vos longs documents en résumés clairs et concis</p>
-                <button 
-                  className="tool-button"
-                  onClick={() => setActiveTab('document')}
-                >
-                  Utiliser
-                </button>
-              </div>
-
-              <div className="tool-card">
-                <div className="tool-icon">❓</div>
-                <h3>Générateur de Questions</h3>
-                <p>Créez des questions d'examen à partir de vos cours</p>
-                <button 
-                  className="tool-button"
-                  onClick={() => setActiveTab('document')}
-                >
-                  Utiliser
-                </button>
-              </div>
-
-              <div className="tool-card">
-                <div className="tool-icon">🧠</div>
-                <h3>Explication de Concepts</h3>
-                <p>Obtenez des explications simples pour les concepts complexes</p>
-                <button 
-                  className="tool-button"
-                  onClick={() => setActiveTab('chat')}
-                >
-                  Utiliser
-                </button>
-              </div>
-
-              <div className="tool-card">
-                <div className="tool-icon">📚</div>
-                <h3>Assistant de Révision</h3>
-                <p>Planifiez et optimisez vos sessions de révision</p>
-                <button 
-                  className="tool-button"
-                  onClick={() => setActiveTab('chat')}
-                >
-                  Utiliser
-                </button>
-              </div>
-            </div>
-
-            <div className="statistics-section">
-              <h3>📊 Vos Statistiques</h3>
-              <div className="stats-grid">
-                <div className="stat-item">
-                  <div className="stat-number">{messages.filter(m => m.role === 'user').length}</div>
-                  <div className="stat-label">Messages envoyés</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-number">{uploadedFiles.length}</div>
-                  <div className="stat-label">Documents analysés</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-number">{apiStatus.available}</div>
-                  <div className="stat-label">Clés API actives</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-      default:
-        return <div>Onglet non trouvé</div>;
-    }
-  };
-
-  // ===================================================================
-  // 🎨 RENDU PRINCIPAL
-  // ===================================================================
-  
   return (
-    <div className="app">
-      {/* Header révolutionnaire */}
-      <header className="app-header revolutionary">
-        <div className="cosmic-background"></div>
-        <div className="header-content">
-          <div className="logo-section">
-            <h1 className="app-title">
-              <span className="title-etud">Étud</span>
-              <span className="title-ia">IA</span>
-              <span className="title-version">v2.0</span>
-            </h1>
-            <p className="app-subtitle">
-              Votre assistant IA révolutionnaire pour vos études !
-            </p>
-            <div className="made-in-ci">
-              <span className="flag">🇨🇮</span>
-              <span>Made in Côte d'Ivoire</span>
-            </div>
-            
-            {/* 🔑 Statut des clés API */}
-            <div className="api-status-container">
-              {renderApiStatus()}
-            </div>
+    <div className={`app ${isDarkMode ? 'dark-mode' : ''}`}>
+      {/* Message flottant */}
+      {connectionMessage.show && (
+        <div className={`floating-message ${connectionMessage.type}`}>
+          {connectionMessage.text}
+        </div>
+      )}
+
+      {/* HEADER RÉVOLUTIONNAIRE ÉPURÉ - NE PAS MODIFIER */}
+<header className="app-header revolutionary">
+  <div className="cosmic-background"></div>
+  
+  <div className="header-content">
+    {/* Section logo SEULE */}
+    <div className="logo-section">
+      <h1 className="app-title">
+        <span className="title-etud">Étud</span>
+        <span className="title-ia">IA</span>
+        <span className="title-version">4.0</span>
+      </h1>
+      <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
+      <div className="made-in-ci">
+        <span className="flag">🇨🇮</span>
+        <span>Made with ❤️ in Côte d'Ivoire by @Pacousstar</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+      {/* 🔋 AFFICHAGE STATISTIQUES UTILISATEUR */}
+      {student && (
+        <div className="user-tokens-display">
+          <div className="tokens-header">
+            <h3 className="tokens-title">🔋 Utilisation Tokens Aujourd'hui</h3>
+            <span className="tokens-value">{userStats.tokens_used.toLocaleString()} tokens</span>
+          </div>
+          <div className="tokens-progress-container">
+            <div 
+              className="tokens-progress-fill"
+              style={{ 
+                width: `${Math.min(100, (userStats.tokens_used / 1000) * 100)}%` 
+              }}
+            ></div>
+          </div>
+          <div className="tokens-details">
+            <span>📊 {userStats.conversations} conversations</span>
+            <span>📄 {userStats.documents} documents</span>
+            <span>🎯 Niveau {userStats.level}/5</span>
           </div>
         </div>
-      </header>
+      )}
+
+      {/* Sélecteur de documents AVEC BOUTON SUPPRESSION */}
+      {student && allDocuments.length > 0 && (
+        <div className="document-selector">
+          <h3>📄 Vos Documents Analysés</h3>
+          <div className="documents-grid">
+            {allDocuments.map((doc) => (
+              <button
+                key={doc.id}
+                className={`document-card ${selectedDocumentId === doc.id ? 'active' : ''}`}
+                onClick={() => switchDocument(doc.id)}
+              >
+                {/* 🗑️ BOUTON SUPPRESSION */}
+                <button
+                  className="document-delete-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteDocument(doc.id, doc.nom_original);
+                  }}
+                  title={`Supprimer "${doc.nom_original}"`}
+                >
+                  🗑️
+                </button>
+                
+                <div className="doc-icon">📄</div>
+                <div className="doc-info">
+                  <div className="doc-name">{doc.nom_original}</div>
+                  <div className="doc-meta">
+                    <span>{doc.matiere || 'Général'}</span>
+                    <span>{new Date(doc.date_upload).toLocaleDateString('fr-FR')}</span>
+                  </div>
+                </div>
+                {selectedDocumentId === doc.id && <div className="doc-active">✓</div>}
+              </button>
+            ))}
+          </div>
+          <button 
+            className="add-document-btn"
+            onClick={() => setActiveTab('upload')}
+          >
+            ➕ Charger un autre document
+          </button>
+        </div>
+      )}
 
       {/* Barre de progression */}
       <div className="progress-container">
@@ -852,101 +999,382 @@ function App() {
         </div>
         <div className="progress-steps">
           <div className={`step ${currentStep >= 1 ? 'completed' : ''}`}>
-            <div className="step-number">1</div>
-            <div className="step-label">Inscription</div>
+            <span className="step-number">1</span>
+            <span className="step-label">Inscription</span>
           </div>
           <div className={`step ${currentStep >= 2 ? 'completed' : ''}`}>
-            <div className="step-number">2</div>
-            <div className="step-label">Documents</div>
+            <span className="step-number">2</span>
+            <span className="step-label">Upload Document</span>
           </div>
           <div className={`step ${currentStep >= 3 ? 'completed' : ''}`}>
-            <div className="step-number">3</div>
-            <div className="step-label">Assistant IA</div>
+            <span className="step-number">3</span>
+            <span className="step-label">Chat ÉtudIA</span>
           </div>
         </div>
       </div>
 
-      {/* Navigation des onglets */}
-      {isRegistered && (
-        <nav className="tab-navigation">
-          <button 
-            className={`tab-button ${activeTab === 'accueil' ? 'active' : ''}`}
-            onClick={() => setActiveTab('accueil')}
-          >
-            <span className="tab-icon">🏠</span>
-            <span className="tab-label">Accueil</span>
-          </button>
-          
-          <button 
-            className={`tab-button ${activeTab === 'document' ? 'active' : ''}`}
-            onClick={() => setActiveTab('document')}
-          >
-            <span className="tab-icon">📄</span>
-            <span className="tab-label">Documents</span>
-            {uploadedFiles.length > 0 && (
-              <span className="tab-badge">{uploadedFiles.length}</span>
-            )}
-          </button>
-          
-          <button 
-            className={`tab-button ${activeTab === 'chat' ? 'active' : ''}`}
-            onClick={() => setActiveTab('chat')}
-          >
-            <span className="tab-icon">💬</span>
-            <span className="tab-label">Assistant IA</span>
-            {messages.length > 0 && (
-              <span className="tab-badge">{messages.filter(m => m.role === 'user').length}</span>
-            )}
-          </button>
-          
-          <button 
-            className={`tab-button ${activeTab === 'outils' ? 'active' : ''}`}
-            onClick={() => setActiveTab('outils')}
-          >
-            <span className="tab-icon">🛠️</span>
-            <span className="tab-label">Outils</span>
-          </button>
-        </nav>
-      )}
+      {/* Navigation onglets */}
+      <nav className="tab-navigation">
+        <TabButton
+          id="inscription"
+          label="Inscription"
+          icon="👤"
+          isActive={activeTab === 'inscription'}
+          onClick={setActiveTab}
+        />
+        <TabButton
+          id="upload"
+          label="Upload OCR"
+          icon="📸"
+          isActive={activeTab === 'upload'}
+          onClick={setActiveTab}
+          disabled={!student}
+        />
+        <TabButton
+          id="chat"
+          label="Chat ÉtudIA"
+          icon="🦙"
+          isActive={activeTab === 'chat'}
+          onClick={setActiveTab}
+          disabled={!student}
+        />
+      </nav>
 
-      {/* Contenu principal */}
+      {/* CONTENU PRINCIPAL */}
       <main className="main-content enhanced">
-        {renderTabContent()}
+        {/* Onglet inscription */}
+        {activeTab === 'inscription' && (
+          <div className="tab-content inscription-tab">
+            <div className="content-header">
+              <h2 className="main-title">🎓 Rejoignez la Révolution Éducative ÉtudIA !</h2>
+              <p className="main-subtitle">
+                Inscrivez-vous en moins de 2 minutes et bénéficiez des performances de ÉtudIA
+              </p>
+              
+              {backendStatus !== 'online' && (
+                <div className="server-warning">
+                  {backendStatus === 'checking' ? (
+                    <span>⏳ Connexion au serveur en cours...</span>
+                  ) : (
+                    <span>⚠️ Serveur temporairement indisponible. Réessayez dans quelques instants.</span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {message.text && (
+              <div className={`message ${message.type}`}>
+                <strong>{message.type === 'error' ? '❌ ' : '✅ '}</strong>
+                {message.text}
+              </div>
+            )}
+
+            {/* 🟠 FORMULAIRE D'INSCRIPTION CENTRÉ */}
+            <form onSubmit={handleSubmit} className="inscription-form">
+              <div className="form-header">
+                <h3 style={{ color: 'white', textAlign: 'center', marginBottom: '1rem', fontSize: '1.3rem', fontWeight: '800' }}>
+                  🚀 Rejoindre ÉtudIA
+                </h3>
+                <p style={{ color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: '2rem' }}>
+                  Créez votre compte en quelques secondes
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="name" className="form-label">
+                  👤 Nom complet *
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Entrez votre nom et prénom"
+                  className="form-input"
+                  disabled={backendStatus !== 'online'}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="email" className="form-label">
+                  📧 Email *
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="votre.email@exemple.com"
+                  className="form-input"
+                  disabled={backendStatus !== 'online'}
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="class_level" className="form-label">
+                    🎓 Classe *
+                  </label>
+                  <select
+                    id="class_level"
+                    name="class_level"
+                    value={formData.class_level}
+                    onChange={handleInputChange}
+                    required
+                    className="form-select"
+                    disabled={backendStatus !== 'online'}
+                  >
+                    <option value="">Choisissez votre classe</option>
+                    {classLevels.map(level => (
+                      <option key={level} value={level}>{level}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="school" className="form-label">
+                    🏫 École
+                  </label>
+                  <select
+                    id="school"
+                    name="school"
+                    value={formData.school}
+                    onChange={handleInputChange}
+                    className="form-select"
+                    disabled={backendStatus !== 'online'}
+                  >
+                    <option value="">Sélectionnez votre école</option>
+                    {schools.map(school => (
+                      <option key={school} value={school}>{school}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting || backendStatus !== 'online'}
+                className="submit-button"
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner"></span>
+                    ⏳ Inscription en cours...
+                  </>
+                ) : backendStatus !== 'online' ? (
+                  <>⏳ Attente serveur EtudIA...</>
+                ) : (
+                  <>🚀 Rejoindre ÉtudIA Maintenant !</>
+                )}
+              </button>
+            </form>
+
+            {/* Section connexion rapide */}
+            <div className="login-section">
+              <div className="login-header">
+                <h3 className="section-title">⚡ Connexion Rapide</h3>
+                <p className="section-subtitle">Déjà inscrit ? Connectez-vous pour accéder à ÉtudIA :</p>
+              </div>
+              <div className="quick-login">
+                <input
+                  type="email"
+                  placeholder="Votre email d'inscription"
+                  className="login-input"
+                  id="login-email-input"
+                  disabled={backendStatus !== 'online'}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && e.target.value && backendStatus === 'online') {
+                      handleLogin(e.target.value);
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const emailInput = document.getElementById('login-email-input');
+                    const email = emailInput?.value;
+                    if (email && backendStatus === 'online') {
+                      handleLogin(email);
+                    }
+                  }}
+                  className="login-button"
+                  disabled={backendStatus !== 'online'}
+                >
+                  {backendStatus === 'online' ? 'Se connecter' : 'Serveur indisponible'}
+                </button>
+              </div>
+            </div>
+
+            {/* Grille des fonctionnalités */}
+            <div className="features-grid">
+              <div className="feature-card memory">
+                <span className="feature-icon">🧠</span>
+                <h3 className="feature-title">IA ÉtudIA Personnalisée</h3>
+                <p className="feature-description">
+                  Mémoire avancée en mathématique et compréhension française
+                </p>
+                <div className="feature-status status-active">✅ Actif</div>
+              </div>
+              
+              <div className="feature-card step-mode">
+                <span className="feature-icon">🔁</span>
+                <h3 className="feature-title">Mode Étape par Étape</h3>
+                <p className="feature-description">
+                  Guidage progressif "📊 Étape 1/4" optimisé par la logique améliorée de ÉtudIA
+                </p>
+                <div className="feature-status status-active">✅ Optimisé</div>
+              </div>
+              
+              <div className="feature-card direct-mode">
+                <span className="feature-icon">✅</span>
+                <h3 className="feature-title">Mode Solution Directe</h3>
+                <p className="feature-description">
+                  Solutions complètes instantanées avec ÉtudIA
+                </p>
+                <div className="feature-status status-active">✅ Accéléré</div>
+              </div>
+              
+              <div className="feature-card ocr">
+                <span className="feature-icon">📸</span>
+                <h3 className="feature-title">OCR Révolutionnaire</h3>
+                <p className="feature-description">
+                  Extraction texte 95% de précision analysée par ÉtudIA
+                </p>
+                <div className="feature-status status-active">✅ Analysé</div>
+              </div>
+              
+              <div className="feature-card protection">
+                <span className="feature-icon">🛡️</span>
+                <h3 className="feature-title">Protection Intelligente</h3>
+                <p className="feature-description">
+                  Gestion automatique des limites avec fallback seamless 
+                </p>
+                <div className="feature-status">
+                  {stats.tokens_status?.remaining > 85000 ? '🟢 Optimal' : 
+                   stats.tokens_status?.remaining > 50000 ? '🟡 Modéré' : '🔴 Limité'}
+                </div>
+              </div>
+              
+              <div className="feature-card africa">
+                <span className="feature-icon">🇨🇮</span>
+                <h3 className="feature-title">Made in Côte d'Ivoire</h3>
+                <p className="feature-description">
+                  Conçu spécialement pour l'Afrique avec contexte culturel intégré 
+                </p>
+                <div className="feature-status status-special">🌍 Pour l'Afrique</div>
+              </div>
+            </div>
+
+            {/* Section améliorations LlAMA 3.3 */}
+            <div className="llama-improvements-section">
+              <h3 className="section-title">🦙 Pourquoi ÉtudIA change tout ?</h3>
+              <div className="improvements-grid">
+                <div className="improvement-item">
+                  <span className="improvement-icon">📊</span>
+                  <div className="improvement-content">
+                    <h4>Précision Mathématique</h4>
+                    <div className="improvement-stats">
+                      <span className="old-value">Avant: 78%</span>
+                      <span className="arrow">→</span>
+                      <span className="new-value">Maintenant: 97% (+25%)</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="improvement-item">
+                  <span className="improvement-icon">🇫🇷</span>
+                  <div className="improvement-content">
+                    <h4>Compréhension Française</h4>
+                    <div className="improvement-stats">
+                      <span className="old-value">Avant: 85%</span>
+                      <span className="arrow">→</span>
+                      <span className="new-value">Maintenant: 96% (+30%)</span>
+                    </div>
+                  </div>
+                </div>
+                
+                
+                <div className="improvement-item">
+                  <span className="improvement-icon">🧠</span>
+                  <div className="improvement-content">
+                    <h4>Raisonnement Logique</h4>
+                    <div className="improvement-stats">
+                      <span className="old-value">Avant: 82%</span>
+                      <span className="arrow">→</span>
+                      <span className="new-value">Maintenant: 94% (+20%)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Témoignages élèves */}
+            <div className="testimonials-section">
+              <h3 className="section-title">💬 Ce que disent nos élèves sur ÉtudIA</h3>
+              <div className="testimonials-grid">
+                <div className="testimonial">
+                  <p>"ÉtudIA comprend encore mieux mes questions en français ! C'est impressionnant !"</p>
+                  <span>- Doriane, Première S - Abidjan</span>
+                </div>
+                <div className="testimonial">
+                  <p>"Les solutions en maths sont maintenant parfaites ! ÉtudIA ne fait plus d'erreurs de calcul."</p>
+                  <span>- Kalou, Terminale C - Cocody</span>
+                </div>
+                <div className="testimonial">
+                  <p>"Le mode étape par étape est devenu encore plus clair. Je comprends tout du premier coup !"</p>
+                  <span>- Gougnan, 3ème - Yopougon</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Onglet upload documents */}
+        {activeTab === 'upload' && student && (
+          <UploadDocument
+            student={student}
+            apiUrl={API_URL}
+            onDocumentProcessed={handleDocumentProcessed}
+          />
+        )}
+
+        {/* Onglet chat ÉtudIA */}
+        {activeTab === 'chat' && student && (
+          <ChatIA
+            student={student}
+            apiUrl={API_URL}
+            documentContext={documentContext}
+            allDocuments={allDocuments}
+            selectedDocumentId={selectedDocumentId}
+          />
+        )}
       </main>
-
-      {/* Notification flottante */}
-      {notification.show && (
-        <div className={`floating-message ${notification.type}`}>
-          {notification.message}
-        </div>
-      )}
-
-      {/* 🔑 Moniteur des clés API Groq */}
-      {groqService && <GroqKeyMonitor groqService={groqService} />}
 
       {/* Footer */}
       <footer className="app-footer">
         <div className="footer-content">
           <div className="footer-main">
-            <p><strong>ÉtudIA v2.0</strong> - Assistant IA pour étudiants africains</p>
-            <p>Développé avec ❤️ en Côte d'Ivoire 🇨🇮</p>
+            <p>&copy; 2025 ÉtudIA v4.0 - Révolutionnons l'éducation Africaine ! 🌍</p>
+            <p>Développé avec ❤️ par <strong>@Pacousstar</strong> - Côte d'Ivoire</p>
+          </div>
+        
+          <a href="https://etudia-v4.gsnexpertises.com" target="_blank">
+           📝 Donner votre avis testeur
+          </a>
+        
+          <div className="footer-stats">
+            <span>🚀 {stats.students.toLocaleString()}+ élèves</span>
+            <span>📚 {stats.documents.toLocaleString()}+ documents</span>
+            <span>💬 {stats.chats.toLocaleString()}+ conversations</span>
+            <span>🦙 07 07 80 18 17</span>
+          </div>
+          
+          <div className="footer-tech">
             
-            <div className="footer-stats">
-              <span>🤖 IA Avancée</span>
-              <span>🔐 Multi-Clés API</span>
-              <span>📱 Responsive Design</span>
-              <span>🌍 Made in Africa</span>
-            </div>
-            
-            <div className="footer-tech">
-              <span>Powered by React</span>
-              <span>•</span>
-              <span>Groq LLaMA</span>
-              <span>•</span>
-              <span>CSS3 Animations</span>
-              <span>•</span>
-              <span>African Innovation</span>
-            </div>
+            <span>Status: {backendStatus === 'online' ? '🟢 En ligne' : '🔴 Maintenance'}</span>
           </div>
         </div>
       </footer>
