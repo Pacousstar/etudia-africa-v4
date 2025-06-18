@@ -1218,7 +1218,7 @@ function App() {
                 <span className="feature-icon">🧠</span>
                 <h3 className="feature-title">IA ÉtudIA Personnalisée</h3>
                 <p className="feature-description">
-                  Mémoire avancée en mathématique et compréhension française
+                  Mémoire avancée en mathématique et compréhension française amélioréepour ÉtudIA
                 </p>
                 <div className="feature-status status-active">✅ Actif</div>
               </div>
@@ -1236,7 +1236,7 @@ function App() {
                 <span className="feature-icon">✅</span>
                 <h3 className="feature-title">Mode Solution Directe</h3>
                 <p className="feature-description">
-                  Solutions complètes instantanées avec ÉtudIA
+                  Solutions complètes instantanées de vos exercices et devoirs avec ÉtudIA
                 </p>
                 <div className="feature-status status-active">✅ Accéléré</div>
               </div>
@@ -1365,13 +1365,10 @@ function App() {
             <p>Développé avec ❤️ par <strong>@Pacousstar</strong> - Côte d'Ivoire</p>
           </div>
         
-          <a href="https://etudia-v4.gsnexpertises.com" target="_blank">
+          
+          <a href="https://etudia-v4.gsnexpertises.com" className="footer-feedback-link">
            📝 Donner votre avis testeur
           </a>
-
-<a href="https://etudia-v4.gsnexpertises.com" className="footer-feedback-link">
-  📝 Donner votre avis testeur
-</a>
         
           <div className="footer-stats">
             <span>🚀 {stats.students.toLocaleString()}+ élèves</span>
