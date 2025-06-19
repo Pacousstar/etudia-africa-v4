@@ -4,14 +4,16 @@ import './App.css';
 import UploadDocument from './components/UploadDocument';
 import ChatIA from './components/ChatIA';
 
-// Configuration API pour Render
+// Configuration API pour Render - DÉFINITIVE !
 const API_URL = process.env.REACT_APP_API_URL || 
   (process.env.NODE_ENV === 'production'  
-  ? 'https://etudia-v4-revolutionary.onrender.com'  // 🔥 NOUVELLE URL RENDER !
+  ? 'https://etudia-v4-revolutionary.onrender.com'  // 🔥 RENDER DÉFINITIF !
   : 'http://localhost:10000');
 
-console.log('🔗 API_URL:', API_URL);
-console.log('🏢 Hébergement: Render (Backend) + Vercel (Frontend)');
+console.log('🔗 API_URL FINALE:', API_URL);
+console.log('🎉 Hébergement: Render (Backend) + Vercel (Frontend)');
+console.log('✅ ÉtudIA v4.0 - READY TO ROCK!');
+
 
 function App() {
   // États principaux
@@ -616,6 +618,25 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+// 🎉 MESSAGE DE VICTOIRE QUAND SERVEUR REVIENT EN LIGNE
+useEffect(() => {
+  if (backendStatus === 'online') {
+    // Afficher message de victoire uniquement si c'était offline avant
+    const wasOffline = localStorage.getItem('etudia_was_offline');
+    
+    if (wasOffline === 'true') {
+      showTemporaryMessage(
+        '🎉 ÉtudIA est de retour ! Serveur opérationnel sur Render ! ✨', 
+        'success', 
+        5000
+      );
+      localStorage.removeItem('etudia_was_offline');
+    }
+  } else if (backendStatus === 'offline') {
+    localStorage.setItem('etudia_was_offline', 'true');
+  }
+}, [backendStatus]);
+  
   // Récupération statistiques
   useEffect(() => {
     const fetchStats = async () => {
@@ -697,27 +718,129 @@ function App() {
       </header>
 
       {/* Statistiques utilisateur */}
-      {student && (
-        <div className="user-tokens-display">
-          <div className="tokens-header">
-            <h3 className="tokens-title">🔋 Utilisation Tokens Aujourd'hui</h3>
-            <span className="tokens-value">{userStats.tokens_used.toLocaleString()} tokens</span>
-          </div>
-          <div className="tokens-progress-container">
-            <div 
-              className="tokens-progress-fill"
-              style={{ 
-                width: `${Math.min(100, (userStats.tokens_used / 1000) * 100)}%` 
-              }}
-            ></div>
-          </div>
-          <div className="tokens-details">
-            <span>📊 {userStats.conversations} conversations</span>
-            <span>📄 {userStats.documents} documents</span>
-            <span>🎯 Niveau {userStats.level}/5</span>
+     {/* 🔋 NOUVEAU DESIGN TOKENS RÉVOLUTIONNAIRE */}
+{student && (
+  <div className="user-tokens-display-v2">
+    <div className="tokens-container">
+      {/* Header principal */}
+      <div className="tokens-header-main">
+        <div className="tokens-icon-wrapper">
+          <span className="tokens-icon">🔋</span>
+          <div className="tokens-pulse"></div>
+        </div>
+        <div className="tokens-info">
+          <h3 className="tokens-title">Consommation IA Aujourd'hui</h3>
+          <div className="tokens-value-display">
+            <span className="tokens-number">{userStats.tokens_used.toLocaleString('fr-FR')}</span>
+            <span className="tokens-unit">tokens</span>
           </div>
         </div>
-      )}
+        <div className="tokens-status-badge">
+          <span className={`status-indicator ${
+            userStats.tokens_used < 1000 ? 'optimal' : 
+            userStats.tokens_used < 5000 ? 'moderate' : 'high'
+          }`}></span>
+          <span className="status-text">
+            {userStats.tokens_used < 1000 ? 'Optimal' : 
+             userStats.tokens_used < 5000 ? 'Modéré' : 'Intensif'}
+          </span>
+        </div>
+      </div>
+
+      {/* Barre de progression dynamique */}
+      <div className="tokens-progress-wrapper">
+        <div className="tokens-progress-track">
+          <div 
+            className="tokens-progress-fill-animated"
+            style={{ 
+              width: `${Math.min(100, (userStats.tokens_used / 10000) * 100)}%`,
+              background: userStats.tokens_used < 1000 ? 
+                'linear-gradient(90deg, #00ff88, #00cc6a)' :
+                userStats.tokens_used < 5000 ?
+                'linear-gradient(90deg, #ffa500, #ff8c00)' :
+                'linear-gradient(90deg, #ff6b6b, #ee5a52)'
+            }}
+          >
+            <div className="tokens-progress-shimmer"></div>
+          </div>
+        </div>
+        <div className="tokens-progress-labels">
+          <span>0</span>
+          <span>10K tokens/jour</span>
+        </div>
+      </div>
+
+      {/* Statistiques détaillées */}
+      <div className="tokens-stats-grid">
+        <div className="stat-card conversations">
+          <div className="stat-icon">💬</div>
+          <div className="stat-content">
+            <div className="stat-number">{userStats.conversations}</div>
+            <div className="stat-label">Conversations</div>
+          </div>
+          <div className="stat-trend">
+            {userStats.conversations > 10 ? '📈' : '🚀'}
+          </div>
+        </div>
+
+        <div className="stat-card documents">
+          <div className="stat-icon">📄</div>
+          <div className="stat-content">
+            <div className="stat-number">{userStats.documents}</div>
+            <div className="stat-label">Documents</div>
+          </div>
+          <div className="stat-trend">
+            {userStats.documents > 5 ? '📚' : '📝'}
+          </div>
+        </div>
+
+        <div className="stat-card level">
+          <div className="stat-icon">🎯</div>
+          <div className="stat-content">
+            <div className="stat-number">Niveau {userStats.level}/5</div>
+            <div className="stat-label">Expertise</div>
+          </div>
+          <div className="stat-trend">
+            {'⭐'.repeat(userStats.level)}
+          </div>
+        </div>
+
+        <div className="stat-card efficiency">
+          <div className="stat-icon">⚡</div>
+          <div className="stat-content">
+            <div className="stat-number">
+              {userStats.conversations > 0 ? 
+                Math.round(userStats.tokens_used / userStats.conversations) : 0}
+            </div>
+            <div className="stat-label">Tokens/Conv</div>
+          </div>
+          <div className="stat-trend">
+            {(userStats.conversations > 0 && (userStats.tokens_used / userStats.conversations) < 500) ? '🔥' : '💡'}
+          </div>
+        </div>
+      </div>
+
+      {/* Conseils intelligents */}
+      <div className="tokens-tips">
+        {userStats.tokens_used < 500 && (
+          <div className="tip optimal">
+            💡 <strong>Excellent !</strong> Consommation optimale. Continuez comme ça !
+          </div>
+        )}
+        {userStats.tokens_used >= 500 && userStats.tokens_used < 2000 && (
+          <div className="tip moderate">
+            ⚡ <strong>Bon rythme !</strong> Vous utilisez ÉtudIA de manière équilibrée.
+          </div>
+        )}
+        {userStats.tokens_used >= 2000 && (
+          <div className="tip intensive">
+            🔥 <strong>Utilisateur intensif !</strong> Vous exploitez bien ÉtudIA !
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Sélecteur de documents */}
       {student && allDocuments.length > 0 && (
