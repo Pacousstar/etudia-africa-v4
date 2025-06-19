@@ -4459,7 +4459,6 @@ body {
 
 .chat-messages.enhanced::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #10B981, #059669);
-} pointer;
   transition: all 0.3s ease;
   font-size: 1.2rem;
   min-width: 50px;
