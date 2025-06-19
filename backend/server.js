@@ -176,56 +176,87 @@ const MemoryManager = {
   },
 
   // 🎯 PROMPTS ULTRA-COURTS ET DIRECTS (MAX 500 CHARS) - CORRECTION LLAMA
-  createPersonalizedPrompt(studentInfo, learningProfile, documentName, documentContent, mode = 'normal') {
+  // 🔧 AMÉLIORATION: Fonction createPersonalizedPrompt AMÉLIORÉE (pas remplacée)
+  createPersonalizedPrompt(studentInfo, learningProfile, documentName, documentContent, mode = 'normal', conversationContext = null) {
     const prenomExact = studentInfo.nom.trim().split(' ')[0];
     const className = studentInfo.classe;
 
-    // 🔧 INSTRUCTIONS ULTRA-DIRECTES SELON LE MODE
+    // 🔧 NOUVEAUTÉ: Gestion du contexte de conversation
+    let contextInstruction = '';
+    if (conversationContext?.hasContext && conversationContext?.wasIncomplete) {
+      contextInstruction = `\nCONTEXTE: Tu étais en train de traiter "${conversationContext.lastTopic}". Continue exactement où tu t'es arrêté.`;
+    }
+
+    // 🔧 INSTRUCTIONS CORE AMÉLIORÉES (garde la logique existante + ajoute les nouvelles)
     let coreInstruction = '';
     let maxTokens = 200;
 
     if (mode === 'step_by_step') {
-      coreInstruction = `RÈGLE ABSOLUE: Commence par "📊 Étape X/Y" OBLIGATOIRE.
-Guide ${prenomExact} étape par étape. UNE question par réponse.
-Ne donne JAMAIS la solution finale.`;
-      maxTokens = 150;
-    } 
-    else if (mode === 'direct_solution') {
-      coreInstruction = `RÈGLE ABSOLUE: Donne toutes les solutions complètes à ${prenomExact}.
-Détaille chaque calcul. N'utilise PAS "📊 Étape X/Y".
-Format: Exercice 1: [solution], Exercice 2: [solution]`;
+      // 🔧 AMÉLIORATION STEP-BY-STEP: Plus de leadership, moins de questions vides
+      coreInstruction = `RÈGLE ABSOLUE pour ${prenomExact}: 
+1. Commence TOUJOURS par "📊 Étape X/Y" OBLIGATOIRE
+2. RÉSOUS activement l'étape (calculs, explications)
+3. GUIDE ${prenomExact} dans la résolution
+4. Termine par UNE question de compréhension pour continuer
+5. Ne donne pas tout d'un coup - UNE étape à la fois
+6. Reconnais quand ${prenomExact} dit "continue" pour poursuivre
+
+EXEMPLE FORMAT:
+📊 Étape 1/4
+Pour résoudre cette équation, je commence par isoler x...
+[calculs et explications]
+❓ ${prenomExact}, comprends-tu pourquoi j'ai fait cette opération ?${contextInstruction}`;
+      maxTokens = 180;
+      
+    } else if (mode === 'direct_solution') {
+      // 🔧 AMÉLIORATION DIRECT: Ajoute détection de fin
+      coreInstruction = `RÈGLE ABSOLUE pour ${prenomExact}:
+1. Donne TOUTES les solutions complètes immédiatement
+2. Détaille chaque calcul et étape
+3. N'utilise PAS "📊 Étape X/Y" 
+4. Format: Exercice 1: [solution complète], Exercice 2: [solution complète]
+5. Termine par un message de fin quand tout est résolu${contextInstruction}`;
       maxTokens = 400;
-    }
-    else {
-      coreInstruction = `Aide ${prenomExact} (${className}) de manière équilibrée.
-Adapte selon sa question. Reste pédagogique.`;
-      maxTokens = 250;
+      
+    } else if (mode === 'normal') {
+      // 🔧 NOUVEAUTÉ: Mode normal COMPLÈTEMENT LIBRE
+      coreInstruction = `NOUVEAU MODE LIBRE pour ${prenomExact}:
+1. Réponds à TOUTE question (maths, actualités, culture, devoirs)
+2. N'utilise PAS le document - mode libre total
+3. Sois concis pour économiser les tokens
+4. Réponses précises et directes
+5. Pas de format spécial - conversation naturelle${contextInstruction}`;
+      maxTokens = 200;
     }
 
-    // 🎯 PROMPT ULTRA-COURT (MOINS DE 500 CHARS)
+    // 🔧 NOUVEAUTÉ: Instruction de fin d'exercice pour tous les modes
+    const completionInstruction = `
+RÈGLE FIN D'EXERCICE: Quand tu donnes un résultat final, ajoute un message de célébration approprié.`;
+
+    // 🎯 PROMPT FINAL (CONSERVE LA STRUCTURE EXISTANTE)
     return {
       prompt: `Tu es ÉtudIA pour ${prenomExact}.
 
 ${coreInstruction}
 
-Document: "${documentName}"
-Style: ${learningProfile?.style_apprentissage || 'équilibré'}
+${mode !== 'normal' ? `Document: "${documentName}"` : 'Mode libre - pas de document'}
+Style: ${learningProfile?.style_apprentissage || 'équilibré'}${completionInstruction}
 
 TOUJOURS commencer par "${prenomExact}," dans tes réponses.`,
       maxTokens
     };
   },
 
-  // 🔧 VALIDATION POST-RÉPONSE STRICTE
-  validateAndFixResponse(aiResponse, mode, prenomExact, step_info = null) {
+  // 🔧 AMÉLIORATION: Fonction validateAndFixResponse AMÉLIORÉE
+  validateAndFixResponse(aiResponse, mode, prenomExact, step_info = null, isExerciseComplete = false) {
     let correctedResponse = aiResponse;
 
-    // 1. Vérifier présence du prénom
+    // 1. Vérifier présence du prénom (CONSERVE L'EXISTANT)
     if (!correctedResponse.includes(prenomExact)) {
       correctedResponse = `${prenomExact}, ${correctedResponse}`;
     }
 
-    // 2. Validation MODE ÉTAPE PAR ÉTAPE
+    // 2. Validation MODE ÉTAPE PAR ÉTAPE (AMÉLIORE L'EXISTANT)
     if (mode === 'step_by_step' && step_info) {
       const expectedFormat = `📊 Étape ${step_info.current_step}/${step_info.total_steps}`;
       
@@ -233,28 +264,38 @@ TOUJOURS commencer par "${prenomExact}," dans tes réponses.`,
         correctedResponse = `${expectedFormat}\n\n${correctedResponse}`;
       }
       
-      // Forcer question à la fin
+      // 🔧 AMÉLIORATION: Logique de question plus intelligente
       if (!correctedResponse.includes('?') && !correctedResponse.includes('🔄')) {
-        correctedResponse += `\n\n❓ ${prenomExact}, que penses-tu de cette étape ?`;
+        // Si c'est la dernière étape, moins de questions
+        if (step_info.current_step >= step_info.total_steps || isExerciseComplete) {
+          correctedResponse += `\n\n✅ ${prenomExact}, as-tu bien compris cette dernière étape ?`;
+        } else {
+          correctedResponse += `\n\n❓ ${prenomExact}, peux-tu me confirmer que tu suis ?`;
+        }
       }
     }
 
-    // 3. Validation MODE SOLUTION DIRECTE
+    // 3. Validation MODE SOLUTION DIRECTE (CONSERVE L'EXISTANT)
     if (mode === 'direct_solution') {
-      // Supprimer format étape si présent par erreur
       correctedResponse = correctedResponse.replace(/📊 Étape \d+\/\d+/g, '');
       
-      // Ajouter structure si manquante
       if (!correctedResponse.includes('Exercice') && !correctedResponse.includes('Solution')) {
         correctedResponse = `✅ Solutions complètes pour ${prenomExact} :\n\n${correctedResponse}`;
       }
     }
 
-    // 4. Gérer continuation automatique
+    // 4. 🔧 NOUVEAUTÉ: Ajouter message de fin si exercice terminé
+    if (isExerciseComplete) {
+      const completionMessage = ExerciseCompletionDetector.generateCompletionMessage(mode, prenomExact);
+      correctedResponse += completionMessage;
+    }
+
+    // 5. Gérer continuation automatique (CONSERVE L'EXISTANT)
     const isIncomplete = (
       correctedResponse.length > 280 && 
       !correctedResponse.includes('🎉') && 
-      !correctedResponse.includes('[RÉPONSE CONTINUE...]')
+      !correctedResponse.includes('[RÉPONSE CONTINUE...]') &&
+      !isExerciseComplete
     );
 
     if (isIncomplete) {
@@ -264,19 +305,18 @@ TOUJOURS commencer par "${prenomExact}," dans tes réponses.`,
     return correctedResponse;
   },
 
-  // 🎯 CRÉATION MESSAGES OPTIMISÉS POUR LLAMA
-  createOptimizedMessages(basePromptData, chatHistory, userMessage, mode, step_info) {
+  // 🔧 AMÉLIORATION: Messages optimisés AMÉLIORÉS (pas remplacés)
+  createOptimizedMessages(basePromptData, chatHistory, userMessage, mode, step_info, conversationContext = null) {
     const { prompt, maxTokens } = basePromptData;
 
-    // Messages ultra-courts pour LLaMA
     const messages = [
       {
         role: 'system',
-        content: prompt // Déjà ultra-court (< 500 chars)
+        content: prompt
       }
     ];
 
-    // Historique limité (MAX 2 échanges)
+    // 🔧 AMÉLIORATION: Gestion intelligente de l'historique
     if (chatHistory?.length > 0) {
       const recentHistory = chatHistory.slice(-2).reverse();
       
@@ -289,12 +329,12 @@ TOUJOURS commencer par "${prenomExact}," dans tes réponses.`,
     // Message actuel
     messages.push({ role: 'user', content: userMessage });
 
-    // Instructions spéciales continuation
-    const isContinuation = /continue|suite|la suite/i.test(userMessage);
-    if (isContinuation && chatHistory?.length > 0) {
+    // 🔧 NOUVEAUTÉ: Instructions de continuation améliorées
+    const isContinuation = ConversationContinuityManager.isContinuationRequest(userMessage);
+    if (isContinuation && conversationContext?.hasContext) {
       messages.push({
         role: 'system',
-        content: `CONTINUE exactement où tu t'es arrêté. Reprends le fil naturellement.`
+        content: `CONTINUATION: L'élève demande la suite. Tu traitais "${conversationContext.lastTopic}". Continue exactement où tu t'es arrêté sans répéter.`
       });
     }
 
@@ -943,6 +983,123 @@ app.delete('/api/documents/:documentId', async (req, res) => {
   }
 });
 
+// 🔧 AMÉLIORATION 1: DÉTECTEUR DE FIN D'EXERCICE
+// Ajoute cette fonction AVANT la route /api/chat (ligne ~800)
+const ExerciseCompletionDetector = {
+  // 🎯 NOUVELLE FONCTION: Détecte si un exercice est terminé
+  isExerciseComplete(aiResponse, userMessage, mode) {
+    // Mots-clés indiquant une fin d'exercice
+    const completionKeywords = [
+      'résultat final', 'réponse finale', 'solution complète',
+      'exercice terminé', 'c\'est fini', 'voilà la réponse',
+      'donc la réponse est', 'en conclusion', 'résultat:',
+      'la solution est', 'réponse:', 'donc', 'finalement'
+    ];
+    
+    // Vérifications spécifiques par mode
+    if (mode === 'direct_solution') {
+      // En mode direct: si l'IA a donné des résultats numériques ou des conclusions
+      const hasNumericalResult = /=\s*[\d,.-]+|résultat\s*[:=]\s*[\d,.-]+/i.test(aiResponse);
+      const hasConclusion = completionKeywords.some(keyword => 
+        aiResponse.toLowerCase().includes(keyword.toLowerCase())
+      );
+      return hasNumericalResult || hasConclusion;
+    }
+    
+    if (mode === 'step_by_step') {
+      // En mode étape: si l'IA indique la dernière étape ET donne un résultat
+      const isLastStep = /étape\s+\d+\/\d+/i.test(aiResponse);
+      const hasResult = /résultat|solution|réponse/i.test(aiResponse);
+      const noMoreQuestions = !aiResponse.includes('?') || aiResponse.includes('exercice terminé');
+      return isLastStep && hasResult && noMoreQuestions;
+    }
+    
+    return false;
+  },
+
+  // 🎯 NOUVELLE FONCTION: Génère un message de fin approprié
+  generateCompletionMessage(mode, prenomEleve) {
+    const completionMessages = {
+      'step_by_step': [
+        `🎉 Excellent ${prenomEleve} ! Nous avons terminé cet exercice ensemble !`,
+        `✅ Bravo ${prenomEleve} ! Tu as suivi toutes les étapes avec succès !`,
+        `🌟 Parfait ${prenomEleve} ! Exercice complètement résolu étape par étape !`
+      ],
+      'direct_solution': [
+        `🎯 Voilà ${prenomEleve} ! Solution complète fournie !`,
+        `✅ Parfait ${prenomEleve} ! Tous les exercices sont résolus !`,
+        `🚀 Terminé ${prenomEleve} ! Toutes les réponses sont là !`
+      ],
+      'normal': [
+        `👍 Voilà ${prenomEleve} ! J'espère que ça répond à ta question !`,
+        `✅ Parfait ${prenomEleve} ! Autre chose ?`
+      ]
+    };
+
+    const messages = completionMessages[mode] || completionMessages['normal'];
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+    
+    return `\n\n${randomMessage}\n\n💡 **Prêt pour le prochain défi ?**`;
+  }
+};
+
+// 🔧 AMÉLIORATION 2: GESTIONNAIRE DE CONTINUITÉ AMÉLIORÉ
+// Ajoute cette fonction AVANT la route /api/chat
+const ConversationContinuityManager = {
+  // 🎯 NOUVELLE FONCTION: Détecte les demandes de continuation
+  isContinuationRequest(message) {
+    const continuationKeywords = [
+      'continue', 'suite', 'la suite', 'continuer', 'après', 'ensuite',
+      'et puis', 'next', 'suivant', 'poursuit', 'va-y', 'poursuis', 'et après',
+    ];
+    
+    return continuationKeywords.some(keyword => 
+      message.toLowerCase().includes(keyword.toLowerCase())
+    );
+  },
+
+  // 🎯 NOUVELLE FONCTION: Analyse le contexte de conversation
+  analyzeConversationContext(chatHistory, currentMessage) {
+    if (!chatHistory || chatHistory.length === 0) {
+      return { hasContext: false, lastTopic: null, wasIncomplete: false };
+    }
+
+    const lastExchange = chatHistory[chatHistory.length - 1];
+    const lastResponse = lastExchange?.reponse_ia || '';
+    
+    // Détecte si la dernière réponse était incomplète
+    const wasIncomplete = 
+      lastResponse.includes('[RÉPONSE CONTINUE...]') ||
+      lastResponse.includes('🔄') ||
+      lastResponse.length > 280;
+
+    // Extrait le sujet principal de la dernière conversation
+    const lastTopic = this.extractMainTopic(lastExchange?.message_eleve || '');
+
+    return {
+      hasContext: true,
+      lastTopic: lastTopic,
+      wasIncomplete: wasIncomplete,
+      lastMode: lastExchange?.mode_utilise || 'normal',
+      lastResponse: lastResponse.substring(0, 200) // Garde les 200 premiers chars
+    };
+  },
+
+  // 🎯 FONCTION HELPER: Extrait le sujet principal
+  extractMainTopic(message) {
+    // Mots-clés pour identifier le type d'exercice/sujet
+    if (/équation|résoudre|x\s*=|inconnue/i.test(message)) return 'équation';
+    if (/dérivée|dériver|f'|limite/i.test(message)) return 'dérivée';
+    if (/intégrale|primitive|∫/i.test(message)) return 'intégrale';
+    if (/fraction|pourcentage|%/i.test(message)) return 'fraction';
+    if (/géométrie|triangle|cercle|aire|périmètre/i.test(message)) return 'géométrie';
+    if (/probabilité|chance|statistique/i.test(message)) return 'probabilité';
+    if (/exercice|problème|question/i.test(message)) return 'exercice général';
+    
+    return 'sujet général';
+  }
+};
+
 // ===================================================================
 // 🤖 CORRECTIONS IA - SERVER.JS 
 // Remplace la route /api/chat par cette version CORRIGÉE
@@ -1162,26 +1319,50 @@ Réponds avec précision et logique.`;
       systemPrompt += `\n\nATTENTION: L'élève demande la SUITE. Continue exactement où tu t'es arrêté dans ta dernière réponse.`;
     }
 
-    // 🚀 APPEL GROQ AVEC INSTRUCTIONS STRICTES
+    // 🔧 NOUVEAUTÉ: Analyse du contexte de conversation
+    const conversationContext = ConversationContinuityManager.analyzeConversationContext(
+      await supabase.from('historique_conversations')
+        .select('*')
+        .eq('eleve_id', user_id)
+        .order('date_creation', { ascending: false })
+        .limit(3)
+        .then(result => result.data || []),
+      message
+    );
+
+    // 🔧 NOUVEAUTÉ: Détection de continuation
+    const isContinuation = ConversationContinuityManager.isContinuationRequest(message);
+
+    // 🎯 PROMPTS AMÉLIORÉS (CONSERVE LA STRUCTURE EXISTANTE)
+    const systemPromptData = MemoryManager.createPersonalizedPrompt(
+      studentInfo, 
+      learningProfile, 
+      documentName, 
+      finalDocumentContext, 
+      mode, 
+      conversationContext  // 🔧 NOUVEAU PARAMÈTRE
+    );
+
+    // 🚀 APPEL GROQ AVEC INSTRUCTIONS AMÉLIORÉES (CONSERVE LA LOGIQUE EXISTANTE)
     let completion;
     
     try {
+      const optimizedMessages = MemoryManager.createOptimizedMessages(
+        systemPromptData,
+        null, // Historique géré par conversationContext
+        finalDocumentContext ? 
+          `Contexte document: ${finalDocumentContext.substring(0, 1500)}\n\nQuestion: ${message}` :
+          message,
+        mode,
+        step_info,
+        conversationContext  // 🔧 NOUVEAU PARAMÈTRE
+      );
+
       completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: finalDocumentContext ? 
-              `Contexte document: ${finalDocumentContext.substring(0, 1500)}\n\nQuestion: ${message}` :
-              message
-          }
-        ],
+        messages: optimizedMessages.messages,
         model: 'llama-3.3-70b-versatile',
-        temperature: mode === 'step_by_step' ? 0.1 : 0.3,
-        max_tokens: maxTokens,
+        temperature: mode === 'step_by_step' ? 0.1 : mode === 'normal' ? 0.2 : 0.15,
+        max_tokens: optimizedMessages.maxTokens,
         top_p: 0.8
       });
       
@@ -1209,30 +1390,22 @@ ${finalDocumentContext ?
       });
     }
 
-    // ✅ TRAITEMENT RÉPONSE AVEC VALIDATION MODE
+    // ✅ TRAITEMENT RÉPONSE AVEC NOUVELLES VALIDATIONS
     let aiResponse = completion.choices[0]?.message?.content || `Désolé ${prenomExact}, erreur technique.`;
     
-    // 🔧 VALIDATION STRICTE DU FORMAT SELON MODE
-    if (mode === 'step_by_step') {
-      // Forcer le format étape si absent
-      if (!aiResponse.includes('📊 Étape')) {
-        const currentStep = step_info?.current_step || 1;
-        const totalSteps = step_info?.total_steps || 4;
-        aiResponse = `📊 Étape ${currentStep}/${totalSteps}\n\n${aiResponse}`;
-      }
-      
-      // Forcer question à la fin si absente
-      if (!aiResponse.includes('?') && !aiResponse.includes('❓')) {
-        aiResponse += `\n\n❓ ${prenomExact}, comprends-tu cette étape ?`;
-      }
-    }
+    // 🔧 NOUVEAUTÉ: Détection de fin d'exercice
+    const isExerciseComplete = ExerciseCompletionDetector.isExerciseComplete(aiResponse, message, mode);
     
-    // Validation prénom
-    if (!aiResponse.includes(prenomExact)) {
-      aiResponse = `${prenomExact}, ${aiResponse}`;
-    }
+    // 🔧 VALIDATION STRICTE AMÉLIORÉE (CONSERVE + AMÉLIORE)
+    aiResponse = MemoryManager.validateAndFixResponse(
+      aiResponse, 
+      mode, 
+      prenomExact, 
+      step_info, 
+      isExerciseComplete  // 🔧 NOUVEAU PARAMÈTRE
+    );
 
-    console.log('✅ Réponse IA traitée et validée');
+    console.log('✅ Réponse IA traitée et validée avec améliorations');
 
     // ✅ SAUVEGARDE
     try {
