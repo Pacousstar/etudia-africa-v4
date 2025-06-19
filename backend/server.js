@@ -446,6 +446,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// 🔧 CORRECTION 1: AJOUTER AVANT TES AUTRES ROUTES (ligne ~250)
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept');
+  res.status(200).end();
+});
+
 // ===================================================================
 // 🔧 CORRECTION 5: ROUTE DEBUG (optionnelle)
 // ===================================================================
@@ -555,6 +563,58 @@ app.get('/health', async (req, res) => {
       }
     });
   }
+});
+
+// 🔧 CORRECTION 4: ROUTE DEBUG ÉTENDUE (ajoute après /health)
+app.get('/debug', (req, res) => {
+  const memoryUsage = process.memoryUsage();
+  
+  res.json({
+    message: '🔍 Debug ÉtudIA Render Complet',
+    timestamp: new Date().toISOString(),
+    server_info: {
+      platform: 'Render.com',
+      node_version: process.version,
+      environment: process.env.NODE_ENV,
+      port: PORT,
+      uptime: Math.round(process.uptime()),
+      memory: {
+        used: Math.round(memoryUsage.heapUsed / 1024 / 1024) + ' MB',
+        total: Math.round(memoryUsage.heapTotal / 1024 / 1024) + ' MB'
+      }
+    },
+    request_info: {
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip,
+      user_agent: req.get('user-agent')?.substring(0, 100),
+      origin: req.get('origin'),
+      referer: req.get('referer')
+    },
+    api_status: {
+      supabase: !!process.env.SUPABASE_URL,
+      groq: !!process.env.GROQ_API_KEY,
+      cloudinary: !!process.env.CLOUDINARY_CLOUD_NAME
+    },
+    available_routes: [
+      '✅ GET /',
+      '✅ GET /health', 
+      '✅ GET /debug',
+      '✅ POST /api/students',
+      '✅ POST /api/students/login',
+      '✅ POST /api/upload',
+      '✅ POST /api/chat',
+      '✅ GET /api/stats'
+    ],
+    cors_config: {
+      origins: [
+        'https://etudia-africa-v4.vercel.app',
+        'https://etudia-v4-revolutionary.onrender.com'
+      ],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      headers: ['Content-Type', 'Authorization', 'Accept']
+    }
+  });
 });
 
 // ===================================================================
@@ -1278,8 +1338,6 @@ app.get('/api/analytics/:userId', async (req, res) => {
 // 📊 ROUTES STATS ET HEALTH
 // ===================================================================
 
-// 🧪 ROUTES DIAGNOSTIC COMPLÈTES V2 - Ajoute dans server.js
-
 // 🔍 ROUTE TEST COMPLET SYSTÈME
 app.get('/api/diagnostic/system/:userId', async (req, res) => {
   const { userId } = req.params;
@@ -1803,6 +1861,65 @@ app.post('/api/diagnostic/repair/:userId', async (req, res) => {
       next_steps: ['🚨 Contacter le développeur - erreur critique de réparation']
     });
   }
+});
+
+// 🔧 CORRECTION 2: ROUTE CATCH-ALL 404 (à la FIN de tes routes, AVANT app.listen)
+app.use('*', (req, res) => {
+  console.log(`❓ Route non trouvée: ${req.method} ${req.originalUrl}`);
+  console.log(`🌍 Origin: ${req.get('origin') || 'Direct'}`);
+  console.log(`🖥️ User-Agent: ${(req.get('user-agent') || 'Unknown').substring(0, 50)}`);
+  
+  // 🔧 RÉPONSE SPÉCIALE POUR ROUTES API
+  if (req.originalUrl.startsWith('/api/')) {
+    res.status(404).json({
+      success: false,
+      error: 'Route API non trouvée',
+      message: `La route ${req.originalUrl} n'existe pas sur ÉtudIA`,
+      available_routes: [
+        'GET /',
+        'GET /health',
+        'GET /debug',
+        'POST /api/students',
+        'POST /api/students/login',
+        'POST /api/upload',
+        'POST /api/chat',
+        'GET /api/stats',
+        'GET /api/documents/:userId'
+      ],
+      timestamp: new Date().toISOString(),
+      help: 'Vérifiez l\'URL et la méthode HTTP'
+    });
+  } else {
+    // 🔧 RÉPONSE POUR AUTRES ROUTES
+    res.status(404).json({
+      success: false,
+      error: 'Page non trouvée',
+      message: `La page ${req.originalUrl} n'existe pas`,
+      suggestion: 'Allez sur / pour accéder à ÉtudIA',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// 🔧 CORRECTION 5: GESTION ERREURS GLOBALE (ajoute AVANT app.listen)
+app.use((error, req, res, next) => {
+  console.error('\n💥 =============== ERREUR SERVEUR GLOBALE ===============');
+  console.error('❌ Erreur:', error.name);
+  console.error('📝 Message:', error.message);
+  console.error('📍 Route:', req.method, req.originalUrl);
+  console.error('📦 Body:', JSON.stringify(req.body, null, 2));
+  console.error('🔚 =============== FIN ERREUR GLOBALE ===============\n');
+  
+  res.status(500).json({
+    success: false,
+    error: 'Erreur serveur interne',
+    message: 'ÉtudIA rencontre un problème technique. Réessayez dans quelques instants.',
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl,
+    method: req.method,
+    error_type: error.name,
+    can_retry: true
+  });
 });
 
 // ===================================================================
