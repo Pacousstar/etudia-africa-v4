@@ -1,4 +1,4 @@
-// ===================================================================
+  // ===================================================================
 // 🚀 ÉtudIA v4.0 - SERVER.JS COMPLET CORRIGÉ - INSTRUCTIONS LLAMA RESPECTÉES
 // Backend Node.js optimisé pour Railway/Render
 // Créé par @Pacousstar - Made with ❤️ in Côte d'Ivoire 🇨🇮
@@ -330,7 +330,7 @@ TOUJOURS commencer par "${prenomExact}," dans tes réponses.`,
     messages.push({ role: 'user', content: userMessage });
 
     // 🔧 NOUVEAUTÉ: Instructions de continuation améliorées
-    const isContinuation = ConversationContinuityManager.isContinuationRequest(userMessage);
+    
     if (isContinuation && conversationContext?.hasContext) {
       messages.push({
         role: 'system',
@@ -1310,13 +1310,6 @@ Question élève: ${message}
 Réponds avec précision et logique.`;
       
       maxTokens = 250;
-    }
-
-    // 🔍 DÉTECTION DEMANDE DE CONTINUATION
-    const isContinuation = /continue|suite|la suite|continuer|après|ensuite/i.test(message);
-    
-    if (isContinuation) {
-      systemPrompt += `\n\nATTENTION: L'élève demande la SUITE. Continue exactement où tu t'es arrêté dans ta dernière réponse.`;
     }
 
     // 🔧 NOUVEAUTÉ: Analyse du contexte de conversation
