@@ -1,4 +1,4 @@
-  // ===================================================================
+// ===================================================================
 // 🚀 ÉtudIA v4.0 - SERVER.JS COMPLET CORRIGÉ - INSTRUCTIONS LLAMA RESPECTÉES
 // Backend Node.js optimisé pour Render
 // Créé par @Pacousstar - Made with ❤️ in Côte d'Ivoire 🇨🇮
@@ -2126,6 +2126,51 @@ app.post('/api/diagnostic/repair/:userId', async (req, res) => {
         message: error.message
       },
       next_steps: ['🚨 Contacter le développeur - erreur critique de réparation']
+    });
+  }
+});
+
+// 📊 ROUTE STATS MANQUANTE - Ajoute ça dans server.js
+app.get('/api/stats', async (req, res) => {
+  try {
+    console.log('📊 Route /api/stats appelée');
+    
+    // Récupération des stats de base
+    const [studentsResult, documentsResult, conversationsResult] = await Promise.all([
+      supabase.from('eleves').select('count(*)'),
+      supabase.from('documents').select('count(*)'),
+      supabase.from('historique_conversations').select('count(*)')
+    ]);
+
+    const stats = {
+      students: studentsResult.data?.[0]?.count || 0,
+      documents: documentsResult.data?.[0]?.count || 0,
+      chats: conversationsResult.data?.[0]?.count || 0,
+      active_students_7days: 0, // À implémenter plus tard
+      tokens_status: {
+        used_today: 0,
+        remaining: 95000,
+        status: '🟢 Optimal'
+      }
+    };
+
+    console.log('✅ Stats générées:', stats);
+    res.json(stats);
+
+  } catch (error) {
+    console.error('❌ Erreur route stats:', error.message);
+    
+    // Fallback avec stats par défaut
+    res.json({
+      students: 0,
+      documents: 0,
+      chats: 0,
+      active_students_7days: 0,
+      tokens_status: {
+        used_today: 0,
+        remaining: 95000,
+        status: '🟢 Optimal'
+      }
     });
   }
 });
