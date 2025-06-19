@@ -88,120 +88,222 @@ const ChatIA = ({
     }
   }, [chatTokensUsed]);
 
-  // 🎤 INITIALISATION RECONNAISSANCE VOCALE
-  useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
-      
-      recognitionInstance.continuous = false;
-      recognitionInstance.interimResults = false;
-      recognitionInstance.lang = 'fr-FR';
-      
-      recognitionInstance.onstart = () => {
-        console.log('🎤 Reconnaissance vocale démarrée');
-        setIsRecording(true);
-      };
-      
-      recognitionInstance.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        console.log('🎤 Texte reconnu:', transcript);
-        setInputMessage(transcript);
-        setIsRecording(false);
-      };
-      
-      recognitionInstance.onerror = (event) => {
-        console.error('❌ Erreur reconnaissance vocale:', event.error);
-        setIsRecording(false);
-      };
-      
-      recognitionInstance.onend = () => {
-        console.log('🎤 Reconnaissance vocale terminée');
-        setIsRecording(false);
-      };
-      
-      setRecognition(recognitionInstance);
-    }
-  }, []);
-
-  // 🔊 FONCTION SYNTHÈSE VOCALE AMÉLIORÉE
-  const speakResponse = (text) => {
-    if ('speechSynthesis' in window) {
-      speechSynthesis.cancel();
-      
-      const cleanText = text
-        .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
-        .replace(/📊|🔁|✅|🎯|💬|🤖/g, '')
-        .replace(/Étape \d+\/\d+/g, '')
-        .trim();
-      
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = 'fr-FR';
-      utterance.rate = 0.9;
-      utterance.pitch = 1.0;
-      utterance.volume = 0.8;
-      
-      const voices = speechSynthesis.getVoices();
-      const frenchVoice = voices.find(voice => voice.lang.startsWith('fr'));
-      if (frenchVoice) {
-        utterance.voice = frenchVoice;
+ // 🎤 INITIALISATION RECONNAISSANCE VOCALE CORRIGÉE POUR MOBILE
+useEffect(() => {
+  console.log('🎤 Initialisation reconnaissance vocale...');
+  
+  // 📱 DÉTECTION MOBILE
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  
+  console.log('📱 Appareil détecté:', { isMobile, isIOS });
+  
+  // 🎤 SUPPORT RECONNAISSANCE VOCALE
+  const SpeechRecognition = window.SpeechRecognition || 
+                           window.webkitSpeechRecognition || 
+                           window.mozSpeechRecognition || 
+                           window.msSpeechRecognition;
+  
+  if (SpeechRecognition) {
+    console.log('✅ Reconnaissance vocale supportée');
+    
+    const recognitionInstance = new SpeechRecognition();
+    
+    // 🔧 CONFIGURATION MOBILE-FRIENDLY
+    recognitionInstance.continuous = false;
+    recognitionInstance.interimResults = false;
+    recognitionInstance.lang = 'fr-FR';
+    
+    // 📱 CONFIGURATION SPÉCIALE MOBILE
+    if (isMobile) {
+      recognitionInstance.maxAlternatives = 1;
+      if (isIOS) {
+        // iOS a besoin de paramètres spéciaux
+        recognitionInstance.lang = 'fr-FR';
+        recognitionInstance.continuous = false;
       }
-      
-      utterance.onstart = () => console.log('🔊 Synthèse vocale démarrée');
-      utterance.onend = () => console.log('🔊 Synthèse vocale terminée');
-      utterance.onerror = (event) => console.error('❌ Erreur synthèse vocale:', event.error);
-      
-      speechSynthesis.speak(utterance);
-    } else {
-      console.warn('⚠️ Synthèse vocale non supportée');
     }
-  };
+    
+    recognitionInstance.onstart = () => {
+      console.log('🎤 Reconnaissance vocale démarrée');
+      setIsRecording(true);
+    };
+    
+    recognitionInstance.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      console.log('🎤 Texte reconnu:', transcript);
+      setInputMessage(transcript);
+      setIsRecording(false);
+      
+      // 📱 FEEDBACK MOBILE
+      if (isMobile && navigator.vibrate) {
+        navigator.vibrate(100); // Vibration courte
+      }
+    };
+    
+    recognitionInstance.onerror = (event) => {
+      console.error('❌ Erreur reconnaissance vocale:', event.error);
+      setIsRecording(false);
+      
+      // 📱 GESTION ERREURS MOBILES
+      if (isMobile) {
+        if (event.error === 'not-allowed') {
+          alert('🎤 Autorise l\'accès au microphone dans les paramètres de ton navigateur !');
+        } else if (event.error === 'no-speech') {
+          console.log('📱 Aucun son détecté - normal sur mobile');
+        }
+      }
+    };
+    
+    recognitionInstance.onend = () => {
+      console.log('🎤 Reconnaissance vocale terminée');
+      setIsRecording(false);
+    };
+    
+    setRecognition(recognitionInstance);
+    console.log('✅ Reconnaissance vocale configurée pour mobile');
+    
+  } else {
+    console.warn('⚠️ Reconnaissance vocale non supportée sur cet appareil');
+    setRecognition(null);
+  }
+}, []);
 
-  // 🎤 FONCTION DÉMARRAGE RECONNAISSANCE VOCALE
-  const startVoiceRecognition = () => {
-    if (recognition && !isRecording) {
-      try {
+// 🎤 FONCTION DÉMARRAGE RECONNAISSANCE VOCALE CORRIGÉE MOBILE
+const startVoiceRecognition = () => {
+  if (!recognition) {
+    console.warn('⚠️ Reconnaissance vocale non supportée');
+    
+    // 📱 MESSAGE SPÉCIAL MOBILE
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      alert('🎤 Ton navigateur mobile ne supporte pas la reconnaissance vocale. Essaie Chrome ou Safari !');
+    } else {
+      alert('🎤 Ton navigateur ne supporte pas la reconnaissance vocale. Utilise Chrome ou Edge !');
+    }
+    return;
+  }
+
+  if (isRecording) {
+    console.log('🎤 Reconnaissance déjà en cours...');
+    return;
+  }
+
+  try {
+    console.log('🎤 Démarrage reconnaissance vocale...');
+    
+    // 📱 PERMISSION MOBILE
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // Demander permission explicitement sur mobile
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(() => {
+            console.log('📱 Permission micro accordée');
+            recognition.start();
+          })
+          .catch((error) => {
+            console.error('📱 Permission micro refusée:', error);
+            alert('🎤 Autorise l\'accès au microphone pour utiliser la reconnaissance vocale !');
+          });
+      } else {
         recognition.start();
-        console.log('🎤 Démarrage reconnaissance vocale...');
-      } catch (error) {
-        console.error('❌ Erreur démarrage reconnaissance:', error);
-        setIsRecording(false);
       }
-    } else if (!recognition) {
-      console.warn('⚠️ Reconnaissance vocale non supportée');
-      alert('🎤 Votre navigateur ne supporte pas la reconnaissance vocale. Utilisez Chrome ou Edge.');
     } else {
-      console.log('🎤 Reconnaissance vocale déjà en cours...');
+      recognition.start();
+    }
+    
+  } catch (error) {
+    console.error('❌ Erreur démarrage reconnaissance:', error);
+    setIsRecording(false);
+    
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      alert('🎤 Erreur mobile. Réessaie ou utilise le clavier !');
+    } else {
+      alert('🎤 Erreur technique. Réessaie dans quelques secondes !');
+    }
+  }
+};
+
+// 🔊 FONCTION SYNTHÈSE VOCALE CORRIGÉE MOBILE
+const speakResponse = (text) => {
+  if (!('speechSynthesis' in window)) {
+    console.warn('⚠️ Synthèse vocale non supportée');
+    return;
+  }
+
+  // 📱 DÉTECTION MOBILE
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  // Arrêter synthèse en cours
+  speechSynthesis.cancel();
+  
+  // Nettoyer le texte
+  const cleanText = text
+    .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+    .replace(/📊|🔁|✅|🎯|💬|🤖|📄|💡|🚀/g, '')
+    .replace(/Étape \d+\/\d+/g, '')
+    .trim();
+  
+  if (!cleanText) return;
+  
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = 'fr-FR';
+  
+  // 📱 CONFIGURATION MOBILE
+  if (isMobile) {
+    utterance.rate = 0.8; // Plus lent sur mobile
+    utterance.pitch = 1.0;
+    utterance.volume = 0.9; // Plus fort sur mobile
+    
+    if (isIOS) {
+      // iOS a besoin de paramètres spéciaux
+      utterance.rate = 0.7;
+      utterance.volume = 1.0;
+    }
+  } else {
+    utterance.rate = 0.9;
+    utterance.pitch = 1.0;
+    utterance.volume = 0.8;
+  }
+  
+  // Voix française si disponible
+  const voices = speechSynthesis.getVoices();
+  const frenchVoice = voices.find(voice => voice.lang.startsWith('fr'));
+  if (frenchVoice) {
+    utterance.voice = frenchVoice;
+  }
+  
+  utterance.onstart = () => {
+    console.log('🔊 Synthèse vocale démarrée');
+    // 📱 FEEDBACK MOBILE
+    if (isMobile && navigator.vibrate) {
+      navigator.vibrate(50);
     }
   };
-
-  // Suggestions intelligentes selon le profil
-  const getSuggestions = () => {
-    const baseSuggestions = [
-      "Explique-moi ce document en détail",
-      "Quels sont les points clés à retenir ?",
-      "Aide-moi avec cet exercice",
-      "Comment réviser efficacement cette leçon ?"
-    ];
-
-    if (learningProfile?.style === 'interactif') {
-      return [
-        "Pose-moi des questions sur ce chapitre",
-        "Créons un quiz ensemble",
-        "Vérifie ma compréhension",
-        "Débattons de ce sujet"
-      ];
-    } else if (learningProfile?.style === 'pratique') {
-      return [
-        "Montrons avec des exemples concrets",
-        "Faisons des exercices pratiques",
-        "Applications dans la vie réelle",
-        "Exercices étape par étape"
-      ];
-    }
-
-    return baseSuggestions;
+  
+  utterance.onend = () => {
+    console.log('🔊 Synthèse vocale terminée');
   };
+  
+  utterance.onerror = (event) => {
+    console.error('❌ Erreur synthèse vocale:', event.error);
+  };
+  
+  // 📱 DÉLAI SPÉCIAL MOBILE
+  if (isMobile) {
+    setTimeout(() => {
+      speechSynthesis.speak(utterance);
+    }, 100);
+  } else {
+    speechSynthesis.speak(utterance);
+  }
+};
 
   // 🔧 CORRECTION 7: MESSAGE D'ACCUEIL CORRIGÉ
   const triggerWelcomeMessage = async () => {
