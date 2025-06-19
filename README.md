@@ -66,7 +66,7 @@ Progressive Web App     // Installation mobile
 
 ### Infrastructure Cloud
 ```bash
-🚀 Backend:  Railway.app        # Déploiement automatisé
+🚀 Backend:  render.com        # Déploiement automatisé
 🎨 Frontend: Vercel.com         # CDN mondial ultra-rapide
 🗄️ Database: Supabase.com      # PostgreSQL managé
 📸 Storage:  Cloudinary.com     # Optimisation images
@@ -135,14 +135,14 @@ CLOUDINARY_API_SECRET=your_api_secret
 # Chaque push déclenche :
 ✅ Tests automatisés
 ✅ Build optimisé  
-✅ Deploy Railway (backend)
+✅ Deploy Render (backend)
 ✅ Deploy Vercel (frontend)
 ✅ Tests end-to-end
 ```
 
 ### URLs de Production
 - 🌐 **Frontend**: https://etudia-africa.vercel.app
-- 🔗 **API**: https://etudia-backend.railway.app
+- 🔗 **API**: https://etudia-v4-revolutionary.onrender.com
 - 📊 **Status**: https://status.etudia-africa.com
 
 ---
@@ -202,7 +202,7 @@ Ce projet est sous licence [MIT](./LICENSE) - libre d'utilisation pour l'éducat
 - 🤖 **Groq** pour l'accès gratuit à Llama 3.3 70B
 - 🗄️ **Supabase** pour l'infrastructure backend
 - ☁️ **Cloudinary** pour le traitement d'images
-- 🚀 **Railway & Vercel** pour l'hébergement
+- 🚀 **Vercel** pour l'hébergement
 - 🇨🇮 **Étudiants ivoiriens** pour les tests et feedback
 
 ---
