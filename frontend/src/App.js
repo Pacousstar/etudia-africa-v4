@@ -5,12 +5,10 @@ import UploadDocument from './components/UploadDocument';
 import ChatIA from './components/ChatIA';
 
 // Configuration API pour Render - DÉFINITIVE !
-const API_URL = process.env.REACT_APP_API_URL || 
-  (process.env.NODE_ENV === 'production'  
-  ? 'https://etudia-v4-revolutionary.onrender.com'  // 🔥 RENDER DÉFINITIF !
-  : 'http://localhost:10000');
+// ✅ REMPLACE PAR ÇA (temporaire pour débugger) :
+const API_URL = 'https://etudia-v4-revolutionary.onrender.com';
+console.log('🔗 API_URL FORCÉ RENDER:', API_URL);
 
-console.log('🔗 API_URL FINALE:', API_URL);
 console.log('🎉 Hébergement: Render (Backend) + Vercel (Frontend)');
 console.log('✅ ÉtudIA v4.0 - READY TO ROCK!');
 
