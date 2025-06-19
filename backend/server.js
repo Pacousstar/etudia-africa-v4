@@ -1,6 +1,6 @@
   // ===================================================================
 // 🚀 ÉtudIA v4.0 - SERVER.JS COMPLET CORRIGÉ - INSTRUCTIONS LLAMA RESPECTÉES
-// Backend Node.js optimisé pour Railway/Render
+// Backend Node.js optimisé pour Render
 // Créé par @Pacousstar - Made with ❤️ in Côte d'Ivoire 🇨🇮
 // ===================================================================
 
@@ -74,7 +74,7 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY
 });
 
-console.log('🔗 Configuration Railway/Render:');
+console.log('🔗 Configuration Render:');
 console.log('- Port:', PORT);
 console.log('- Environment:', process.env.NODE_ENV);
 console.log('- Supabase URL:', process.env.SUPABASE_URL ? '✅ Configuré' : '❌ Manquant');
@@ -448,11 +448,7 @@ app.use(cors({
     
     // Regex pour tous les domaines Vercel et Render
     /.*\.vercel\.app$/,
-    /.*\.onrender\.com$/,
-    
-    // Ancienne Railway (au cas où)
-    /.*\.railway\.app$/,
-    /.*\.up\.railway\.app$/
+    /.*\.onrender\.com$/    
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
