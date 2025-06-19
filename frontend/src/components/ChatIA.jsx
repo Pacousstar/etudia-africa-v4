@@ -672,13 +672,13 @@ Pose-moi tes questions, je ferai de mon mieux ! ✨
         throw new Error(data.error || 'Erreur communication IA');
       }
     } catch (error) {
-      console.error('❌ Erreur chat complète:', {
-        error_name: error.name,
-        error_message: error.message,
-        student_id: student?.id,
-        api_url: apiUrl,
-        has_document: !!(activeDocument?.texte_extrait || documentContext)
-      });
+  console.error('❌ Erreur chat complète:', {
+    error_name: error.name,
+    error_message: error.message,
+    student_id: student?.id,
+    api_url: apiUrl,
+    has_document: !!(finalDocumentContext || documentContext)  // ✅ CORRIGÉ !
+  });
       
       setConnectionStatus('error');
       
