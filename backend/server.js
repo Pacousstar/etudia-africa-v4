@@ -1098,17 +1098,14 @@ const ConversationContinuityManager = {
 
 // ===================================================================
 // 🤖 CORRECTIONS IA - SERVER.JS 
-// Remplace la route /api/chat par cette version CORRIGÉE
+// 🚀 REMPLACE TA ROUTE /api/chat DEBUG PAR CETTE VERSION AVANCÉE
 // ===================================================================
 
 app.post('/api/chat', async (req, res) => {
-  console.log('\n🚀 =============== ÉTUDIA CHAT DEBUG ===============');
+  console.log('\n🚀 =============== ÉTUDIA CHAT AVANCÉ ===============');
   console.log('📅 Timestamp:', new Date().toLocaleString('fr-FR'));
   
   try {
-    // 🔧 DEBUG: Vérification body
-    console.log('📦 Body reçu:', req.body);
-    
     const { 
       message, 
       user_id, 
@@ -1127,37 +1124,20 @@ app.post('/api/chat', async (req, res) => {
     });
     
     if (!user_id) {
-      console.log('❌ user_id manquant');
       return res.status(400).json({ 
         error: 'ID utilisateur manquant',
         success: false 
       });
     }
 
-    // 🎯 RÉCUPÉRATION ÉLÈVE AVEC DEBUG
-    console.log('🔍 Recherche élève ID:', user_id);
-    
-    let studentInfo;
-    try {
-      const studentResult = await supabase
-        .from('eleves')
-        .select('nom, classe, email')
-        .eq('id', user_id)
-        .single();
-      
-      studentInfo = studentResult.data;
-      console.log('✅ Élève trouvé:', studentInfo?.nom);
-      
-    } catch (studentError) {
-      console.error('❌ Erreur récupération élève:', studentError.message);
-      return res.status(404).json({
-        error: 'Élève non trouvé',
-        success: false
-      });
-    }
+    // 🎯 RÉCUPÉRATION ÉLÈVE
+    const { data: studentInfo } = await supabase
+      .from('eleves')
+      .select('nom, classe, email')
+      .eq('id', user_id)
+      .single();
     
     if (!studentInfo) {
-      console.log('❌ studentInfo null');
       return res.status(404).json({
         error: 'Élève non trouvé',
         success: false
@@ -1165,19 +1145,66 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const prenomExact = studentInfo.nom.trim().split(' ')[0];
-    console.log('👤 Prénom élève:', prenomExact);
 
-    // 🎉 MESSAGE D'ACCUEIL SIMPLE
-    if (is_welcome || !message || message.trim().toLowerCase() === 'connexion') {
-      console.log('🎉 Message d\'accueil demandé');
+    // 🎯 RÉCUPÉRATION DOCUMENT AVEC DÉTAILS
+    let finalDocumentContext = '';
+    let documentName = 'Aucun document';
+    let documentLength = 0;
+    
+    try {
+      if (selected_document_id) {
+        const { data: specificDoc } = await supabase
+          .from('documents')
+          .select('nom_original, texte_extrait, matiere')
+          .eq('id', selected_document_id)
+          .eq('eleve_id', user_id)
+          .single();
+
+        if (specificDoc?.texte_extrait) {
+          finalDocumentContext = specificDoc.texte_extrait;
+          documentName = specificDoc.nom_original;
+          documentLength = specificDoc.texte_extrait.length;
+        }
+      }
       
+      if (!finalDocumentContext) {
+        const { data: latestDoc } = await supabase
+          .from('documents')
+          .select('nom_original, texte_extrait, matiere')
+          .eq('eleve_id', user_id)
+          .order('date_upload', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (latestDoc?.texte_extrait) {
+          finalDocumentContext = latestDoc.texte_extrait;
+          documentName = latestDoc.nom_original;
+          documentLength = latestDoc.texte_extrait.length;
+        }
+      }
+      
+      if (!finalDocumentContext && document_context) {
+        finalDocumentContext = document_context;
+        documentName = 'Document transmis';
+        documentLength = document_context.length;
+      }
+    } catch (docError) {
+      console.warn('⚠️ Erreur récupération document:', docError.message);
+    }
+
+    // 🎉 MESSAGE D'ACCUEIL AVANCÉ
+    if (is_welcome || !message || message.trim().toLowerCase() === 'connexion') {
+      console.log('🎉 Message d\'accueil avec détails document...');
+      
+      const documentInfo = finalDocumentContext ? 
+        `📄 **Document analysé** : "${documentName}" (${documentLength.toLocaleString()} caractères)` :
+        '📄 **Aucun document** - Upload un document pour commencer !';
+
       const reponseAccueil = `Salut ${prenomExact} ! 🤖
 
 Je suis ÉtudIA, ton tuteur IA révolutionnaire !
 
-${document_context ? 
-  `📄 **Document analysé** : Document détecté (${document_context.length} caractères)` :
-  '📄 **Aucun document** - Upload un document pour commencer !'}
+${documentInfo}
 
 💡 **Comment puis-je t'aider aujourd'hui ?**
 - Résoudre des exercices de maths ?
@@ -1186,39 +1213,34 @@ ${document_context ?
 
 🚀 **Tape ta question et c'est parti !**`;
 
-      // Sauvegarde simple
       try {
         await supabase.from('historique_conversations').insert([{
           eleve_id: parseInt(user_id),
           message_eleve: 'Connexion',
           reponse_ia: reponseAccueil,
           tokens_utilises: 0,
-          modele_ia: 'etudia-accueil-debug',
+          modele_ia: 'etudia-accueil-avance',
           mode_utilise: 'accueil',
-          document_utilise: 'Document analysé',
-          contexte_utilise: !!document_context
+          document_utilise: documentName,
+          contexte_utilise: !!finalDocumentContext
         }]);
-        console.log('✅ Accueil sauvegardé');
       } catch (saveError) {
         console.warn('⚠️ Erreur sauvegarde accueil:', saveError.message);
       }
 
-      console.log('✅ Accueil envoyé');
       return res.json({
         response: reponseAccueil,
         timestamp: new Date().toISOString(),
-        model: 'etudia-accueil-debug',
+        model: 'etudia-accueil-avance',
         student_name: prenomExact,
-        has_context: !!document_context,
-        document_name: 'Document analysé',
-        context_length: document_context?.length || 0,
+        has_context: !!finalDocumentContext,
+        document_name: documentName,
+        context_length: documentLength,
         success: true
       });
     }
 
-    // 🔧 VÉRIFICATION MESSAGE
     if (!message?.trim()) {
-      console.log('❌ Message vide');
       return res.json({
         response: `${prenomExact}, je n'ai pas reçu ton message ! Peux-tu le réécrire ? 😊`,
         timestamp: new Date().toISOString(),
@@ -1226,31 +1248,83 @@ ${document_context ?
       });
     }
 
-    console.log('💬 Message élève:', message);
-    console.log('🎯 Mode actuel:', mode);
+    console.log('💬 Mode actuel:', mode);
+    console.log('📄 Document:', documentName, `(${documentLength} chars)`);
 
-    // 🚀 APPEL GROQ SIMPLE POUR DEBUG
+    // 🎯 PROMPTS RÉVOLUTIONNAIRES SELON MODE
     let systemPrompt = '';
-    let maxTokens = 200;
+    let maxTokens = 250;
     
     if (mode === 'step_by_step') {
-      systemPrompt = `Tu es ÉtudIA pour ${prenomExact}. Mode étape par étape.
-Commence par "📊 Étape 1/4".
-Explique une seule étape puis pose une question.`;
-      maxTokens = 150;
+      // 📊 MODE ÉTAPE PAR ÉTAPE - ULTRA STRICT
+      const currentStep = step_info?.current_step || 1;
+      const totalSteps = step_info?.total_steps || 4;
+      
+      systemPrompt = `Tu es ÉtudIA en mode ÉTAPE PAR ÉTAPE pour ${prenomExact}.
+
+RÈGLES ABSOLUES:
+1. Commence TOUJOURS par "📊 Étape ${currentStep}/${totalSteps}"
+2. RÉSOUS activement l'étape (calculs, explications)
+3. GUIDE ${prenomExact} dans la résolution
+4. Termine par UNE question de compréhension
+5. Maximum 120 mots - UNE étape à la fois
+
+Document: "${documentName}"
+Question élève: ${message}
+
+Format obligatoire:
+📊 Étape ${currentStep}/${totalSteps}
+[Explication courte + calculs de cette étape]
+❓ [Une question de vérification]`;
+      
+      maxTokens = 120;
+      
     } else if (mode === 'direct_solution') {
-      systemPrompt = `Tu es ÉtudIA pour ${prenomExact}. Mode solution directe.
-Donne toutes les solutions complètes.`;
-      maxTokens = 300;
+      // ✅ MODE SOLUTION DIRECTE - COMPLET ET STRUCTURÉ
+      systemPrompt = `Tu es ÉtudIA en mode SOLUTION DIRECTE pour ${prenomExact}.
+
+RÈGLES ABSOLUES:
+1. Donne TOUTES les solutions complètes immédiatement
+2. Structure: Exercice 1: [solution], Exercice 2: [solution]
+3. Détaille chaque calcul étape par étape
+4. N'utilise PAS "📊 Étape X/Y"
+5. Maximum 350 mots
+
+Document: "${documentName}"
+Question élève: ${message}
+
+Résous complètement tout ce qui est demandé avec tous les calculs.`;
+      
+      maxTokens = 400;
+      
     } else {
-      systemPrompt = `Tu es ÉtudIA pour ${prenomExact}. Mode normal.
-Réponds de façon équilibrée.`;
+      // 💬 MODE NORMAL - LIBRE ET PRÉCIS
+      systemPrompt = `Tu es ÉtudIA en mode NORMAL LIBRE pour ${prenomExact}.
+
+RÈGLES:
+1. Réponds à TOUTE question (maths, actualités, culture, devoirs)
+2. N'utilise PAS le document - mode libre total
+3. Sois concis et précis (maximum 180 mots)
+4. Conversation naturelle et directe
+5. Si demande de "suite" ou "continue", poursuis là où tu t'es arrêté
+
+Question élève: ${message}
+
+Réponds avec précision et logique sans référence au document.`;
+      
       maxTokens = 200;
     }
 
-    console.log('🤖 Appel Groq...');
+    // 🔍 DÉTECTION DEMANDE DE CONTINUATION
+    const isContinuation = /continue|suite|la suite|continuer|après|ensuite/i.test(message);
     
+    if (isContinuation) {
+      systemPrompt += `\n\nATTENTION: L'élève demande la SUITE. Continue exactement où tu t'es arrêté dans ta dernière réponse.`;
+    }
+
+    // 🚀 APPEL GROQ AVEC INSTRUCTIONS STRICTES
     let completion;
+    
     try {
       completion = await groq.chat.completions.create({
         messages: [
@@ -1260,15 +1334,15 @@ Réponds de façon équilibrée.`;
           },
           {
             role: 'user',
-            content: document_context ? 
-              `Contexte: ${document_context.substring(0, 500)}\n\nQuestion: ${message}` :
+            content: mode !== 'normal' && finalDocumentContext ? 
+              `Contexte document: ${finalDocumentContext.substring(0, 1500)}\n\nQuestion: ${message}` :
               message
           }
         ],
         model: 'llama-3.3-70b-versatile',
-        temperature: 0.2,
+        temperature: mode === 'step_by_step' ? 0.05 : mode === 'normal' ? 0.15 : 0.1,
         max_tokens: maxTokens,
-        top_p: 0.8
+        top_p: 0.7
       });
       
       console.log('✅ Réponse Groq reçue');
@@ -1276,10 +1350,14 @@ Réponds de façon équilibrée.`;
     } catch (groqError) {
       console.error('❌ Erreur Groq:', groqError.message);
       
-      const fallbackResponse = `${prenomExact}, problème technique avec l'IA ! 😅
+      const fallbackResponse = `${prenomExact}, problème technique ! 😅
 
-🔧 Erreur: ${groqError.message.substring(0, 100)}
-💡 Reformule ta question et je ferai de mon mieux !`;
+🔧 Mon système IA redémarre...
+💡 Reformule ta question et je ferai de mon mieux !
+
+${finalDocumentContext ? 
+  `📄 J'ai ton document "${documentName}" (${documentLength.toLocaleString()} chars)` :
+  '📄 Upload un document pour des réponses plus précises !'}`;
 
       return res.json({
         response: fallbackResponse,
@@ -1291,29 +1369,57 @@ Réponds de façon équilibrée.`;
       });
     }
 
-    // ✅ TRAITEMENT RÉPONSE SIMPLE
+    // ✅ TRAITEMENT RÉPONSE AVEC VALIDATION MODE
     let aiResponse = completion.choices[0]?.message?.content || `Désolé ${prenomExact}, erreur technique.`;
     
-    // Validation prénom
+    // 🔧 VALIDATION STRICTE DU FORMAT SELON MODE
+    if (mode === 'step_by_step') {
+      // Forcer le format étape si absent
+      if (!aiResponse.includes('📊 Étape')) {
+        const currentStep = step_info?.current_step || 1;
+        const totalSteps = step_info?.total_steps || 4;
+        aiResponse = `📊 Étape ${currentStep}/${totalSteps}\n\n${aiResponse}`;
+      }
+      
+      // Forcer question à la fin si absente
+      if (!aiResponse.includes('?') && !aiResponse.includes('❓')) {
+        aiResponse += `\n\n❓ ${prenomExact}, comprends-tu cette étape ?`;
+      }
+    }
+    
+    // 🔧 VALIDATION PRÉNOM
     if (!aiResponse.includes(prenomExact)) {
       aiResponse = `${prenomExact}, ${aiResponse}`;
     }
 
-    console.log('✅ Réponse IA préparée');
+    // 🔧 DÉTECTION FIN D'EXERCICE
+    const isExerciseComplete = /résultat final|réponse finale|solution complète|exercice terminé|c'est fini|voilà la réponse/i.test(aiResponse);
+    
+    if (isExerciseComplete) {
+      const completionMessages = {
+        'step_by_step': `\n\n🎉 Excellent ${prenomExact} ! Nous avons terminé cet exercice ensemble !`,
+        'direct_solution': `\n\n🎯 Voilà ${prenomExact} ! Solution complète fournie !`,
+        'normal': `\n\n👍 Voilà ${prenomExact} ! J'espère que ça répond à ta question !`
+      };
+      
+      aiResponse += completionMessages[mode] || completionMessages['normal'];
+      aiResponse += `\n\n💡 **Prêt pour le prochain défi ?**`;
+    }
 
-    // ✅ SAUVEGARDE SIMPLE
+    console.log('✅ Réponse IA traitée et validée');
+
+    // ✅ SAUVEGARDE
     try {
       await supabase.from('historique_conversations').insert([{
         eleve_id: parseInt(user_id),
         message_eleve: message.trim(),
         reponse_ia: aiResponse,
         tokens_utilises: completion.usage?.total_tokens || 0,
-        modele_ia: 'llama-3.3-debug',
+        modele_ia: 'llama-3.3-avance',
         mode_utilise: mode,
-        document_utilise: 'Document',
-        contexte_utilise: !!document_context
+        document_utilise: documentName,
+        contexte_utilise: !!finalDocumentContext
       }]);
-      console.log('✅ Conversation sauvegardée');
     } catch (saveError) {
       console.warn('⚠️ Erreur sauvegarde:', saveError.message);
     }
@@ -1322,30 +1428,30 @@ Réponds de façon équilibrée.`;
     const responseData = {
       response: aiResponse,
       timestamp: new Date().toISOString(),
-      model: 'llama-3.3-debug',
+      model: 'llama-3.3-avance',
       student_name: prenomExact,
       tokens_used: completion.usage?.total_tokens || 0,
       mode_used: mode,
-      has_context: !!document_context,
-      document_name: 'Document analysé',
-      context_length: document_context?.length || 0,
+      has_context: !!finalDocumentContext,
+      document_name: documentName,
+      context_length: documentLength,
+      step_info: mode === 'step_by_step' ? {
+        current_step: (step_info?.current_step || 1),
+        total_steps: (step_info?.total_steps || 4),
+        next_step: (step_info?.current_step || 1) + 1
+      } : null,
       success: true
     };
 
-    console.log('🎉 =============== CHAT DEBUG SUCCÈS ===============\n');
+    console.log('🎉 =============== ÉTUDIA CHAT AVANCÉ SUCCÈS ===============\n');
     res.json(responseData);
 
   } catch (error) {
-    console.error('💥 ERREUR CHAT DEBUG:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack?.substring(0, 500)
-    });
+    console.error('💥 Erreur chat avancé:', error.message);
     
     res.status(500).json({
-      error: 'Erreur technique debug',
-      message: error.message,
-      response: `Désolé, ÉtudIA rencontre un problème technique ! 🛠️\n\n🔧 Erreur: ${error.message}`,
+      error: 'Erreur technique',
+      response: `Désolé, ÉtudIA rencontre un problème ! 🛠️\n\n🔧 Réessaie dans quelques instants.`,
       timestamp: new Date().toISOString(),
       success: false
     });
