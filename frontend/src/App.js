@@ -621,7 +621,6 @@ function App() {
 // 🎉 MESSAGE DE VICTOIRE QUAND SERVEUR REVIENT EN LIGNE
 useEffect(() => {
   if (backendStatus === 'online') {
-    // Afficher message de victoire uniquement si c'était offline avant
     const wasOffline = localStorage.getItem('etudia_was_offline');
     
     if (wasOffline === 'true') {
@@ -722,7 +721,6 @@ useEffect(() => {
 {student && (
   <div className="user-tokens-display-v2">
     <div className="tokens-container">
-      {/* Header principal */}
       <div className="tokens-header-main">
         <div className="tokens-icon-wrapper">
           <span className="tokens-icon">🔋</span>
@@ -747,7 +745,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Barre de progression dynamique */}
       <div className="tokens-progress-wrapper">
         <div className="tokens-progress-track">
           <div 
@@ -770,7 +767,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Statistiques détaillées */}
       <div className="tokens-stats-grid">
         <div className="stat-card conversations">
           <div className="stat-icon">💬</div>
@@ -820,7 +816,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Conseils intelligents */}
       <div className="tokens-tips">
         {userStats.tokens_used < 500 && (
           <div className="tip optimal">
@@ -1250,19 +1245,19 @@ useEffect(() => {
 
         {/* 🔧 ONGLET CHAT IA CORRIGÉ AVEC TOUS LES PROPS */}
         {activeTab === 'chat' && student && (
-          <ChatIA
-            student={student}
-            apiUrl={API_URL}
-            documentContext={documentContext}
-            allDocuments={allDocuments}
-            selectedDocumentId={selectedDocumentId}
-            chatHistory={chatHistory}
-            setChatHistory={setChatHistory}
-            chatTokensUsed={chatTokensUsed}
-            setChatTokensUsed={setChatTokensUsed}
-            onStatsUpdate={updateUserStats}
-          />
-        )}
+  <ChatIA
+    student={student}
+    apiUrl={API_URL}
+    documentContext={documentContext}
+    allDocuments={allDocuments}
+    selectedDocumentId={selectedDocumentId}  // ✅ PROP AJOUTÉE
+    chatHistory={chatHistory}               // ✅ PROP AJOUTÉE
+    setChatHistory={setChatHistory}         // ✅ PROP AJOUTÉE  
+    chatTokensUsed={chatTokensUsed}         // ✅ PROP AJOUTÉE
+    setChatTokensUsed={setChatTokensUsed}   // ✅ PROP AJOUTÉE
+    onStatsUpdate={updateUserStats}         // ✅ PROP AJOUTÉE
+  />
+)}
       </main>
 
       {/* 🔧 FOOTER CORRIGÉ SANS COMMENTAIRES */}
