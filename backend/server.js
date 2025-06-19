@@ -1044,13 +1044,6 @@ app.post('/api/chat', async (req, res) => {
 
 Je suis ÉtudIA, ton tuteur IA révolutionnaire !
 
-✨ **NOUVEAU**: Serveur ultra-rapide sur Render !
-
-🎯 **Modes disponibles** :
-• 📊 **Étape par étape** - Guidage progressif
-• ✅ **Solution directe** - Réponses complètes  
-• 💬 **Mode normal** - Conversation équilibrée
-
 ${documentInfo}
 
 💡 **Comment puis-je t'aider aujourd'hui ?**
