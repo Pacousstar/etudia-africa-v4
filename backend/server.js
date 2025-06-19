@@ -446,6 +446,34 @@ app.use((req, res, next) => {
   next();
 });
 
+// 🔧 MIDDLEWARE LOGS AMÉLIORÉS 
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  const userAgent = req.get('user-agent') || 'Unknown';
+  const origin = req.get('origin') || 'Direct';
+  
+  console.log(`\n🌐 =============== REQUÊTE ENTRANTE ===============`);
+  console.log(`📅 [${timestamp}]`);
+  console.log(`🎯 ${req.method} ${req.originalUrl}`);
+  console.log(`📍 IP: ${req.ip}`);
+  console.log(`🌍 Origin: ${origin}`);
+  console.log(`🖥️ User-Agent: ${userAgent.substring(0, 100)}`);
+  console.log(`📦 Content-Type: ${req.get('content-type') || 'None'}`);
+  console.log(`🔑 Headers: ${JSON.stringify({
+    'content-type': req.get('content-type'),
+    'origin': req.get('origin'),
+    'referer': req.get('referer')
+  }, null, 2)}`);
+  
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log(`📋 Body: ${JSON.stringify(req.body, null, 2)}`);
+  }
+  
+  console.log(`🏁 =============== FIN INFO REQUÊTE ===============\n`);
+  
+  next();
+});
+
 // 🔧 CORRECTION 1: AJOUTER AVANT TES AUTRES ROUTES (ligne ~250)
 app.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
