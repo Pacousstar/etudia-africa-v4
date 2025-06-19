@@ -1,4 +1,4 @@
-// ChatIA.js - VERSION CORRIGÉE - FONCTION getSuggestions AJOUTÉE
+  // ChatIA.js - VERSION CORRIGÉE - FONCTION getSuggestions AJOUTÉE
 import React, { useState, useEffect, useRef } from 'react';
 
 const ChatIA = ({ 
@@ -533,159 +533,161 @@ Pose-moi tes questions, je ferai de mon mieux ! ✨
 
   // 🔧 FONCTION ENVOI MESSAGE COMPLÈTE
   const handleSendMessage = async (messageText = inputMessage, mode = chatMode) => {
-    if (!messageText.trim() || isLoading) return;
+  if (!messageText.trim() || isLoading) return;
 
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      content: messageText.trim(),
-      timestamp: new Date().toISOString(),
-      tokens: 0,
-      mode: mode
+  const userMessage = {
+    id: Date.now(),
+    type: 'user',
+    content: messageText.trim(),
+    timestamp: new Date().toISOString(),
+    tokens: 0,
+    mode: mode
+  };
+
+  setMessages(prev => [...prev, userMessage]);
+  setInputMessage('');
+  setIsLoading(true);
+
+  // 🔧 DÉCLARE LES VARIABLES EN HAUT POUR LE SCOPE
+  let activeDocument = null;
+  let finalDocumentContext = '';
+  let hasValidContext = false;
+
+  try {
+    // 🔧 RÉCUPÉRATION DOCUMENT SÉCURISÉE
+    try {
+      if (selectedDocumentId && allDocuments.length > 0) {
+        activeDocument = allDocuments.find(doc => doc.id === selectedDocumentId);
+        console.log('🎯 Document sélectionné trouvé:', activeDocument?.nom_original);
+      }
+      
+      if (!activeDocument && allDocuments.length > 0) {
+        activeDocument = allDocuments[0];
+        console.log('🎯 Premier document utilisé:', activeDocument?.nom_original);
+      }
+      
+      finalDocumentContext = activeDocument?.texte_extrait || documentContext || '';
+      hasValidContext = finalDocumentContext && finalDocumentContext.length > 50;
+      
+      console.log('📤 Contexte document final:', {
+        active_document: activeDocument?.nom_original || 'Aucun',
+        context_length: finalDocumentContext.length,
+        has_valid_context: hasValidContext,
+        mode: mode,
+        message_preview: messageText.substring(0, 50) + '...'
+      });
+      
+    } catch (contextError) {
+      console.warn('⚠️ Erreur récupération contexte:', contextError.message);
+      finalDocumentContext = documentContext || '';
+      hasValidContext = false;
+    }
+
+    const payload = {
+      message: messageText.trim(),
+      user_id: student.id,
+      document_context: finalDocumentContext,
+      mode: mode,
+      selected_document_id: selectedDocumentId || null,
+      document_name: activeDocument?.nom_original || '',
+      has_document: hasValidContext
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
+    if (mode === 'step_by_step') {
+      payload.step_info = {
+        current_step: currentStep,
+        total_steps: totalSteps
+      };
+    }
 
-    try {
-      let activeDocument = null;
-      let finalDocumentContext = '';
-      let hasValidContext = false;
+    console.log('📡 Envoi vers API:', {
+      url: `${apiUrl}/api/chat`,
+      payload_keys: Object.keys(payload),
+      user_id: payload.user_id,
+      has_context: !!payload.document_context
+    });
 
-      try {
-        if (selectedDocumentId && allDocuments.length > 0) {
-          activeDocument = allDocuments.find(doc => doc.id === selectedDocumentId);
-          console.log('🎯 Document sélectionné trouvé:', activeDocument?.nom_original);
-        }
-        
-        if (!activeDocument && allDocuments.length > 0) {
-          activeDocument = allDocuments[0];
-          console.log('🎯 Premier document utilisé:', activeDocument?.nom_original);
-        }
-        
-        finalDocumentContext = activeDocument?.texte_extrait || documentContext || '';
-        hasValidContext = finalDocumentContext && finalDocumentContext.length > 50;
-        
-        console.log('📤 Contexte document final:', {
-          active_document: activeDocument?.nom_original || 'Aucun',
-          context_length: finalDocumentContext.length,
-          has_valid_context: hasValidContext,
-          mode: mode,
-          message_preview: messageText.substring(0, 50) + '...'
-        });
-        
-      } catch (contextError) {
-        console.warn('⚠️ Erreur récupération contexte:', contextError.message);
-        finalDocumentContext = documentContext || '';
-        hasValidContext = false;
-      }
+    const response = await fetch(`${apiUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-      const payload = {
-        message: messageText.trim(),
-        user_id: student.id,
-        document_context: finalDocumentContext,
+    console.log('📡 Réponse API chat:', response.status, response.ok);
+
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('📊 Données chat reçues:', {
+      success: data.success,
+      response_length: data.response?.length || 0,
+      tokens_used: data.tokens_used,
+      has_context: data.has_context
+    });
+
+    if (data.success !== false) {
+      const aiMessage = {
+        id: Date.now() + 1,
+        type: 'ai',
+        content: data.response,
+        timestamp: data.timestamp,
+        tokens: data.tokens_used || 0,
+        model: data.model,
+        hasContext: data.has_context || hasValidContext,
         mode: mode,
-        selected_document_id: selectedDocumentId || null,
-        document_name: activeDocument?.nom_original || '',
-        has_document: hasValidContext
+        nextStep: data.next_step,
+        documentUsed: data.document_name || activeDocument?.nom_original,
+        contextLength: data.context_length || finalDocumentContext.length,
+        responseValidated: true
       };
 
-      if (mode === 'step_by_step') {
-        payload.step_info = {
-          current_step: currentStep,
-          total_steps: totalSteps
-        };
+      setMessages(prev => [...prev, aiMessage]);
+      setConversationCount(prev => prev + 1);
+      setTotalTokens(prev => prev + (data.tokens_used || 0));
+      setConnectionStatus('online');
+
+      if (data.tokens_used) {
+        updateTokenUsage(data.tokens_used);
       }
 
-      console.log('📡 Envoi vers API:', {
-        url: `${apiUrl}/api/chat`,
-        payload_keys: Object.keys(payload),
-        user_id: payload.user_id,
-        has_context: !!payload.document_context
-      });
-
-      const response = await fetch(`${apiUrl}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      console.log('📡 Réponse API chat:', response.status, response.ok);
-
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+      if (mode === 'step_by_step' && data.next_step?.next) {
+        setCurrentStep(data.next_step.next);
       }
 
-      const data = await response.json();
-      console.log('📊 Données chat reçues:', {
-        success: data.success,
-        response_length: data.response?.length || 0,
-        tokens_used: data.tokens_used,
-        has_context: data.has_context
-      });
-
-      if (data.success !== false) {
-        const aiMessage = {
-          id: Date.now() + 1,
-          type: 'ai',
-          content: data.response,
-          timestamp: data.timestamp,
-          tokens: data.tokens_used || 0,
-          model: data.model,
-          hasContext: data.has_context || hasValidContext,
-          mode: mode,
-          nextStep: data.next_step,
-          documentUsed: data.document_name || activeDocument?.nom_original,
-          contextLength: data.context_length || finalDocumentContext.length,
-          responseValidated: true
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
-        setConversationCount(prev => prev + 1);
-        setTotalTokens(prev => prev + (data.tokens_used || 0));
-        setConnectionStatus('online');
-
-        if (data.tokens_used) {
-          updateTokenUsage(data.tokens_used);
-        }
-
-        if (mode === 'step_by_step' && data.next_step?.next) {
-          setCurrentStep(data.next_step.next);
-        }
-
-        if (isAudioMode && data.response) {
-          setTimeout(() => speakResponse(data.response), 500);
-        }
-
-        if (onStatsUpdate && student?.id) {
-          try {
-            onStatsUpdate(student.id);
-          } catch (statsError) {
-            console.warn('⚠️ Erreur mise à jour stats:', statsError.message);
-          }
-        }
-
-        console.log(`✅ IA a répondu avec succès. Document utilisé: "${aiMessage.documentUsed}" (${aiMessage.contextLength} chars)`);
-
-      } else {
-        throw new Error(data.error || 'Erreur communication IA');
+      if (isAudioMode && data.response) {
+        setTimeout(() => speakResponse(data.response), 500);
       }
-    } catch (error) {
-  console.error('❌ Erreur chat complète:', {
-    error_name: error.name,
-    error_message: error.message,
-    student_id: student?.id,
-    api_url: apiUrl,
-    has_document: !!(finalDocumentContext || documentContext)  // ✅ CORRIGÉ !
-  });
-      
-      setConnectionStatus('error');
-      
-      let errorContent;
-      
-      if (error.message.includes('404')) {
-        errorContent = `${prenomEleve}, la route de chat ÉtudIA est introuvable ! 🔍
+
+      if (onStatsUpdate && student?.id) {
+        try {
+          onStatsUpdate(student.id);
+        } catch (statsError) {
+          console.warn('⚠️ Erreur mise à jour stats:', statsError.message);
+        }
+      }
+
+      console.log(`✅ IA a répondu avec succès. Document utilisé: "${aiMessage.documentUsed || 'Aucun'}" (${aiMessage.contextLength || 0} chars)`);
+
+    } else {
+      throw new Error(data.error || 'Erreur communication IA');
+    }
+  } catch (error) {
+    console.error('❌ Erreur chat complète:', {
+      error_name: error.name,
+      error_message: error.message,
+      student_id: student?.id,
+      api_url: apiUrl,
+      has_document: !!(finalDocumentContext || documentContext)  // ✅ MAINTENANT ACCESSIBLE !
+    });
+    
+    setConnectionStatus('error');
+    
+    let errorContent;
+    
+    if (error.message.includes('404')) {
+      errorContent = `${prenomEleve}, la route de chat ÉtudIA est introuvable ! 🔍
 
 🔧 **Problème**: Route /api/chat non trouvée sur le serveur
 
@@ -696,8 +698,8 @@ Pose-moi tes questions, je ferai de mon mieux ! ✨
 
 🤖 **URL actuelle**: ${apiUrl}/api/chat`;
 
-      } else if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
-        errorContent = `${prenomEleve}, problème de connexion réseau ! 🌐
+    } else if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
+      errorContent = `${prenomEleve}, problème de connexion réseau ! 🌐
 
 🔧 **Problème**: Impossible de joindre le serveur ÉtudIA
 
@@ -708,40 +710,40 @@ Pose-moi tes questions, je ferai de mon mieux ! ✨
 
 🤖 ÉtudIA sera bientôt de retour !`;
 
-      } else {
-        errorContent = `Désolé ${prenomEleve}, problème technique ! 😅
+    } else {
+      errorContent = `Désolé ${prenomEleve}, problème technique ! 😅
 
 🔧 **Erreur**: ${error.message.substring(0, 100)}
 
-${activeDocument ? 
-  `J'ai bien ton document "${activeDocument.nom_original}" mais je n'arrive pas à le traiter.` : 
+${finalDocumentContext ? 
+  `J'ai bien ton document mais je n'arrive pas à le traiter.` : 
   'Tu n\'as pas encore uploadé de document.'}
 
 💡 **Solutions**:
-${!activeDocument ? '• Upload d\'abord un document\n' : ''}• Recharge la page (F5)  
+${!finalDocumentContext ? '• Upload d\'abord un document\n' : ''}• Recharge la page (F5)  
 • Réessaie dans 30 secondes
 • Vérifie ta connexion
 
 🤖 ÉtudIA sera bientôt de retour !`;
-      }
-      
-      const errorMessage = {
-        id: Date.now() + 1,
-        type: 'ai',
-        content: errorContent,
-        timestamp: new Date().toISOString(),
-        tokens: 0,
-        isError: true,
-        hasContext: !!(activeDocument?.texte_extrait || documentContext),
-        errorType: error.name,
-        canRetry: true
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
     }
-  };
+    
+    const errorMessage = {
+      id: Date.now() + 1,
+      type: 'ai',
+      content: errorContent,
+      timestamp: new Date().toISOString(),
+      tokens: 0,
+      isError: true,
+      hasContext: !!(finalDocumentContext || documentContext),  // ✅ MAINTENANT ACCESSIBLE !
+      errorType: error.name,
+      canRetry: true
+    };
+    
+    setMessages(prev => [...prev, errorMessage]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // 🎯 BOUTON 1: MODE ÉTAPE PAR ÉTAPE 
   const activateStepByStepMode = () => {
