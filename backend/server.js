@@ -1096,6 +1096,119 @@ const ConversationContinuityManager = {
   }
 };
 
+// 🔧 AMÉLIORATION 1: GESTIONNAIRE DE MÉMOIRE CONVERSATION
+const ConversationMemoryManager = {
+  // 🧠 NOUVELLE FONCTION: Récupère le contexte des derniers échanges
+  async getConversationContext(userId, currentMessage) {
+    try {
+      const { data: recentExchanges } = await supabase
+        .from('historique_conversations')
+        .select('*')
+        .eq('eleve_id', userId)
+        .order('date_creation', { ascending: false })
+        .limit(3);
+
+      if (!recentExchanges || recentExchanges.length === 0) {
+        return { hasContext: false, lastResponse: null, wasIncomplete: false };
+      }
+
+      const lastExchange = recentExchanges[0];
+      const lastResponse = lastExchange.reponse_ia || '';
+      
+      // 🔍 DÉTECTE SI LA DERNIÈRE RÉPONSE ÉTAIT INCOMPLÈTE
+      const wasIncomplete = 
+        lastResponse.includes('x(') ||  // Calcul interrompu
+        lastResponse.includes('x =') ||  // Équation non terminée
+        lastResponse.endsWith('x') ||   // Réponse coupée
+        lastResponse.includes('...') || // Points de suspension
+        (lastResponse.length > 200 && !lastResponse.includes('🎉')) || // Longue sans conclusion
+        lastResponse.includes('b) Pour résoudre') || // Section b) non terminée
+        lastResponse.includes('c)') ||  // Section c) non terminée
+        /exercice\s+\d+.*:/i.test(lastResponse); // Pattern exercice non fini
+
+      // 🔍 EXTRAIT LE POINT D'ARRÊT
+      let stopPoint = null;
+      if (wasIncomplete) {
+        // Trouve où l'IA s'est arrêtée
+        if (lastResponse.includes('b) Pour résoudre')) {
+          stopPoint = 'au milieu de la question b)';
+        } else if (lastResponse.includes('c)')) {
+          stopPoint = 'au début de la question c)';
+        } else if (lastResponse.includes('Exercice 2')) {
+          stopPoint = 'au début de l\'exercice 2';
+        } else if (/x\s*=?\s*$/.test(lastResponse)) {
+          stopPoint = 'au milieu d\'un calcul';
+        } else {
+          stopPoint = 'au milieu de la résolution';
+        }
+      }
+
+      return {
+        hasContext: true,
+        lastResponse: lastResponse,
+        wasIncomplete: wasIncomplete,
+        stopPoint: stopPoint,
+        lastMode: lastExchange.mode_utilise,
+        conversationHistory: recentExchanges.slice(0, 2) // 2 derniers échanges
+      };
+
+    } catch (error) {
+      console.warn('⚠️ Erreur récupération contexte:', error.message);
+      return { hasContext: false, lastResponse: null, wasIncomplete: false };
+    }
+  },
+
+  // 🔍 NOUVELLE FONCTION: Détecte les demandes de continuation
+  isContinuationRequest(message) {
+    const continuationKeywords = [
+      'continue', 'suite', 'la suite', 'continuer', 'poursuis', 'va-y',
+      'après', 'ensuite', 'next', 'suivant', 'reprends', 'finis',
+      'termine', 'complète', 'achève'
+    ];
+    
+    const messageLower = message.toLowerCase();
+    return continuationKeywords.some(keyword => messageLower.includes(keyword));
+  },
+
+  // 📊 NOUVELLE FONCTION: Gère la progression des étapes
+  calculateStepProgression(currentMode, stepInfo, conversationContext, currentMessage) {
+    if (currentMode !== 'step_by_step') {
+      return { current_step: 1, total_steps: 4 }; // Défaut pour autres modes
+    }
+
+    let currentStep = 1;
+    let totalSteps = 4;
+
+    // 🔍 Analyse du contexte pour déterminer l'étape actuelle
+    if (conversationContext?.hasContext && conversationContext?.lastResponse) {
+      const lastResponse = conversationContext.lastResponse;
+      
+      // Extrait l'étape de la dernière réponse
+      const stepMatch = lastResponse.match(/📊\s*Étape\s+(\d+)\/(\d+)/i);
+      if (stepMatch) {
+        currentStep = parseInt(stepMatch[1]);
+        totalSteps = parseInt(stepMatch[2]);
+        
+        // 🔄 Progression automatique si l'utilisateur confirme/continue
+        const isProgressing = /oui|ok|compris|continue|suite|d'accord|parfait|ça marche/i.test(currentMessage);
+        const isContinuation = this.isContinuationRequest(currentMessage);
+        
+        if (isProgressing || isContinuation) {
+          currentStep = Math.min(currentStep + 1, totalSteps);
+        }
+      }
+    }
+
+    // 🎯 Si stepInfo fourni par le client, on l'utilise
+    if (stepInfo?.current_step) {
+      currentStep = stepInfo.current_step;
+      totalSteps = stepInfo.total_steps || 4;
+    }
+
+    return { current_step: currentStep, total_steps: totalSteps };
+  }
+};
+
 // ===================================================================
 // 🤖 CORRECTIONS IA - SERVER.JS 
 // 🚀 REMPLACE TA ROUTE /api/chat DEBUG PAR CETTE VERSION AVANCÉE
@@ -1248,57 +1361,100 @@ ${documentInfo}
       });
     }
 
+// 🔧 AMÉLIORATION 2: DANS TA ROUTE /api/chat, REMPLACE LA SECTION APRÈS "console.log('💬 Mode actuel:', mode);"
+
     console.log('💬 Mode actuel:', mode);
     console.log('📄 Document:', documentName, `(${documentLength} chars)`);
 
-    // 🎯 PROMPTS RÉVOLUTIONNAIRES SELON MODE
+    // 🧠 NOUVEAUTÉ: Récupération contexte conversation
+    const conversationContext = await ConversationMemoryManager.getConversationContext(user_id, message);
+    console.log('🧠 Contexte conversation:', {
+      hasContext: conversationContext.hasContext,
+      wasIncomplete: conversationContext.wasIncomplete,
+      stopPoint: conversationContext.stopPoint
+    });
+
+    // 🔍 NOUVEAUTÉ: Détection demande continuation
+    const isContinuation = ConversationMemoryManager.isContinuationRequest(message);
+    console.log('🔄 Demande de continuation:', isContinuation);
+
+    // 📊 NOUVEAUTÉ: Calcul progression étapes
+    const stepProgression = ConversationMemoryManager.calculateStepProgression(
+      mode, 
+      step_info, 
+      conversationContext, 
+      message
+    );
+    console.log('📊 Progression étapes:', stepProgression);
+
+    // 🎯 PROMPTS RÉVOLUTIONNAIRES AVEC MÉMOIRE
     let systemPrompt = '';
     let maxTokens = 250;
     
     if (mode === 'step_by_step') {
-      // 📊 MODE ÉTAPE PAR ÉTAPE - ULTRA STRICT
-      const currentStep = step_info?.current_step || 1;
-      const totalSteps = step_info?.total_steps || 4;
+      // 📊 MODE ÉTAPE PAR ÉTAPE AVEC MÉMOIRE
+      const currentStep = stepProgression.current_step;
+      const totalSteps = stepProgression.total_steps;
+      
+      let continuationInstruction = '';
+      if (isContinuation && conversationContext.wasIncomplete) {
+        continuationInstruction = `
+ATTENTION CONTINUATION: L'élève demande la suite. Tu t'es arrêté ${conversationContext.stopPoint}.
+Continue EXACTEMENT où tu t'es arrêté sans répéter ce qui a déjà été fait.
+`;
+      }
       
       systemPrompt = `Tu es ÉtudIA en mode ÉTAPE PAR ÉTAPE pour ${prenomExact}.
 
 RÈGLES ABSOLUES:
 1. Commence TOUJOURS par "📊 Étape ${currentStep}/${totalSteps}"
 2. RÉSOUS activement l'étape (calculs, explications)
-3. GUIDE ${prenomExact} dans la résolution
+3. UNE seule étape à la fois - pas tout d'un coup
 4. Termine par UNE question de compréhension
-5. Maximum 120 mots - UNE étape à la fois
+5. Maximum 150 mots par étape
+
+${continuationInstruction}
 
 Document: "${documentName}"
 Question élève: ${message}
 
-Format obligatoire:
-📊 Étape ${currentStep}/${totalSteps}
-[Explication courte + calculs de cette étape]
-❓ [Une question de vérification]`;
+${currentStep === 1 ? 'Commence par la première étape de résolution.' : 
+  currentStep === totalSteps ? 'Dernière étape - donne la solution finale.' : 
+  `Continue avec l'étape ${currentStep} de la résolution.`}`;
       
-      maxTokens = 120;
+      maxTokens = 150;
       
     } else if (mode === 'direct_solution') {
-      // ✅ MODE SOLUTION DIRECTE - COMPLET ET STRUCTURÉ
+      // ✅ MODE SOLUTION DIRECTE AVEC CONTINUATION
+      let continuationInstruction = '';
+      if (isContinuation && conversationContext.wasIncomplete) {
+        continuationInstruction = `
+ATTENTION CONTINUATION: L'élève demande la suite. Tu t'es arrêté ${conversationContext.stopPoint}.
+Continue EXACTEMENT où tu t'es arrêté. Termine la résolution complète.
+`;
+      }
+      
       systemPrompt = `Tu es ÉtudIA en mode SOLUTION DIRECTE pour ${prenomExact}.
 
 RÈGLES ABSOLUES:
-1. Donne TOUTES les solutions complètes immédiatement
+1. Donne TOUTES les solutions complètes
 2. Structure: Exercice 1: [solution], Exercice 2: [solution]
 3. Détaille chaque calcul étape par étape
 4. N'utilise PAS "📊 Étape X/Y"
-5. Maximum 350 mots
+5. TERMINE tous les calculs - pas d'interruption
+6. Finis par "🎉 Tous les exercices résolus !"
+
+${continuationInstruction}
 
 Document: "${documentName}"
 Question élève: ${message}
 
-Résous complètement tout ce qui est demandé avec tous les calculs.`;
+Résous complètement TOUT ce qui est demandé avec TOUS les calculs jusqu'au bout.`;
       
       maxTokens = 400;
       
     } else {
-      // 💬 MODE NORMAL - LIBRE ET PRÉCIS
+      // 💬 MODE NORMAL LIBRE
       systemPrompt = `Tu es ÉtudIA en mode NORMAL LIBRE pour ${prenomExact}.
 
 RÈGLES:
@@ -1306,7 +1462,6 @@ RÈGLES:
 2. N'utilise PAS le document - mode libre total
 3. Sois concis et précis (maximum 180 mots)
 4. Conversation naturelle et directe
-5. Si demande de "suite" ou "continue", poursuis là où tu t'es arrêté
 
 Question élève: ${message}
 
@@ -1315,37 +1470,50 @@ Réponds avec précision et logique sans référence au document.`;
       maxTokens = 200;
     }
 
-    // 🔍 DÉTECTION DEMANDE DE CONTINUATION
-    const isContinuation = /continue|suite|la suite|continuer|après|ensuite/i.test(message);
-    
-    if (isContinuation) {
-      systemPrompt += `\n\nATTENTION: L'élève demande la SUITE. Continue exactement où tu t'es arrêté dans ta dernière réponse.`;
-    }
-
-    // 🚀 APPEL GROQ AVEC INSTRUCTIONS STRICTES
+    // 🚀 APPEL GROQ AVEC MÉMOIRE
     let completion;
     
     try {
+      const messages = [
+        {
+          role: 'system',
+          content: systemPrompt
+        }
+      ];
+
+      // 🧠 AJOUTER CONTEXTE CONVERSATION SI NÉCESSAIRE
+      if (conversationContext.hasContext && conversationContext.conversationHistory) {
+        const recentHistory = conversationContext.conversationHistory.reverse(); // Plus ancien en premier
+        
+        for (const exchange of recentHistory) {
+          messages.push({ 
+            role: 'user', 
+            content: exchange.message_eleve?.substring(0, 100) || 'Question précédente'
+          });
+          messages.push({ 
+            role: 'assistant', 
+            content: exchange.reponse_ia?.substring(0, 200) || 'Réponse précédente'
+          });
+        }
+      }
+
+      // Message actuel
+      messages.push({
+        role: 'user',
+        content: mode !== 'normal' && finalDocumentContext ? 
+          `Contexte document: ${finalDocumentContext.substring(0, 1200)}\n\nQuestion: ${message}` :
+          message
+      });
+
       completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: mode !== 'normal' && finalDocumentContext ? 
-              `Contexte document: ${finalDocumentContext.substring(0, 1500)}\n\nQuestion: ${message}` :
-              message
-          }
-        ],
+        messages: messages,
         model: 'llama-3.3-70b-versatile',
         temperature: mode === 'step_by_step' ? 0.05 : mode === 'normal' ? 0.15 : 0.1,
         max_tokens: maxTokens,
         top_p: 0.7
       });
       
-      console.log('✅ Réponse Groq reçue');
+      console.log('✅ Réponse Groq reçue avec mémoire');
       
     } catch (groqError) {
       console.error('❌ Erreur Groq:', groqError.message);
@@ -1369,15 +1537,15 @@ ${finalDocumentContext ?
       });
     }
 
-    // ✅ TRAITEMENT RÉPONSE AVEC VALIDATION MODE
+    // ✅ TRAITEMENT RÉPONSE AVEC VALIDATION INTELLIGENTE
     let aiResponse = completion.choices[0]?.message?.content || `Désolé ${prenomExact}, erreur technique.`;
     
     // 🔧 VALIDATION STRICTE DU FORMAT SELON MODE
     if (mode === 'step_by_step') {
       // Forcer le format étape si absent
       if (!aiResponse.includes('📊 Étape')) {
-        const currentStep = step_info?.current_step || 1;
-        const totalSteps = step_info?.total_steps || 4;
+        const currentStep = stepProgression.current_step;
+        const totalSteps = stepProgression.total_steps;
         aiResponse = `📊 Étape ${currentStep}/${totalSteps}\n\n${aiResponse}`;
       }
       
@@ -1392,13 +1560,21 @@ ${finalDocumentContext ?
       aiResponse = `${prenomExact}, ${aiResponse}`;
     }
 
-    // 🔧 DÉTECTION FIN D'EXERCICE
-    const isExerciseComplete = /résultat final|réponse finale|solution complète|exercice terminé|c'est fini|voilà la réponse/i.test(aiResponse);
+    // 🔧 DÉTECTION FIN D'EXERCICE AMÉLIORÉE
+    const exercisePatterns = [
+      /résultat final/i, /réponse finale/i, /solution complète/i,
+      /exercice terminé/i, /c'est fini/i, /voilà la réponse/i,
+      /donc.*=.*\d+/i, // Pattern "donc x = 5"
+      /les solutions sont/i, /réponses.*:/i,
+      /tous.*exercices.*résolus/i
+    ];
     
-    if (isExerciseComplete) {
+    const isExerciseComplete = exercisePatterns.some(pattern => pattern.test(aiResponse));
+    
+    if (isExerciseComplete || (mode === 'step_by_step' && stepProgression.current_step >= stepProgression.total_steps)) {
       const completionMessages = {
-        'step_by_step': `\n\n🎉 Excellent ${prenomExact} ! Nous avons terminé cet exercice ensemble !`,
-        'direct_solution': `\n\n🎯 Voilà ${prenomExact} ! Solution complète fournie !`,
+        'step_by_step': `\n\n🎉 Excellent ${prenomExact} ! Nous avons terminé cet exercice étape par étape !`,
+        'direct_solution': `\n\n✅ Parfait ${prenomExact} ! Tous les exercices sont résolus !`,
         'normal': `\n\n👍 Voilà ${prenomExact} ! J'espère que ça répond à ta question !`
       };
       
@@ -1406,29 +1582,33 @@ ${finalDocumentContext ?
       aiResponse += `\n\n💡 **Prêt pour le prochain défi ?**`;
     }
 
-    console.log('✅ Réponse IA traitée et validée');
+    console.log('✅ Réponse IA traitée avec mémoire et progression');
 
-    // ✅ SAUVEGARDE
+    // ✅ SAUVEGARDE AVEC INFORMATIONS ÉTAPES
     try {
       await supabase.from('historique_conversations').insert([{
         eleve_id: parseInt(user_id),
         message_eleve: message.trim(),
         reponse_ia: aiResponse,
         tokens_utilises: completion.usage?.total_tokens || 0,
-        modele_ia: 'llama-3.3-avance',
+        modele_ia: 'llama-3.3-memoire',
         mode_utilise: mode,
         document_utilise: documentName,
-        contexte_utilise: !!finalDocumentContext
+        contexte_utilise: !!finalDocumentContext,
+        // 🆕 NOUVELLES COLONNES (si elles existent)
+        etape_courante: mode === 'step_by_step' ? stepProgression.current_step : null,
+        etape_totale: mode === 'step_by_step' ? stepProgression.total_steps : null,
+        est_continuation: isContinuation
       }]);
     } catch (saveError) {
       console.warn('⚠️ Erreur sauvegarde:', saveError.message);
     }
 
-    // 🎯 RÉPONSE FINALE
+    // 🎯 RÉPONSE FINALE AVEC INFORMATIONS PROGRESSION
     const responseData = {
       response: aiResponse,
       timestamp: new Date().toISOString(),
-      model: 'llama-3.3-avance',
+      model: 'llama-3.3-memoire',
       student_name: prenomExact,
       tokens_used: completion.usage?.total_tokens || 0,
       mode_used: mode,
@@ -1436,14 +1616,19 @@ ${finalDocumentContext ?
       document_name: documentName,
       context_length: documentLength,
       step_info: mode === 'step_by_step' ? {
-        current_step: (step_info?.current_step || 1),
-        total_steps: (step_info?.total_steps || 4),
-        next_step: (step_info?.current_step || 1) + 1
+        current_step: stepProgression.current_step,
+        total_steps: stepProgression.total_steps,
+        next_step: Math.min(stepProgression.current_step + 1, stepProgression.total_steps)
       } : null,
+      conversation_context: {
+        had_previous_context: conversationContext.hasContext,
+        was_continuation: isContinuation,
+        was_incomplete: conversationContext.wasIncomplete
+      },
       success: true
     };
 
-    console.log('🎉 =============== ÉTUDIA CHAT AVANCÉ SUCCÈS ===============\n');
+    console.log('🎉 =============== ÉTUDIA MÉMOIRE SUCCÈS ===============\n');
     res.json(responseData);
 
   } catch (error) {
