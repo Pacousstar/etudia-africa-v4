@@ -6702,3 +6702,126 @@ body {
   50% { opacity: 0.8; }
 }
 
+/* 🔥 FORMULAIRE INSCRIPTION ORANGE SIMPLE - AJOUTE DANS App.css */
+
+.inscription-form {
+  background: linear-gradient(135deg, #ff6b35, #f7931e) !important;
+  border-radius: 20px !important;
+  padding: 30px !important;
+  margin: 20px auto !important;
+  max-width: 600px !important;
+  box-shadow: 0 15px 40px rgba(255, 107, 53, 0.4) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.form-header h3 {
+  color: white !important;
+  text-align: center !important;
+  margin-bottom: 15px !important;
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+.form-header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-align: center !important;
+  margin-bottom: 30px !important;
+  font-size: 16px !important;
+}
+
+.form-label {
+  color: white !important;
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
+  display: block !important;
+}
+
+.form-input, .form-select {
+  width: 100% !important;
+  padding: 12px 16px !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  font-size: 16px !important;
+  margin-bottom: 20px !important;
+  box-sizing: border-box !important;
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.form-select option {
+  background: #374151 !important;
+  color: white !important;
+}
+
+.form-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 15px !important;
+}
+
+.submit-button {
+  width: 100% !important;
+  padding: 15px 25px !important;
+  border: none !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #ff4757, #ff3742) !important;
+  color: white !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  margin-top: 10px !important;
+  transition: all 0.3s ease !important;
+}
+
+.submit-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4) !important;
+}
+
+.submit-button:disabled {
+  background: #6b7280 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+.spinner {
+  display: inline-block !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 50% !important;
+  border-top-color: white !important;
+  animation: spin 1s linear infinite !important;
+  margin-right: 8px !important;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .inscription-form {
+    margin: 10px !important;
+    padding: 20px !important;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .form-header h3 {
+    font-size: 20px !important;
+  }
+}
