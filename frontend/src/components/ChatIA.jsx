@@ -1,4 +1,4 @@
-  // ChatIA.js - VERSION CORRIGÉE - FONCTION getSuggestions AJOUTÉE
+// ChatIA.js - VERSION CORRIGÉE - FONCTION getSuggestions AJOUTÉE
 import React, { useState, useEffect, useRef } from 'react';
 
 const ChatIA = ({ 
@@ -197,62 +197,124 @@ const ChatIA = ({
     }
   }, [chatTokensUsed]);
 
-  // 🎤 INITIALISATION RECONNAISSANCE VOCALE MOBILE
-  useEffect(() => {
-    console.log('🎤 Initialisation reconnaissance vocale...');
+// 🎤 INITIALISATION RECONNAISSANCE VOCALE MOBILE CORRIGÉE
+useEffect(() => {
+  console.log('🎤 Initialisation reconnaissance vocale mobile...');
+  
+  // 📱 DÉTECTION PRÉCISE DU MOBILE
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  
+  console.log('📱 Appareil détecté:', { isMobile, isIOS, isAndroid });
+  
+  // 🎤 SUPPORT RECONNAISSANCE VOCALE MULTI-NAVIGATEUR
+  const SpeechRecognition = window.SpeechRecognition || 
+                           window.webkitSpeechRecognition || 
+                           window.mozSpeechRecognition || 
+                           window.msSpeechRecognition;
+  
+  if (SpeechRecognition) {
+    console.log('✅ Reconnaissance vocale supportée');
     
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    
-    console.log('📱 Appareil détecté:', { isMobile, isIOS });
-    
-    const SpeechRecognition = window.SpeechRecognition || 
-                             window.webkitSpeechRecognition || 
-                             window.mozSpeechRecognition || 
-                             window.msSpeechRecognition;
-    
-    if (SpeechRecognition) {
-      console.log('✅ Reconnaissance vocale supportée');
-      
+    try {
       const recognitionInstance = new SpeechRecognition();
       
-      recognitionInstance.continuous = false;
-      recognitionInstance.interimResults = false;
+      // 🔧 CONFIGURATION MOBILE OPTIMISÉE
+      recognitionInstance.continuous = false;        // CRUCIAL pour mobile
+      recognitionInstance.interimResults = false;    // CRUCIAL pour mobile
       recognitionInstance.lang = 'fr-FR';
+      recognitionInstance.maxAlternatives = 1;       // Optimisation mobile
       
+      // 📱 PARAMÈTRES SPÉCIAUX MOBILES
       if (isMobile) {
-        recognitionInstance.maxAlternatives = 1;
+        // iOS a besoin de paramètres très spécifiques
         if (isIOS) {
           recognitionInstance.lang = 'fr-FR';
           recognitionInstance.continuous = false;
+          recognitionInstance.interimResults = false;
+          console.log('📱 Configuration iOS appliquée');
+        }
+        
+        // Android aussi a ses spécificités
+        if (isAndroid) {
+          recognitionInstance.lang = 'fr-FR';
+          recognitionInstance.continuous = false;
+          console.log('📱 Configuration Android appliquée');
         }
       }
       
+      // 🎤 ÉVÉNEMENTS RECONNAISSANCE
       recognitionInstance.onstart = () => {
         console.log('🎤 Reconnaissance vocale démarrée');
         setIsRecording(true);
+        
+        // 📱 FEEDBACK MOBILE
+        if (isMobile && navigator.vibrate) {
+          navigator.vibrate([100]); // Vibration courte
+        }
       };
       
       recognitionInstance.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        console.log('🎤 Texte reconnu:', transcript);
-        setInputMessage(transcript);
-        setIsRecording(false);
+        console.log('🎤 Événement résultat:', event);
         
-        if (isMobile && navigator.vibrate) {
-          navigator.vibrate(100);
+        if (event.results && event.results.length > 0) {
+          const transcript = event.results[0][0].transcript;
+          console.log('🎤 Texte reconnu:', transcript);
+          
+          setInputMessage(transcript);
+          setIsRecording(false);
+          
+          // 📱 FEEDBACK SUCCÈS MOBILE
+          if (isMobile && navigator.vibrate) {
+            navigator.vibrate([50, 50, 50]); // Triple vibration succès
+          }
+          
+          // 🔊 FEEDBACK AUDIO OPTIONNEL
+          if (window.AudioContext || window.webkitAudioContext) {
+            try {
+              const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+              const oscillator = audioContext.createOscillator();
+              const gainNode = audioContext.createGain();
+              
+              oscillator.connect(gainNode);
+              gainNode.connect(audioContext.destination);
+              
+              oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+              gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+              gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+              
+              oscillator.start(audioContext.currentTime);
+              oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (audioError) {
+              console.log('🔊 Pas de feedback audio disponible');
+            }
+          }
         }
       };
       
       recognitionInstance.onerror = (event) => {
-        console.error('❌ Erreur reconnaissance vocale:', event.error);
+        console.error('❌ Erreur reconnaissance vocale:', event.error, event);
         setIsRecording(false);
         
+        // 📱 GESTION ERREURS SPÉCIFIQUES MOBILES
         if (isMobile) {
-          if (event.error === 'not-allowed') {
-            alert('🎤 Autorise l\'accès au microphone dans les paramètres de ton navigateur !');
+          if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+            alert('🎤 AUTORISATION NÉCESSAIRE\n\nPour utiliser la reconnaissance vocale :\n• Autorise le microphone dans ton navigateur\n• Vérifie les permissions de ton appareil\n• Essaie Chrome ou Safari');
           } else if (event.error === 'no-speech') {
             console.log('📱 Aucun son détecté - normal sur mobile');
+            alert('🎤 Aucun son détecté\n\nAssure-toi de :\n• Parler clairement\n• Être dans un endroit calme\n• Tenir ton téléphone près de ta bouche');
+          } else if (event.error === 'network') {
+            alert('🌐 Problème de connexion\n\nVérifie ta connexion internet et réessaie.');
+          } else if (event.error === 'aborted') {
+            console.log('🎤 Reconnaissance annulée par l\'utilisateur');
+          } else {
+            alert(`🎤 Erreur technique: ${event.error}\n\nRéessaie dans quelques secondes.`);
+          }
+          
+          // 📱 VIBRATION ERREUR
+          if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]); // Pattern d'erreur
           }
         }
       };
@@ -262,139 +324,301 @@ const ChatIA = ({
         setIsRecording(false);
       };
       
+      // 📱 GESTION ÉVÉNEMENT SPÉCIAL MOBILE
+      recognitionInstance.onnomatch = () => {
+        console.log('🎤 Aucune correspondance trouvée');
+        setIsRecording(false);
+        if (isMobile) {
+          alert('🎤 Je n\'ai pas compris\n\nRépète plus clairement s\'il te plaît.');
+        }
+      };
+      
       setRecognition(recognitionInstance);
       console.log('✅ Reconnaissance vocale configurée pour mobile');
       
-    } else {
-      console.warn('⚠️ Reconnaissance vocale non supportée sur cet appareil');
+    } catch (initError) {
+      console.error('❌ Erreur initialisation reconnaissance:', initError);
       setRecognition(null);
     }
-  }, []);
-
-  // 🎤 FONCTION DÉMARRAGE RECONNAISSANCE VOCALE
-  const startVoiceRecognition = () => {
-    if (!recognition) {
-      console.warn('⚠️ Reconnaissance vocale non supportée');
-      
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      if (isMobile) {
-        alert('🎤 Ton navigateur mobile ne supporte pas la reconnaissance vocale. Essaie Chrome ou Safari !');
-      } else {
-        alert('🎤 Ton navigateur ne supporte pas la reconnaissance vocale. Utilise Chrome ou Edge !');
-      }
-      return;
+    
+  } else {
+    console.warn('⚠️ Reconnaissance vocale non supportée');
+    setRecognition(null);
+    
+    // 📱 MESSAGE SPÉCIAL MOBILE
+    if (isMobile) {
+      console.log('📱 Pas de reconnaissance vocale sur ce navigateur mobile');
     }
+  }
+}, []);
 
-    if (isRecording) {
-      console.log('🎤 Reconnaissance déjà en cours...');
-      return;
+// 🎤 FONCTION DÉMARRAGE RECONNAISSANCE VOCALE MOBILE CORRIGÉE
+const startVoiceRecognition = async () => {
+  console.log('🎤 Tentative démarrage reconnaissance vocale...');
+  
+  if (!recognition) {
+    console.warn('⚠️ Reconnaissance vocale non supportée');
+    
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      alert('🎤 RECONNAISSANCE VOCALE NON DISPONIBLE\n\nTon navigateur mobile ne supporte pas cette fonctionnalité.\n\nEssaie :\n• Chrome (Android)\n• Safari (iOS)\n• Firefox mobile récent');
+    } else {
+      alert('🎤 RECONNAISSANCE VOCALE NON DISPONIBLE\n\nTon navigateur ne supporte pas cette fonctionnalité.\n\nUtilise Chrome, Edge ou Firefox récent.');
     }
+    return;
+  }
 
-    try {
-      console.log('🎤 Démarrage reconnaissance vocale...');
-      
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      if (isMobile) {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(() => {
-              console.log('📱 Permission micro accordée');
-              recognition.start();
-            })
-            .catch((error) => {
-              console.error('📱 Permission micro refusée:', error);
-              alert('🎤 Autorise l\'accès au microphone pour utiliser la reconnaissance vocale !');
-            });
-        } else {
-          recognition.start();
-        }
-      } else {
-        recognition.start();
-      }
-      
-    } catch (error) {
-      console.error('❌ Erreur démarrage reconnaissance:', error);
-      setIsRecording(false);
-      
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      if (isMobile) {
-        alert('🎤 Erreur mobile. Réessaie ou utilise le clavier !');
-      } else {
-        alert('🎤 Erreur technique. Réessaie dans quelques secondes !');
-      }
-    }
-  };
+  if (isRecording) {
+    console.log('🎤 Reconnaissance déjà en cours...');
+    return;
+  }
 
-  // 🔊 FONCTION SYNTHÈSE VOCALE MOBILE
-  const speakResponse = (text) => {
-    if (!('speechSynthesis' in window)) {
-      console.warn('⚠️ Synthèse vocale non supportée');
-      return;
-    }
-
+  try {
+    console.log('🎤 Démarrage reconnaissance vocale...');
+    
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-    speechSynthesis.cancel();
     
-    const cleanText = text
-      .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
-      .replace(/📊|🔁|✅|🎯|💬|🤖|📄|💡|🚀/g, '')
-      .replace(/Étape \d+\/\d+/g, '')
-      .trim();
-    
-    if (!cleanText) return;
-    
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = 'fr-FR';
-    
+    // 📱 DEMANDE PERMISSION MICROPHONE EXPLICITE SUR MOBILE
     if (isMobile) {
-      utterance.rate = 0.8;
-      utterance.pitch = 1.0;
-      utterance.volume = 0.9;
+      console.log('📱 Demande permission microphone mobile...');
       
-      if (isIOS) {
-        utterance.rate = 0.7;
-        utterance.volume = 1.0;
+      // 🎤 Méthode 1: getUserMedia pour permission explicite
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+              sampleRate: 44100
+            } 
+          });
+          
+          console.log('📱 Permission micro accordée');
+          
+          // Arrêter le stream immédiatement (on n'en a plus besoin)
+          stream.getTracks().forEach(track => track.stop());
+          
+          // 📱 DÉLAI SPÉCIAL iOS (nécessaire)
+          if (isIOS) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+          
+          // Démarrer la reconnaissance
+          recognition.start();
+          
+        } catch (permissionError) {
+          console.error('📱 Permission micro refusée:', permissionError);
+          
+          if (permissionError.name === 'NotAllowedError') {
+            alert('🎤 PERMISSION REFUSÉE\n\nPour utiliser la reconnaissance vocale :\n\n1. Autorise l\'accès au microphone\n2. Dans les paramètres de ton navigateur\n3. Recharge la page\n4. Réessaie');
+          } else if (permissionError.name === 'NotFoundError') {
+            alert('🎤 MICROPHONE NON TROUVÉ\n\nVérifie que ton appareil a un microphone fonctionnel.');
+          } else {
+            alert(`🎤 ERREUR PERMISSION\n\n${permissionError.message}\n\nVérifie les paramètres de ton navigateur.`);
+          }
+          return;
+        }
+      } else {
+        // 🎤 Méthode 2: Directement reconnaissance (anciens navigateurs)
+        console.log('📱 Démarrage direct reconnaissance (pas de getUserMedia)');
+        recognition.start();
       }
     } else {
-      utterance.rate = 0.9;
-      utterance.pitch = 1.0;
-      utterance.volume = 0.8;
+      // 💻 DESKTOP: Démarrage direct
+      recognition.start();
     }
     
+  } catch (error) {
+    console.error('❌ Erreur démarrage reconnaissance:', error);
+    setIsRecording(false);
+    
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      alert('🎤 ERREUR MOBILE\n\nProblème technique.\n\nSolutions :\n• Recharge la page\n• Redémarre ton navigateur\n• Vérifie ta connexion\n• Utilise le clavier à la place');
+    } else {
+      alert('🎤 ERREUR TECHNIQUE\n\nRéessaie dans quelques secondes ou utilise le clavier.');
+    }
+  }
+};
+
+// 🔊 FONCTION SYNTHÈSE VOCALE MOBILE CORRIGÉE
+const speakResponse = (text) => {
+  console.log('🔊 Tentative synthèse vocale:', text?.substring(0, 50));
+  
+  if (!('speechSynthesis' in window)) {
+    console.warn('⚠️ Synthèse vocale non supportée');
+    return;
+  }
+
+  // 📱 DÉTECTION MOBILE PRÉCISE
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+
+  console.log('🔊 Synthèse sur:', { isMobile, isIOS, isAndroid });
+
+  // Arrêter toute synthèse en cours
+  speechSynthesis.cancel();
+  
+  // 🧹 NETTOYAGE TEXTE POUR SYNTHÈSE
+  const cleanText = text
+    .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '') // Emojis
+    .replace(/📊|🔁|✅|🎯|💬|🤖|📄|💡|🚀|❓|🎉|👍|🌟|⚡|💪|🇨🇮|✨/g, '') // Emojis spécifiques
+    .replace(/📊\s*Étape\s+\d+\/\d+/g, '') // Format étapes
+    .replace(/\*\*(.*?)\*\*/g, '$1') // Markdown gras
+    .replace(/\*(.*?)\*/g, '$1') // Markdown italique
+    .replace(/\n+/g, '. ') // Sauts de ligne en points
+    .replace(/\s+/g, ' ') // Espaces multiples
+    .trim();
+  
+  console.log('🔊 Texte nettoyé:', cleanText?.substring(0, 100));
+  
+  if (!cleanText || cleanText.length < 3) {
+    console.log('🔊 Texte trop court pour synthèse');
+    return;
+  }
+  
+  // 🔊 CRÉATION UTTERANCE
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = 'fr-FR';
+  
+  // 📱 CONFIGURATION SPÉCIALE MOBILE
+  if (isMobile) {
+    utterance.rate = 0.8;     // Plus lent sur mobile
+    utterance.pitch = 1.0;    // Ton normal
+    utterance.volume = 0.9;   // Plus fort sur mobile
+    
+    if (isIOS) {
+      // iOS a besoin de paramètres très spéciaux
+      utterance.rate = 0.7;    // Encore plus lent sur iOS
+      utterance.volume = 1.0;  // Volume max sur iOS
+      utterance.pitch = 1.0;
+      console.log('🍎 Configuration iOS synthèse');
+    }
+    
+    if (isAndroid) {
+      // Android fonctionne bien avec ces paramètres
+      utterance.rate = 0.85;
+      utterance.volume = 0.9;
+      utterance.pitch = 1.0;
+      console.log('🤖 Configuration Android synthèse');
+    }
+  } else {
+    // 💻 DESKTOP
+    utterance.rate = 0.9;
+    utterance.pitch = 1.0;
+    utterance.volume = 0.8;
+  }
+  
+  // 🗣️ SÉLECTION VOIX FRANÇAISE SI DISPONIBLE
+  try {
     const voices = speechSynthesis.getVoices();
-    const frenchVoice = voices.find(voice => voice.lang.startsWith('fr'));
+    console.log('🗣️ Voix disponibles:', voices.length);
+    
+    // Chercher voix française
+    const frenchVoice = voices.find(voice => 
+      voice.lang.startsWith('fr') && 
+      (voice.localService || voice.default)
+    ) || voices.find(voice => voice.lang.startsWith('fr'));
+    
     if (frenchVoice) {
       utterance.voice = frenchVoice;
-    }
-    
-    utterance.onstart = () => {
-      console.log('🔊 Synthèse vocale démarrée');
-      if (isMobile && navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-    };
-    
-    utterance.onend = () => {
-      console.log('🔊 Synthèse vocale terminée');
-    };
-    
-    utterance.onerror = (event) => {
-      console.error('❌ Erreur synthèse vocale:', event.error);
-    };
-    
-    if (isMobile) {
-      setTimeout(() => {
-        speechSynthesis.speak(utterance);
-      }, 100);
+      console.log('🗣️ Voix française sélectionnée:', frenchVoice.name);
     } else {
-      speechSynthesis.speak(utterance);
+      console.log('🗣️ Pas de voix française, utilisation par défaut');
+    }
+  } catch (voiceError) {
+    console.warn('🗣️ Erreur sélection voix:', voiceError);
+  }
+  
+  // 🎤 ÉVÉNEMENTS SYNTHÈSE
+  utterance.onstart = () => {
+    console.log('🔊 Synthèse vocale démarrée');
+    
+    // 📱 FEEDBACK MOBILE
+    if (isMobile && navigator.vibrate) {
+      navigator.vibrate(50); // Vibration courte au début
     }
   };
+  
+  utterance.onend = () => {
+    console.log('🔊 Synthèse vocale terminée');
+  };
+  
+  utterance.onerror = (event) => {
+    console.error('❌ Erreur synthèse vocale:', event.error, event);
+    
+    // 📱 Réessayer une fois sur mobile en cas d'erreur
+    if (isMobile && event.error === 'interrupted') {
+      console.log('🔄 Réessai synthèse mobile...');
+      setTimeout(() => {
+        speechSynthesis.speak(utterance);
+      }, 500);
+    }
+  };
+  
+  utterance.onpause = () => {
+    console.log('⏸️ Synthèse en pause');
+  };
+  
+  utterance.onresume = () => {
+    console.log('▶️ Synthèse reprise');
+  };
+  
+  // 🚀 DÉMARRAGE SYNTHÈSE AVEC DÉLAI MOBILE
+  try {
+    if (isMobile) {
+      // 📱 DÉLAI NÉCESSAIRE POUR MOBILE (évite les conflits)
+      setTimeout(() => {
+        console.log('🔊 Démarrage synthèse mobile...');
+        speechSynthesis.speak(utterance);
+      }, 200);
+    } else {
+      // 💻 DESKTOP: Immédiat
+      console.log('🔊 Démarrage synthèse desktop...');
+      speechSynthesis.speak(utterance);
+    }
+  } catch (speakError) {
+    console.error('❌ Erreur démarrage synthèse:', speakError);
+  }
+};
+
+// 🔧 FONCTION HELPER: Vérifier support audio
+const checkAudioSupport = () => {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  const support = {
+    speechRecognition: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+    speechSynthesis: !!window.speechSynthesis,
+    mediaDevices: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+    vibration: !!navigator.vibrate,
+    audioContext: !!(window.AudioContext || window.webkitAudioContext)
+  };
+  
+  console.log('🎤 Support audio:', support);
+  
+  return {
+    canRecord: support.speechRecognition,
+    canSpeak: support.speechSynthesis,
+    canVibrate: support.vibration && isMobile,
+    isFullySupported: support.speechRecognition && support.speechSynthesis
+  };
+};
+
+// 🎤 APPELER LA VÉRIFICATION AU MONTAGE
+useEffect(() => {
+  const audioSupport = checkAudioSupport();
+  
+  if (!audioSupport.isFullySupported) {
+    console.warn('⚠️ Support audio partiel:', audioSupport);
+  } else {
+    console.log('✅ Support audio complet disponible');
+  }
+}, []);
 
   // 🔧 MESSAGE D'ACCUEIL CORRIGÉ
   const triggerWelcomeMessage = async () => {
