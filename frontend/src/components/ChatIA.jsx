@@ -1509,6 +1509,421 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
           </div>
         </div>
       )}
+
+// 📱 CORRECTION AFFICHAGE MOBILE - AJOUTE CE CSS À LA FIN DE ChatIA.jsx
+
+<style jsx>{`
+  /* 🔧 CORRECTION 1: HEADER CHAT MOBILE RESPONSIVE */
+  .chat-header.revolutionary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    border-radius: 1rem 1rem 0 0;
+    margin-bottom: 1rem;
+    min-height: 60px; /* ✅ Hauteur minimum garantie */
+    position: relative;
+    overflow: visible; /* ✅ Évite la coupure des boutons */
+  }
+
+  .chat-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0; /* ✅ Permet compression */
+  }
+
+  .title-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0; /* ✅ Empêche compression */
+  }
+
+  .title-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 🔧 CORRECTION 2: BOUTONS CONTRÔLES MOBILES */
+  .chat-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-shrink: 0; /* ✅ Empêche compression */
+    margin-left: 0.5rem;
+  }
+
+  .control-button {
+    width: 45px; /* ✅ Taille fixe pour mobile */
+    height: 45px; /* ✅ Taille fixe pour mobile */
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    flex-shrink: 0; /* ✅ Empêche compression */
+    min-width: 45px; /* ✅ Largeur minimum */
+    min-height: 45px; /* ✅ Hauteur minimum */
+  }
+
+  .control-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+  }
+
+  .control-button.active {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  }
+
+  .audio-btn.active {
+    background: linear-gradient(135deg, #F59E0B, #F97316);
+    animation: pulse-audio 2s infinite;
+  }
+
+  @keyframes pulse-audio {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  /* 🔧 CORRECTION 3: MODES RÉVOLUTIONNAIRES RESPONSIVE */
+  .revolutionary-buttons {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+    border: 2px solid rgba(99, 102, 241, 0.2);
+    border-radius: 1.5rem;
+    padding: 1.5rem; /* ✅ Padding réduit pour mobile */
+    margin: 1rem 0;
+    backdrop-filter: blur(10px);
+  }
+
+  .mode-buttons-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .mode-buttons-header h3 {
+    font-size: 1.3rem; /* ✅ Taille réduite pour mobile */
+    font-weight: 800;
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  /* 🔧 CORRECTION 4: GRILLE MODES MOBILE */
+  .mode-buttons-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* ✅ Une colonne sur mobile */
+    gap: 1rem;
+    max-width: 100%;
+  }
+
+  .mode-button {
+    background: white;
+    border: 2px solid rgba(99, 102, 241, 0.2);
+    border-radius: 1rem;
+    padding: 1.25rem; /* ✅ Padding réduit */
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    min-height: auto; /* ✅ Hauteur automatique */
+    width: 100%; /* ✅ Largeur complète */
+    box-sizing: border-box;
+  }
+
+  .mode-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.4);
+  }
+
+  .mode-button.active {
+    border-color: rgba(99, 102, 241, 0.5);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  }
+
+  .mode-button.normal {
+    border-color: rgba(99, 102, 241, 0.3);
+  }
+
+  .mode-button.step-by-step {
+    border-color: rgba(255, 140, 0, 0.3);
+  }
+
+  .mode-button.direct-solution {
+    border-color: rgba(50, 205, 50, 0.3);
+  }
+
+  .mode-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  /* 🔧 CORRECTION 5: CONTENU MODE BUTTONS */
+  .mode-content {
+    flex: 1;
+    text-align: left;
+  }
+
+  .mode-title {
+    font-size: 1.1rem; /* ✅ Taille réduite */
+    font-weight: 700;
+    color: #1F2937;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .mode-description {
+    font-size: 0.9rem; /* ✅ Taille réduite */
+    color: #6B7280;
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+  }
+
+  .mode-benefit {
+    font-size: 0.85rem; /* ✅ Taille réduite */
+    font-weight: 600;
+    color: #059669;
+    background: rgba(16, 185, 129, 0.1);
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.5rem;
+    display: inline-block;
+  }
+
+  .mode-icon {
+    font-size: 2rem; /* ✅ Taille réduite */
+    margin-bottom: 0.75rem;
+    display: block;
+    text-align: center;
+  }
+
+  /* 🔧 RESPONSIVE MOBILE SPÉCIFIQUE */
+  @media (max-width: 768px) {
+    /* Header chat mobile */
+    .chat-header.revolutionary {
+      padding: 0.75rem;
+      min-height: 50px;
+    }
+
+    .title-text {
+      font-size: 1rem;
+    }
+
+    .title-icon {
+      font-size: 1.3rem;
+    }
+
+    .control-button {
+      width: 40px;
+      height: 40px;
+      font-size: 1.1rem;
+      min-width: 40px;
+      min-height: 40px;
+    }
+
+    /* Modes mobile */
+    .revolutionary-buttons {
+      padding: 1rem;
+      margin: 0.75rem 0;
+    }
+
+    .mode-buttons-header h3 {
+      font-size: 1.1rem;
+      line-height: 1.2;
+    }
+
+    .mode-buttons-grid {
+      gap: 0.75rem;
+    }
+
+    .mode-button {
+      padding: 1rem;
+    }
+
+    .mode-title {
+      font-size: 1rem;
+    }
+
+    .mode-description {
+      font-size: 0.85rem;
+    }
+
+    .mode-benefit {
+      font-size: 0.8rem;
+      padding: 0.25rem 0.5rem;
+    }
+
+    .mode-icon {
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  /* 🔧 TRÈS PETITS ÉCRANS (< 480px) */
+  @media (max-width: 480px) {
+    .chat-header.revolutionary {
+      padding: 0.5rem;
+      flex-wrap: nowrap; /* ✅ Empêche retour à la ligne */
+    }
+
+    .title-text {
+      font-size: 0.9rem;
+    }
+
+    .control-button {
+      width: 35px;
+      height: 35px;
+      font-size: 1rem;
+      min-width: 35px;
+      min-height: 35px;
+      margin-left: 0.25rem;
+    }
+
+    .chat-controls {
+      gap: 0.25rem;
+    }
+
+    .revolutionary-buttons {
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+    }
+
+    .mode-buttons-header h3 {
+      font-size: 1rem;
+      padding: 0 0.5rem;
+    }
+
+    .mode-button {
+      padding: 0.75rem;
+    }
+
+    .mode-title {
+      font-size: 0.95rem;
+    }
+
+    .mode-description {
+      font-size: 0.8rem;
+      line-height: 1.3;
+    }
+
+    .mode-benefit {
+      font-size: 0.75rem;
+    }
+
+    .mode-icon {
+      font-size: 1.5rem;
+    }
+  }
+
+  /* 🔧 TRÈS LARGE ÉCRANS (Desktop) */
+  @media (min-width: 1024px) {
+    .mode-buttons-grid {
+      grid-template-columns: repeat(3, 1fr); /* ✅ 3 colonnes sur desktop */
+      gap: 1.5rem;
+    }
+
+    .mode-button {
+      min-height: 180px; /* ✅ Hauteur fixe desktop */
+    }
+
+    .revolutionary-buttons {
+      padding: 2rem;
+    }
+  }
+
+  /* 🔧 ÉCRANS MOYENS (Tablettes) */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .mode-buttons-grid {
+      grid-template-columns: repeat(2, 1fr); /* ✅ 2 colonnes sur tablette */
+      gap: 1.25rem;
+    }
+
+    .mode-button:last-child {
+      grid-column: span 2; /* ✅ Le 3ème bouton prend 2 colonnes */
+    }
+  }
+
+  /* 🔧 FIXES POUR DARK MODE */
+  .dark-mode .chat-header.revolutionary {
+    background: linear-gradient(135deg, #374151, #4B5563);
+  }
+
+  .dark-mode .revolutionary-buttons {
+    background: linear-gradient(135deg, rgba(55, 65, 81, 0.1), rgba(75, 85, 99, 0.1));
+    border-color: rgba(156, 163, 175, 0.3);
+  }
+
+  .dark-mode .mode-button {
+    background: #374151;
+    border-color: rgba(156, 163, 175, 0.3);
+    color: #F9FAFB;
+  }
+
+  .dark-mode .mode-title {
+    color: #F9FAFB;
+  }
+
+  .dark-mode .mode-description {
+    color: #D1D5DB;
+  }
+
+  .dark-mode .mode-benefit {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34D399;
+  }
+
+  /* 🔧 ANIMATIONS FLUIDES */
+  .mode-button, .control-button {
+    will-change: transform;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mode-button, .control-button {
+      transition: none;
+    }
+    
+    .audio-btn.active {
+      animation: none;
+    }
+  }
+
+  /* 🔧 FIXES DÉBORDEMENT */
+  .revolutionary-buttons {
+    overflow: hidden; /* ✅ Évite débordement */
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .mode-buttons-grid {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden; /* ✅ Évite débordement */
+  }
+
+  .chat-container {
+    overflow-x: hidden; /* ✅ Évite scroll horizontal */
+    width: 100%;
+    max-width: 100%;
+  }
+`}</style>
+      
     </div>
   );
 };
