@@ -447,143 +447,271 @@ const startVoiceRecognition = async () => {
 
 // 🔊 FONCTION SYNTHÈSE VOCALE MOBILE CORRIGÉE
 const speakResponse = (text) => {
-  console.log('🔊 Tentative synthèse vocale:', text?.substring(0, 50));
+  console.log('🔊 DÉBUT SYNTHÈSE VOCALE:', text?.substring(0, 50));
   
+  // 🔧 VÉRIFICATION SUPPORT
   if (!('speechSynthesis' in window)) {
-    console.warn('⚠️ Synthèse vocale non supportée');
+    console.error('❌ speechSynthesis non supporté');
+    alert('🔊 Synthèse vocale non supportée sur ton appareil');
     return;
   }
 
-  // 📱 DÉTECTION MOBILE PRÉCISE
+  // 📱 DÉTECTION MOBILE
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isAndroid = /Android/i.test(navigator.userAgent);
-
-  console.log('🔊 Synthèse sur:', { isMobile, isIOS, isAndroid });
-
-  // Arrêter toute synthèse en cours
-  speechSynthesis.cancel();
   
-  // 🧹 NETTOYAGE TEXTE POUR SYNTHÈSE
-  const cleanText = text
-    .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '') // Emojis
-    .replace(/📊|🔁|✅|🎯|💬|🤖|📄|💡|🚀|❓|🎉|👍|🌟|⚡|💪|🇨🇮|✨/g, '') // Emojis spécifiques
-    .replace(/📊\s*Étape\s+\d+\/\d+/g, '') // Format étapes
-    .replace(/\*\*(.*?)\*\*/g, '$1') // Markdown gras
-    .replace(/\*(.*?)\*/g, '$1') // Markdown italique
-    .replace(/\n+/g, '. ') // Sauts de ligne en points
-    .replace(/\s+/g, ' ') // Espaces multiples
-    .trim();
+  console.log('🔊 Appareil détecté:', { isMobile, isIOS });
+
+  // 🛑 ARRÊTER TOUTE SYNTHÈSE EN COURS
+  try {
+    speechSynthesis.cancel();
+    console.log('🛑 Synthèse précédente annulée');
+  } catch (cancelError) {
+    console.warn('⚠️ Erreur annulation synthèse:', cancelError);
+  }
   
-  console.log('🔊 Texte nettoyé:', cleanText?.substring(0, 100));
+  // 🧹 NETTOYAGE TEXTE ULTRA-COMPLET
+  let cleanText = text;
+  
+  try {
+    cleanText = text
+      // Supprimer TOUS les emojis
+      .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+      // Supprimer emojis spécifiques
+      .replace(/📊|🔁|✅|🎯|💬|🤖|📄|💡|🚀|❓|🎉|👍|🌟|⚡|💪|🇨🇮|✨|🔧|🧠|📚|📝|🎓|🔊|🎤/g, '')
+      // Supprimer format étapes
+      .replace(/📊\s*Étape\s+\d+\/\d+/gi, '')
+      // Supprimer markdown
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/__(.*?)__/g, '$1')
+      .replace(/_(.*?)_/g, '$1')
+      // Remplacer sauts de ligne par points
+      .replace(/\n+/g, '. ')
+      // Supprimer espaces multiples
+      .replace(/\s+/g, ' ')
+      // Supprimer caractères spéciaux
+      .replace(/[{}[\]()]/g, '')
+      .trim();
+      
+    console.log('🧹 Texte nettoyé:', cleanText?.substring(0, 100));
+    
+  } catch (cleanError) {
+    console.error('❌ Erreur nettoyage texte:', cleanError);
+    cleanText = text?.replace(/[^\w\s.,!?]/g, '').trim();
+  }
   
   if (!cleanText || cleanText.length < 3) {
-    console.log('🔊 Texte trop court pour synthèse');
+    console.warn('⚠️ Texte trop court pour synthèse:', cleanText);
     return;
   }
   
   // 🔊 CRÉATION UTTERANCE
-  const utterance = new SpeechSynthesisUtterance(cleanText);
+  let utterance;
+  try {
+    utterance = new SpeechSynthesisUtterance(cleanText);
+    console.log('✅ Utterance créée');
+  } catch (utteranceError) {
+    console.error('❌ Erreur création utterance:', utteranceError);
+    return;
+  }
+  
+  // 🔧 CONFIGURATION UTTERANCE
   utterance.lang = 'fr-FR';
+  utterance.volume = 1.0; // Volume maximum
+  utterance.rate = isMobile ? 0.8 : 0.9;
+  utterance.pitch = 1.0;
   
   // 📱 CONFIGURATION SPÉCIALE MOBILE
   if (isMobile) {
-    utterance.rate = 0.8;     // Plus lent sur mobile
-    utterance.pitch = 1.0;    // Ton normal
-    utterance.volume = 0.9;   // Plus fort sur mobile
-    
     if (isIOS) {
-      // iOS a besoin de paramètres très spéciaux
-      utterance.rate = 0.7;    // Encore plus lent sur iOS
-      utterance.volume = 1.0;  // Volume max sur iOS
-      utterance.pitch = 1.0;
-      console.log('🍎 Configuration iOS synthèse');
-    }
-    
-    if (isAndroid) {
-      // Android fonctionne bien avec ces paramètres
-      utterance.rate = 0.85;
-      utterance.volume = 0.9;
-      utterance.pitch = 1.0;
-      console.log('🤖 Configuration Android synthèse');
-    }
-  } else {
-    // 💻 DESKTOP
-    utterance.rate = 0.9;
-    utterance.pitch = 1.0;
-    utterance.volume = 0.8;
-  }
-  
-  // 🗣️ SÉLECTION VOIX FRANÇAISE SI DISPONIBLE
-  try {
-    const voices = speechSynthesis.getVoices();
-    console.log('🗣️ Voix disponibles:', voices.length);
-    
-    // Chercher voix française
-    const frenchVoice = voices.find(voice => 
-      voice.lang.startsWith('fr') && 
-      (voice.localService || voice.default)
-    ) || voices.find(voice => voice.lang.startsWith('fr'));
-    
-    if (frenchVoice) {
-      utterance.voice = frenchVoice;
-      console.log('🗣️ Voix française sélectionnée:', frenchVoice.name);
+      utterance.rate = 0.7;  // iOS plus lent
+      utterance.volume = 1.0; // Volume max iOS
+      console.log('🍎 Configuration iOS appliquée');
     } else {
-      console.log('🗣️ Pas de voix française, utilisation par défaut');
+      utterance.rate = 0.85; // Android normal
+      utterance.volume = 1.0;
+      console.log('🤖 Configuration Android appliquée');
     }
-  } catch (voiceError) {
-    console.warn('🗣️ Erreur sélection voix:', voiceError);
   }
-  
-  // 🎤 ÉVÉNEMENTS SYNTHÈSE
+
+  // 🗣️ SÉLECTION VOIX FRANÇAISE
+  const selectVoice = () => {
+    try {
+      const voices = speechSynthesis.getVoices();
+      console.log('🗣️ Voix disponibles:', voices.length);
+      
+      if (voices.length === 0) {
+        console.warn('⚠️ Aucune voix disponible');
+        return null;
+      }
+      
+      // Chercher voix française prioritaire
+      const frenchVoices = voices.filter(voice => 
+        voice.lang.toLowerCase().includes('fr')
+      );
+      
+      console.log('🇫🇷 Voix françaises trouvées:', frenchVoices.length);
+      
+      if (frenchVoices.length > 0) {
+        // Priorité aux voix locales
+        const localFrenchVoice = frenchVoices.find(voice => voice.localService);
+        if (localFrenchVoice) {
+          console.log('✅ Voix française locale sélectionnée:', localFrenchVoice.name);
+          return localFrenchVoice;
+        }
+        
+        // Sinon première voix française
+        console.log('✅ Voix française sélectionnée:', frenchVoices[0].name);
+        return frenchVoices[0];
+      }
+      
+      // Fallback voix par défaut
+      console.log('⚠️ Pas de voix française, voix par défaut utilisée');
+      return voices[0];
+      
+    } catch (voiceError) {
+      console.error('❌ Erreur sélection voix:', voiceError);
+      return null;
+    }
+  };
+
+  // 🎯 ÉVÉNEMENTS SYNTHÈSE
   utterance.onstart = () => {
-    console.log('🔊 Synthèse vocale démarrée');
+    console.log('🔊 ▶️ SYNTHÈSE DÉMARRÉE');
     
     // 📱 FEEDBACK MOBILE
     if (isMobile && navigator.vibrate) {
-      navigator.vibrate(50); // Vibration courte au début
+      navigator.vibrate(100);
+    }
+    
+    // 🔊 NOTIFICATION VISUELLE
+    if (typeof setIsRecording === 'function') {
+      // Pas de setIsRecording pour synthèse, mais on peut ajouter un état
     }
   };
   
   utterance.onend = () => {
-    console.log('🔊 Synthèse vocale terminée');
+    console.log('🔊 ⏹️ SYNTHÈSE TERMINÉE');
   };
   
   utterance.onerror = (event) => {
-    console.error('❌ Erreur synthèse vocale:', event.error, event);
+    console.error('❌ ERREUR SYNTHÈSE VOCALE:', {
+      error: event.error,
+      charIndex: event.charIndex,
+      elapsedTime: event.elapsedTime
+    });
     
-    // 📱 Réessayer une fois sur mobile en cas d'erreur
-    if (isMobile && event.error === 'interrupted') {
-      console.log('🔄 Réessai synthèse mobile...');
-      setTimeout(() => {
-        speechSynthesis.speak(utterance);
-      }, 500);
+    // 🔊 GESTION ERREURS SPÉCIFIQUES
+    switch (event.error) {
+      case 'network':
+        console.log('🌐 Erreur réseau - synthèse hors ligne');
+        break;
+      case 'synthesis-failed':
+        console.log('🔊 Échec synthèse - texte trop long?');
+        break;
+      case 'synthesis-unavailable':
+        console.log('🔊 Synthèse non disponible');
+        alert('🔊 Synthèse vocale temporairement indisponible');
+        break;
+      case 'language-unavailable':
+        console.log('🇫🇷 Langue française non disponible');
+        break;
+      case 'voice-unavailable':
+        console.log('🗣️ Voix sélectionnée non disponible');
+        break;
+      case 'text-too-long':
+        console.log('📝 Texte trop long pour synthèse');
+        break;
+      case 'invalid-argument':
+        console.log('⚠️ Argument invalide pour synthèse');
+        break;
+      default:
+        console.log('❓ Erreur synthèse inconnue:', event.error);
     }
   };
-  
+
   utterance.onpause = () => {
-    console.log('⏸️ Synthèse en pause');
+    console.log('🔊 ⏸️ Synthèse en pause');
   };
-  
+
   utterance.onresume = () => {
-    console.log('▶️ Synthèse reprise');
+    console.log('🔊 ▶️ Synthèse reprise');
   };
-  
-  // 🚀 DÉMARRAGE SYNTHÈSE AVEC DÉLAI MOBILE
-  try {
-    if (isMobile) {
-      // 📱 DÉLAI NÉCESSAIRE POUR MOBILE (évite les conflits)
-      setTimeout(() => {
-        console.log('🔊 Démarrage synthèse mobile...');
-        speechSynthesis.speak(utterance);
-      }, 200);
-    } else {
-      // 💻 DESKTOP: Immédiat
-      console.log('🔊 Démarrage synthèse desktop...');
+
+  utterance.onmark = (event) => {
+    console.log('🔊 📍 Marque synthèse:', event.name);
+  };
+
+  utterance.onboundary = (event) => {
+    console.log('🔊 📏 Frontière synthèse:', event.name, event.charIndex);
+  };
+
+  // 🚀 FONCTION DÉMARRAGE SYNTHÈSE
+  const startSpeech = () => {
+    try {
+      console.log('🚀 LANCEMENT SYNTHÈSE...');
+      
+      // Sélectionner voix si disponible
+      const selectedVoice = selectVoice();
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+      
+      // Test du volume système
+      console.log('🔊 Volume utterance:', utterance.volume);
+      console.log('🔊 Rate utterance:', utterance.rate);
+      console.log('🔊 Pitch utterance:', utterance.pitch);
+      console.log('🔊 Lang utterance:', utterance.lang);
+      console.log('🔊 Voice utterance:', utterance.voice?.name || 'Default');
+      
+      // DÉMARRAGE EFFECTIF
       speechSynthesis.speak(utterance);
+      console.log('✅ speechSynthesis.speak() appelé');
+      
+      // VÉRIFICATION POST-DÉMARRAGE
+      setTimeout(() => {
+        const isSpaking = speechSynthesis.speaking;
+        const isPending = speechSynthesis.pending;
+        const isPaused = speechSynthesis.paused;
+        
+        console.log('🔊 État synthèse après 100ms:', {
+          speaking: isSpaking,
+          pending: isPending,
+          paused: isPaused
+        });
+        
+        if (!isSpaking && !isPending) {
+          console.warn('⚠️ Synthèse n\'a pas démarré - tentative de réactivation');
+          
+          // RÉESSAI FORCE
+          setTimeout(() => {
+            try {
+              speechSynthesis.cancel();
+              speechSynthesis.speak(utterance);
+              console.log('🔄 Réessai synthèse effectué');
+            } catch (retryError) {
+              console.error('❌ Erreur réessai:', retryError);
+            }
+          }, 100);
+        }
+      }, 100);
+      
+    } catch (startError) {
+      console.error('❌ Erreur démarrage synthèse:', startError);
+      alert('🔊 Impossible de démarrer la synthèse vocale');
     }
-  } catch (speakError) {
-    console.error('❌ Erreur démarrage synthèse:', speakError);
+  };
+
+  // 🕐 DÉLAI SELON PLATEFORME
+  if (isMobile) {
+    // 📱 Mobile: délai pour éviter conflits
+    console.log('📱 Démarrage synthèse mobile avec délai...');
+    setTimeout(startSpeech, 300);
+  } else {
+    // 💻 Desktop: immédiat
+    console.log('💻 Démarrage synthèse desktop immédiat...');
+    setTimeout(startSpeech, 100);
   }
 };
 
