@@ -1510,8 +1510,6 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
         </div>
       )}
 
-// 📱 CORRECTION AFFICHAGE MOBILE - AJOUTE CE CSS À LA FIN DE ChatIA.jsx
-
 <style jsx>{`
   /* 🔧 CORRECTION 1: HEADER CHAT MOBILE RESPONSIVE */
   .chat-header.revolutionary {
