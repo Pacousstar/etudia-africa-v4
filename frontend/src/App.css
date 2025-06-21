@@ -6121,4 +6121,444 @@ body {
   animation-delay: 0.3s;
 }
 
+/* 🎨 RESTAURATION DESIGN FORMULAIRE INSCRIPTION - App.css */
+/* AJOUTE CE CSS DANS TON App.css POUR RESTAURER LE DESIGN MAGNIFIQUE */
+
+/* 🎓 FORMULAIRE INSCRIPTION RÉVOLUTIONNAIRE */
+.inscription-form {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2rem;
+  padding: 3rem 2.5rem;
+  margin: 2rem auto;
+  max-width: 600px;
+  box-shadow: 
+    0 20px 60px rgba(102, 126, 234, 0.4),
+    0 10px 30px rgba(118, 75, 162, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+  transform: translateY(0);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+}
+
+.inscription-form::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    transparent 50%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  border-radius: 2rem;
+  pointer-events: none;
+}
+
+.inscription-form:hover {
+  transform: translateY(-5px);
+  box-shadow: 
+    0 30px 80px rgba(102, 126, 234, 0.5),
+    0 15px 40px rgba(118, 75, 162, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* 🎯 HEADER FORMULAIRE */
+.form-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.form-header h3 {
+  color: white !important;
+  font-size: 1.75rem !important;
+  font-weight: 800 !important;
+  margin-bottom: 1rem !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #ffffff, #f0f9ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.form-header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 1.1rem !important;
+  margin-bottom: 0 !important;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  line-height: 1.4;
+}
+
+/* 📝 GROUPES DE CHAMPS */
+.form-group {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* 🏷️ LABELS STYLÉS */
+.form-label {
+  display: block;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  margin-bottom: 0.75rem !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.3px;
+}
+
+/* 📥 INPUTS MAGNIFIQUES */
+.form-input, .form-select {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+  box-shadow: 
+    inset 0 2px 10px rgba(0, 0, 0, 0.1),
+    0 2px 10px rgba(255, 255, 255, 0.1);
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    inset 0 2px 10px rgba(0, 0, 0, 0.1),
+    0 0 0 3px rgba(255, 255, 255, 0.2),
+    0 5px 20px rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.form-input:hover, .form-select:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* 🎯 SELECT SPÉCIAL */
+.form-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1rem;
+  padding-right: 3rem;
+}
+
+.form-select option {
+  background: #374151;
+  color: white;
+  padding: 0.5rem;
+}
+
+/* 🚀 BOUTON SOUMISSION RÉVOLUTIONNAIRE */
+.submit-button {
+  width: 100%;
+  padding: 1.25rem 2rem;
+  border: none;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+  box-shadow: 
+    0 8px 25px rgba(255, 107, 107, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.submit-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s;
+}
+
+.submit-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 15px 35px rgba(255, 107, 107, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, #ff5252, #e53e3e);
+}
+
+.submit-button:hover::before {
+  left: 100%;
+}
+
+.submit-button:active {
+  transform: translateY(-1px);
+}
+
+.submit-button:disabled {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.submit-button:disabled::before {
+  display: none;
+}
+
+/* ⏳ SPINNER LOADING */
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 📋 SECTION CONNEXION RAPIDE */
+.login-section {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  margin: 3rem auto 2rem;
+  max-width: 600px;
+  backdrop-filter: blur(15px);
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  color: #1f2937 !important;
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  margin-bottom: 0.75rem !important;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-subtitle {
+  color: #6b7280 !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+}
+
+/* 🔐 CONNEXION RAPIDE */
+.quick-login {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.login-input {
+  flex: 1;
+  padding: 1rem 1.25rem;
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  border-radius: 1rem;
+  background: white;
+  color: #1f2937;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 
+    inset 0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 
+    inset 0 1px 3px rgba(0, 0, 0, 0.1),
+    0 0 0 3px rgba(102, 126, 234, 0.2),
+    0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.login-input::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.login-button {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 15px rgba(102, 126, 234, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(102, 126, 234, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, #5a67d8, #6b46c1);
+}
+
+.login-button:disabled {
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 📱 RESPONSIVE MOBILE */
+@media (max-width: 768px) {
+  .inscription-form {
+    margin: 1rem;
+    padding: 2rem 1.5rem;
+    border-radius: 1.5rem;
+  }
+  
+  .form-header h3 {
+    font-size: 1.5rem !important;
+  }
+  
+  .form-header p {
+    font-size: 1rem !important;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .login-section {
+    margin: 2rem 1rem 1rem;
+    padding: 1.5rem;
+  }
+  
+  .quick-login {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .section-title {
+    font-size: 1.3rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .inscription-form {
+    padding: 1.5rem 1rem;
+  }
+  
+  .form-header h3 {
+    font-size: 1.3rem !important;
+  }
+  
+  .form-input, .form-select, .login-input {
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+  }
+  
+  .submit-button, .login-button {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+  }
+  
+  .login-section {
+    padding: 1.25rem;
+  }
+}
+
+/* 🌙 DARK MODE COMPATIBILITY */
+.dark-mode .login-section {
+  background: rgba(31, 41, 55, 0.8);
+  border-color: rgba(156, 163, 175, 0.3);
+}
+
+.dark-mode .section-title {
+  color: #f9fafb !important;
+}
+
+.dark-mode .section-subtitle {
+  color: #d1d5db !important;
+}
+
+.dark-mode .login-input {
+  background: #374151;
+  border-color: rgba(156, 163, 175, 0.3);
+  color: #f9fafb;
+}
+
+.dark-mode .login-input::placeholder {
+  color: #9ca3af;
+}
+
+.dark-mode .login-input:focus {
+  border-color: #667eea;
+  background: #4b5563;
+}
+
+/* 🎊 ANIMATIONS D'ENTRÉE */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inscription-form {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.login-section {
+  animation: fadeInUp 0.8s ease-out;
+}
+
 /* 🎉 FÉLICITATIONS - CSS CHATIA COMPLET ! */
