@@ -777,49 +777,6 @@ useEffect(() => {
       <SchoolsScrollBanner />
 
       
-      {/* Sélecteur de documents */}
-      {student && allDocuments.length > 0 && (
-        <div className="document-selector">
-          <h3>📄 Vos Documents Analysés</h3>
-          <div className="documents-grid">
-            {allDocuments.map((doc) => (
-              <button
-                key={doc.id}
-                className={`document-card ${selectedDocumentId === doc.id ? 'active' : ''}`}
-                onClick={() => switchDocument(doc.id)}
-              >
-                <button
-                  className="document-delete-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteDocument(doc.id, doc.nom_original);
-                  }}
-                  title={`Supprimer "${doc.nom_original}"`}
-                >
-                  🗑️
-                </button>
-                
-                <div className="doc-icon">📄</div>
-                <div className="doc-info">
-                  <div className="doc-name">{doc.nom_original}</div>
-                  <div className="doc-meta">
-                    <span>{doc.matiere || 'Général'}</span>
-                    <span>{new Date(doc.date_upload).toLocaleDateString('fr-FR')}</span>
-                  </div>
-                </div>
-                {selectedDocumentId === doc.id && <div className="doc-active">✓</div>}
-              </button>
-            ))}
-          </div>
-          <button 
-            className="add-document-btn"
-            onClick={() => setActiveTab('upload')}
-          >
-            ➕ Charger un autre document
-          </button>
-        </div>
-      )}
-
       {/* Barre de progression */}
       <div className="progress-container">
         <div className="progress-bar">
