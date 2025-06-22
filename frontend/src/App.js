@@ -13,9 +13,7 @@ console.log('🔗 API_URL FORCÉ RENDER:', API_URL);
 console.log('🎉 Hébergement: Render (Backend) + Vercel (Frontend)');
 console.log('✅ ÉtudIA v4.0 - READY TO ROCK!');
 
-  // 🏫 COMPOSANT DÉFILEMENT ÉCOLES RÉVOLUTIONNAIRE POUR ÉTUDIA
-// À ajouter dans App.js juste après la section user-tokens-display-v2
-
+// 🏫 Composant des écoles - ajoute AVANT function App()
 const SchoolsScrollBanner = () => {
   const schools = [
     { name: 'Lycée Classique d\'Abidjan', emoji: '🏛️', students: 247 },
@@ -34,6 +32,11 @@ const SchoolsScrollBanner = () => {
 
   return (
     <div className="schools-scroll-banner">
+      <div className="schools-banner-header">
+        <h4>🏫 Écoles Partenaires ÉtudIA - Côte d'Ivoire</h4>
+        <span className="total-schools">{schools.length}+ établissements connectés</span>
+      </div>
+      
       <div className="schools-scroll-content">
         <div className="schools-scroll-track">
           {/* Première série d'écoles */}
@@ -50,7 +53,7 @@ const SchoolsScrollBanner = () => {
             </div>
           ))}
           
-          {/* Deuxième série pour continuité du défilement */}
+          {/* Deuxième série pour continuité du scroll */}
           {schools.map((school, index) => (
             <div key={`school-2-${index}`} className="school-card">
               <div className="school-emoji">{school.emoji}</div>
@@ -64,12 +67,6 @@ const SchoolsScrollBanner = () => {
             </div>
           ))}
         </div>
-      </div>
-      
-      {/* Titre de section */}
-      <div className="schools-banner-header">
-        <h4>🏫 Écoles Partenaires ÉtudIA - Côte d'Ivoire</h4>
-        <span className="total-schools">{schools.length}+ établissements connectés</span>
       </div>
     </div>
   );
