@@ -777,7 +777,6 @@ useEffect(() => {
       <SchoolsScrollBanner />
 
       
-
       {/* Sélecteur de documents */}
       {student && allDocuments.length > 0 && (
         <div className="document-selector">
