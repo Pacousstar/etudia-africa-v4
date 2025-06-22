@@ -894,6 +894,9 @@ useEffect(() => {
   </div>
 )}
 
+{/* Défilement des écoles */}
+      {student && <SchoolsScrollBanner />}
+
       {/* Sélecteur de documents */}
       {student && allDocuments.length > 0 && (
         <div className="document-selector">
