@@ -2277,7 +2277,7 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
   
 `}</style>
       
-   
+    </div>
   );
 };
 
