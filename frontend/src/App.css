@@ -6825,3 +6825,422 @@ body {
     font-size: 20px !important;
   }
 }
+/* ===================================================================
+   🏫 DÉFILEMENT ÉCOLES RÉVOLUTIONNAIRE - AJOUTE DANS APP.CSS
+   =================================================================== */
+
+.schools-scroll-banner {
+  background: linear-gradient(135deg, 
+    #FF8C00 0%, 
+    #FF6B35 50%, 
+    #F7931E 100%
+  );
+  border-radius: 20px;
+  margin: 2rem auto;
+  max-width: 1200px;
+  padding: 2rem;
+  box-shadow: 
+    0 12px 40px rgba(255, 140, 0, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.schools-banner-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.schools-banner-header h4 {
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #ffffff, #fff5f3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.total-schools {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* 🎯 CONTENEUR DÉFILEMENT */
+.schools-scroll-content {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  mask: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+  -webkit-mask: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+}
+
+.schools-scroll-track {
+  display: flex;
+  gap: 2rem;
+  animation: scrollSchools 60s linear infinite;
+  width: max-content;
+}
+
+/* 🌊 ANIMATION DÉFILEMENT */
+@keyframes scrollSchools {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* 🏫 CARTES ÉCOLES MAGNIFIQUES */
+.school-card {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95), 
+    rgba(255, 255, 255, 0.85)
+  );
+  border-radius: 15px;
+  padding: 1.5rem;
+  min-width: 280px;
+  max-width: 280px;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.school-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #32CD32, #10B981);
+  border-radius: 15px 15px 0 0;
+}
+
+.school-card:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 12px 35px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 1), 
+    rgba(255, 255, 255, 0.95)
+  );
+}
+
+/* 🎨 EMOJI ÉCOLE */
+.school-emoji {
+  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, 
+    rgba(255, 140, 0, 0.15), 
+    rgba(255, 107, 53, 0.15)
+  );
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: floatEmoji 3s ease-in-out infinite;
+  border: 2px solid rgba(255, 140, 0, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 140, 0, 0.2);
+}
+
+@keyframes floatEmoji {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(2deg); }
+}
+
+/* 📝 INFO ÉCOLE */
+.school-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.school-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1F2937;
+  line-height: 1.3;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #1F2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.school-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.student-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6366F1;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.active-indicator {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #10B981;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: activeGlow 2s ease-in-out infinite;
+}
+
+@keyframes activeGlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* 🎯 EFFET PAUSE AU HOVER GLOBAL */
+.schools-scroll-banner:hover .schools-scroll-track {
+  animation-play-state: paused;
+}
+
+/* 📱 RESPONSIVE MOBILE PARFAIT */
+@media (max-width: 1024px) {
+  .schools-scroll-banner {
+    margin: 1.5rem;
+    padding: 1.5rem;
+  }
+  
+  .school-card {
+    min-width: 250px;
+    max-width: 250px;
+    padding: 1.25rem;
+  }
+  
+  .school-emoji {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+  }
+  
+  .school-name {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .schools-scroll-banner {
+    margin: 1rem;
+    padding: 1.25rem;
+    border-radius: 15px;
+  }
+  
+  .schools-banner-header h4 {
+    font-size: 1.2rem;
+  }
+  
+  .total-schools {
+    font-size: 0.9rem;
+  }
+  
+  .schools-scroll-track {
+    gap: 1.5rem;
+  }
+  
+  .school-card {
+    min-width: 220px;
+    max-width: 220px;
+    padding: 1rem;
+  }
+  
+  .school-emoji {
+    width: 45px;
+    height: 45px;
+    font-size: 1.8rem;
+  }
+  
+  .school-name {
+    font-size: 0.9rem;
+  }
+  
+  .student-count {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .schools-scroll-banner {
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+  
+  .schools-banner-header h4 {
+    font-size: 1.1rem;
+  }
+  
+  .school-card {
+    min-width: 200px;
+    max-width: 200px;
+    padding: 0.875rem;
+    gap: 1rem;
+  }
+  
+  .school-emoji {
+    width: 40px;
+    height: 40px;
+    font-size: 1.6rem;
+  }
+  
+  .school-name {
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+  
+  .student-count {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+  }
+  
+  .active-indicator {
+    font-size: 0.7rem;
+  }
+}
+
+/* 🌙 MODE SOMBRE */
+.dark-mode .schools-scroll-banner {
+  background: linear-gradient(135deg, 
+    #D2691E 0%, 
+    #FF6B35 50%, 
+    #FF8C00 100%
+  );
+  box-shadow: 
+    0 12px 40px rgba(210, 105, 30, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .school-card {
+  background: linear-gradient(135deg, 
+    rgba(31, 41, 55, 0.95), 
+    rgba(31, 41, 55, 0.85)
+  );
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .school-name {
+  color: #F9FAFB;
+  background: linear-gradient(135deg, #F9FAFB, #E5E7EB);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark-mode .student-count {
+  color: #818CF8;
+  background: rgba(129, 140, 248, 0.2);
+}
+
+.dark-mode .active-indicator {
+  color: #34D399;
+}
+
+/* ✨ EFFETS SPÉCIAUX SUPPLÉMENTAIRES */
+.schools-scroll-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  border-radius: 20px;
+}
+
+/* 🎯 OPTIMISATIONS PERFORMANCE */
+.schools-scroll-track {
+  will-change: transform;
+  contain: layout style;
+}
+
+.school-card {
+  will-change: transform;
+  contain: layout style paint;
+}
+
+.school-emoji {
+  will-change: transform;
+}
+
+/* 🔄 ANIMATION ALTERNATIVE POUR RÉDUIRE LA CHARGE */
+@media (prefers-reduced-motion: reduce) {
+  .schools-scroll-track {
+    animation: scrollSchoolsReduced 120s linear infinite;
+  }
+  
+  .school-emoji,
+  .active-indicator {
+    animation: none;
+  }
+}
+
+@keyframes scrollSchoolsReduced {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-25%); }
+}
+
+/* 📊 INDICATEURS DE PERFORMANCE */
+.school-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent
+  );
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.school-card:hover::after {
+  left: 100%;
+}
