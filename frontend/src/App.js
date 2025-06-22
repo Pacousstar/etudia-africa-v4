@@ -718,7 +718,70 @@ useEffect(() => {
      {/* 🔋 NOUVEAU DESIGN TOKENS RÉVOLUTIONNAIRE */}
 {student && (
   <div className="user-tokens-display-v2">
-    <div className="tokens-container">
+
+
+  // 🏫 COMPOSANT DÉFILEMENT ÉCOLES RÉVOLUTIONNAIRE POUR ÉTUDIA
+// À ajouter dans App.js juste après la section user-tokens-display-v2
+
+const SchoolsScrollBanner = () => {
+  const schools = [
+    { name: 'Lycée Classique d\'Abidjan', emoji: '🏛️', students: 247 },
+    { name: 'Lycée Technique d\'Abidjan', emoji: '⚙️', students: 189 },
+    { name: 'Collège Notre-Dame d\'Afrique', emoji: '⛪', students: 156 },
+    { name: 'Lycée Sainte-Marie de Cocody', emoji: '🌟', students: 203 },
+    { name: 'Institution Sainte-Marie de Cocody', emoji: '✨', students: 145 },
+    { name: 'Cours Secondaire Catholique', emoji: '📚', students: 178 },
+    { name: 'Lycée Municipal d\'Abidjan', emoji: '🏛️', students: 234 },
+    { name: 'Groupe Scolaire Les Génies', emoji: '🧠', students: 167 },
+    { name: 'École Internationale WASCAL', emoji: '🌍', students: 198 },
+    { name: 'Lycée Moderne de Bouaké', emoji: '🏢', students: 134 },
+    { name: 'Collège Henri Konan Bédié', emoji: '👨‍🎓', students: 176 },
+    { name: 'École Privée Excellence', emoji: '🏆', students: 123 }
+  ];
+
+  return (
+    <div className="schools-scroll-banner">
+      <div className="schools-scroll-content">
+        <div className="schools-scroll-track">
+          {/* Première série d'écoles */}
+          {schools.map((school, index) => (
+            <div key={`school-1-${index}`} className="school-card">
+              <div className="school-emoji">{school.emoji}</div>
+              <div className="school-info">
+                <div className="school-name">{school.name}</div>
+                <div className="school-stats">
+                  <span className="student-count">{school.students} élèves</span>
+                  <span className="active-indicator">🟢 Actif</span>
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {/* Deuxième série pour continuité du défilement */}
+          {schools.map((school, index) => (
+            <div key={`school-2-${index}`} className="school-card">
+              <div className="school-emoji">{school.emoji}</div>
+              <div className="school-info">
+                <div className="school-name">{school.name}</div>
+                <div className="school-stats">
+                  <span className="student-count">{school.students} élèves</span>
+                  <span className="active-indicator">🟢 Actif</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Titre de section */}
+      <div className="schools-banner-header">
+        <h4>🏫 Écoles Partenaires ÉtudIA - Côte d'Ivoire</h4>
+        <span className="total-schools">{schools.length}+ établissements connectés</span>
+      </div>
+    </div>
+  );
+};
+    <div className="tokens-container">i
       <div className="tokens-header-main">
         <div className="tokens-icon-wrapper">
           <span className="tokens-icon">🔋</span>
