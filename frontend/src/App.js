@@ -773,6 +773,9 @@ useEffect(() => {
         </div>
       </header>
 
+      {/* 🏫 Défilement des écoles - Position optimale */}
+      <SchoolsScrollBanner />
+
       {/* Statistiques utilisateur */}
      {/* 🔋 NOUVEAU DESIGN TOKENS RÉVOLUTIONNAIRE */}
 {student && (
@@ -894,8 +897,6 @@ useEffect(() => {
   </div>
 )}
 
-{/* Défilement des écoles */}
-      {student && <SchoolsScrollBanner />}
 
       {/* Sélecteur de documents */}
       {student && allDocuments.length > 0 && (
