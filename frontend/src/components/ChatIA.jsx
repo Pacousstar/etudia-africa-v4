@@ -2048,6 +2048,231 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
     width: 100%;
     max-width: 100%;
   }
+
+/* 📱 CORRECTION CENTRAGE MODES MOBILE - AJOUTE À LA FIN DU CSS ChatIA.jsx */
+
+/* 🎯 AMÉLIORATION BOUTONS MODES MOBILE */
+.mode-button {
+  background: white !important;
+  border: 2px solid rgba(99, 102, 241, 0.2) !important;
+  border-radius: 1rem !important;
+  padding: 1.75rem 1.5rem !important; /* Padding augmenté */
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  position: relative !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  /* 🎯 CENTRAGE PARFAIT */
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  min-height: 160px !important; /* Hauteur minimum pour mobile */
+}
+
+/* 🎨 ICÔNES MODES CENTRÉES ET STYLÉES */
+.mode-icon {
+  font-size: 2.5rem !important; /* Agrandie */
+  margin-bottom: 1rem !important;
+  display: block !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  /* 🌟 Effet brillant */
+  filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.3)) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* 🎯 CONTENU MODES CENTRÉ */
+.mode-content {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 100% !important;
+  gap: 0.75rem !important;
+}
+
+/* ✨ TITRE MODES STYLÉ */
+.mode-title {
+  font-size: 1.25rem !important; /* Agrandie */
+  font-weight: 800 !important; /* Plus gras */
+  color: #1F2937 !important;
+  margin: 0 !important;
+  line-height: 1.3 !important;
+  text-align: center !important;
+  /* 🎨 Gradient de couleur */
+  background: linear-gradient(135deg, #1F2937, #374151) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* 📝 DESCRIPTION MODES STYLÉE */
+.mode-description {
+  font-size: 1rem !important; /* Agrandie */
+  color: #6B7280 !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  text-align: center !important;
+  font-weight: 500 !important; /* Plus défini */
+  max-width: 100% !important;
+  padding: 0 0.5rem !important;
+}
+
+/* 🏆 BADGE BÉNÉFICE STYLÉ */
+.mode-benefit {
+  font-size: 0.9rem !important; /* Agrandie */
+  font-weight: 700 !important; /* Plus gras */
+  color: #059669 !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1)) !important;
+  padding: 0.5rem 1rem !important; /* Padding augmenté */
+  border-radius: 0.75rem !important; /* Plus arrondi */
+  display: inline-block !important;
+  text-align: center !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* 🎨 EFFETS HOVER AMÉLIORÉS */
+.mode-button:hover {
+  transform: translateY(-5px) scale(1.02) !important;
+  box-shadow: 0 15px 35px rgba(99, 102, 241, 0.25) !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+.mode-button:hover .mode-icon {
+  transform: scale(1.1) !important;
+  filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.4)) !important;
+}
+
+.mode-button:hover .mode-title {
+  background: linear-gradient(135deg, #6366F1, #8B5CF6) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* 🎯 COULEURS SPÉCIFIQUES PAR MODE */
+.mode-button.normal:hover {
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  box-shadow: 0 15px 35px rgba(99, 102, 241, 0.3) !important;
+}
+
+.mode-button.step-by-step:hover {
+  border-color: rgba(255, 140, 0, 0.5) !important;
+  box-shadow: 0 15px 35px rgba(255, 140, 0, 0.3) !important;
+}
+
+.mode-button.direct-solution:hover {
+  border-color: rgba(50, 205, 50, 0.5) !important;
+  box-shadow: 0 15px 35px rgba(50, 205, 50, 0.3) !important;
+}
+
+/* 🌟 MODE ACTIF HIGHLIGHT */
+.mode-button.active {
+  border-color: rgba(99, 102, 241, 0.6) !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05)) !important;
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2) !important;
+}
+
+.mode-button.active .mode-icon {
+  filter: drop-shadow(0 3px 10px rgba(99, 102, 241, 0.4)) !important;
+}
+
+/* 📱 RESPONSIVE MOBILE SPÉCIFIQUE */
+@media (max-width: 768px) {
+  .mode-button {
+    min-height: 140px !important; /* Hauteur mobile */
+    padding: 1.5rem 1.25rem !important;
+  }
+  
+  .mode-icon {
+    font-size: 2.25rem !important; /* Légèrement plus petit sur mobile */
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .mode-title {
+    font-size: 1.15rem !important;
+  }
+  
+  .mode-description {
+    font-size: 0.95rem !important;
+    line-height: 1.4 !important;
+  }
+  
+  .mode-benefit {
+    font-size: 0.85rem !important;
+    padding: 0.4rem 0.8rem !important;
+  }
+}
+
+/* 📱 TRÈS PETITS ÉCRANS */
+@media (max-width: 480px) {
+  .mode-button {
+    min-height: 130px !important;
+    padding: 1.25rem 1rem !important;
+  }
+  
+  .mode-icon {
+    font-size: 2rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .mode-title {
+    font-size: 1.1rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  .mode-description {
+    font-size: 0.9rem !important;
+    padding: 0 0.25rem !important;
+  }
+  
+  .mode-benefit {
+    font-size: 0.8rem !important;
+    padding: 0.35rem 0.7rem !important;
+  }
+}
+
+/* 🌙 DARK MODE MODES */
+.dark-mode .mode-button {
+  background: #374151 !important;
+  border-color: rgba(156, 163, 175, 0.3) !important;
+  color: #F9FAFB !important;
+}
+
+.dark-mode .mode-title {
+  color: #F9FAFB !important;
+  background: linear-gradient(135deg, #F9FAFB, #E5E7EB) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+.dark-mode .mode-description {
+  color: #D1D5DB !important;
+}
+
+.dark-mode .mode-benefit {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #34D399 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.dark-mode .mode-button:hover .mode-title {
+  background: linear-gradient(135deg, #6366F1, #8B5CF6) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+  
 `}</style>
       
     </div>
