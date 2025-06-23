@@ -1157,101 +1157,128 @@ useEffect(() => {
 )}
       </main>
 
-{/* 📊 STATISTIQUES UTILISATEUR RÉVOLUTIONNAIRES */}
-      {student && (
-        <div className="user-comprehensive-stats">
-          <div className="stats-header-revolutionary">
-            <h2>📊 Tes Statistiques, {student?.nom?.split(' ')[0] || 'Élève'} !</h2>
-            <p>Performance et progression avec ÉtudIA</p>
+
+{/* 📊 STATISTIQUES UTILISATEUR TESLA RÉVOLUTIONNAIRES */}
+{student && (
+  <div className="user-comprehensive-stats tesla-enhanced">
+    {/* 🚀 HEADER TESLA AVEC MOBILE PARFAIT */}
+    <div className="stats-header-revolutionary-tesla">
+      <div className="tesla-background-effect"></div>
+      <div className="tesla-particles"></div>
+      
+      <h2 className="tesla-title">
+        <span className="tesla-icon">📊</span>
+        <span className="tesla-text">
+          <span className="tesla-highlight">Tes Statistiques</span><span className="mobile-break">,</span> 
+          <span className="tesla-name">{prenomEleve}</span><span className="exclamation">!</span>
+        </span>
+        <div className="tesla-glow-effect"></div>
+      </h2>
+      
+      <p className="tesla-subtitle">
+        <span className="performance-text">Performance</span> 
+        <span className="connector">et</span> 
+        <span className="progression-text">progression</span> 
+        <span className="etudia-brand">avec ÉtudIA</span>
+      </p>
+      
+      {/* Vagues d'énergie Tesla */}
+      <div className="tesla-energy-waves">
+        <div className="wave wave-1"></div>
+        <div className="wave wave-2"></div>
+        <div className="wave wave-3"></div>
+      </div>
+    </div>
+
+    {/* 🎯 GRILLE STATISTIQUES (garde ton code existant) */}
+    <div className="stats-grid-revolutionary">
+      <div className="stat-card-revolutionary conversations">
+        <div className="stat-icon-wrapper">
+          <span className="stat-icon">💬</span>
+          <div className="stat-pulse"></div>
+        </div>
+        <div className="stat-content">
+          <div className="stat-number-animated" data-target="{userStats.conversations}">
+            {userStats.conversations}
           </div>
+          <div className="stat-label">Conversations</div>
+          <div className="stat-trend positive">+{Math.round(userStats.conversations / 7)} cette semaine</div>
+        </div>
+      </div>
 
-          <div className="stats-grid-revolutionary">
-            <div className="stat-card-revolutionary conversations">
-              <div className="stat-icon-wrapper">
-                <span className="stat-icon">💬</span>
-                <div className="stat-pulse"></div>
-              </div>
-              <div className="stat-content">
-                <div className="stat-number-animated" data-target="{userStats.conversations}">
-                  {userStats.conversations}
-                </div>
-                <div className="stat-label">Conversations</div>
-                <div className="stat-trend positive">+{Math.round(userStats.conversations / 7)} cette semaine</div>
-              </div>
-            </div>
-
-            <div className="stat-card-revolutionary tokens">
-              <div className="stat-icon-wrapper">
-                <span className="stat-icon">🔋</span>
-                <div className="stat-pulse"></div>
-              </div>
-              <div className="stat-content">
-                <div className="stat-number-animated" data-target="{userStats.tokens_used}">
-                  {userStats.tokens_used.toLocaleString('fr-FR')}
-                </div>
-                <div className="stat-label">Tokens utilisés</div>
-                <div className="stat-progress">
-                  <div className="progress-bar-revolutionary">
-                    <div 
-                      className="progress-fill-revolutionary"
-                      style={{ width: `${Math.min(100, (userStats.tokens_used / 95000) * 100)}%` }}
-                    ></div>
-                  </div>
-                  <span className="progress-text">{Math.round((userStats.tokens_used / 95000) * 100)}% utilisé</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="stat-card-revolutionary documents">
-              <div className="stat-icon-wrapper">
-                <span className="stat-icon">📄</span>
-                <div className="stat-pulse"></div>
-              </div>
-              <div className="stat-content">
-                <div className="stat-number-animated" data-target="{userStats.documents}">
-                  {userStats.documents}
-                </div>
-                <div className="stat-label">Documents analysés</div>
-                <div className="stat-trend neutral">OCR 95% précision</div>
-              </div>
-            </div>
-
-            <div className="stat-card-revolutionary level">
-              <div className="stat-icon-wrapper">
-                <span className="stat-icon">🎯</span>
-                <div className="stat-pulse"></div>
-              </div>
-              <div className="stat-content">
-                <div className="stat-number-animated">
-                  Niveau {userStats.level}/5
-                </div>
-                <div className="stat-label">Expertise ÉtudIA</div>
-                <div className="level-stars">
-                  {'⭐'.repeat(userStats.level)}{'☆'.repeat(5 - userStats.level)}
-                </div>
-              </div>
-            </div>
+      <div className="stat-card-revolutionary tokens">
+        <div className="stat-icon-wrapper">
+          <span className="stat-icon">🔋</span>
+          <div className="stat-pulse"></div>
+        </div>
+        <div className="stat-content">
+          <div className="stat-number-animated" data-target="{userStats.tokens_used}">
+            {userStats.tokens_used.toLocaleString('fr-FR')}
           </div>
-
-          <div className="performance-metrics">
-            <div className="metric-item">
-              <span className="metric-label">Efficacité moyenne</span>
-              <span className="metric-value">
-                {userStats.conversations > 0 ? 
-                  Math.round(userStats.tokens_used / userStats.conversations) : 0} tokens/conv
-              </span>
+          <div className="stat-label">Tokens utilisés</div>
+          <div className="stat-progress">
+            <div className="progress-bar-revolutionary">
+              <div 
+                className="progress-fill-revolutionary"
+                style={{ width: `${Math.min(100, (userStats.tokens_used / 95000) * 100)}%` }}
+              ></div>
             </div>
-            <div className="metric-item">
-              <span className="metric-label">Temps d'apprentissage</span>
-              <span className="metric-value">{userStats.conversations * 5} minutes</span>
-            </div>
-            <div className="metric-item">
-              <span className="metric-label">Progression</span>
-              <span className="metric-value">+{userStats.level * 20}% cette semaine</span>
-            </div>
+            <span className="progress-text">{Math.round((userStats.tokens_used / 95000) * 100)}% utilisé</span>
           </div>
         </div>
-      )}
+      </div>
+
+      <div className="stat-card-revolutionary documents">
+        <div className="stat-icon-wrapper">
+          <span className="stat-icon">📄</span>
+          <div className="stat-pulse"></div>
+        </div>
+        <div className="stat-content">
+          <div className="stat-number-animated" data-target="{userStats.documents}">
+            {userStats.documents}
+          </div>
+          <div className="stat-label">Documents analysés</div>
+          <div className="stat-trend neutral">OCR 95% précision</div>
+        </div>
+      </div>
+
+      <div className="stat-card-revolutionary level">
+        <div className="stat-icon-wrapper">
+          <span className="stat-icon">🎯</span>
+          <div className="stat-pulse"></div>
+        </div>
+        <div className="stat-content">
+          <div className="stat-number-animated">
+            Niveau {userStats.level}/5
+          </div>
+          <div className="stat-label">Expertise ÉtudIA</div>
+          <div className="level-stars">
+            {'⭐'.repeat(userStats.level)}{'☆'.repeat(5 - userStats.level)}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* 📊 MÉTRIQUES PERFORMANCE (garde ton code existant) */}
+    <div className="performance-metrics">
+      <div className="metric-item">
+        <span className="metric-label">Efficacité moyenne</span>
+        <span className="metric-value">
+          {userStats.conversations > 0 ? 
+            Math.round(userStats.tokens_used / userStats.conversations) : 0} tokens/conv
+        </span>
+      </div>
+      <div className="metric-item">
+        <span className="metric-label">Temps d'apprentissage</span>
+        <span className="metric-value">{userStats.conversations * 5} minutes</span>
+      </div>
+      <div className="metric-item">
+        <span className="metric-label">Progression</span>
+        <span className="metric-value">+{userStats.level * 20}% cette semaine</span>
+      </div>
+    </div>
+  </div>
+)}
 
             
       {/* 🔧 FOOTER CORRIGÉ SANS COMMENTAIRES */}
