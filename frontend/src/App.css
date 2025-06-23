@@ -8489,3 +8489,150 @@ body {
     transform: none !important;
   }
 }
+
+/* 🎯 SECTION STATISTIQUES AVEC MARGES BACKGROUND - AJOUTE DANS APP.CSS */
+
+/* ===================================================================
+   📊 ESPACEMENT SECTION STATISTIQUES POUR VOIR BACKGROUND
+   ================================================================= */
+
+.user-comprehensive-stats.tesla-enhanced {
+  margin: 2rem auto;
+  max-width: 1000px; /* Réduit de 1200px */
+  padding: 0 2rem; /* Marges latérales pour voir background */
+  width: calc(100% - 4rem); /* Largeur réduite */
+  box-sizing: border-box;
+}
+
+/* 🎯 HEADER TESLA AVEC MARGES */
+.stats-header-revolutionary-tesla {
+  position: relative;
+  padding: 2rem 1.5rem; /* Réduit padding */
+  text-align: center;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, 
+    rgba(0, 120, 255, 0.12) 0%,
+    rgba(100, 200, 255, 0.08) 25%,
+    rgba(255, 100, 150, 0.08) 50%,
+    rgba(150, 100, 255, 0.12) 75%,
+    rgba(0, 255, 200, 0.12) 100%
+  );
+  border: 2px solid rgba(0, 120, 255, 0.3);
+  background-clip: padding-box;
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 0 60px rgba(0, 120, 255, 0.25),
+    inset 0 0 60px rgba(255, 255, 255, 0.08);
+  animation: teslaGlow 4s ease-in-out infinite;
+  margin-bottom: 1.5rem; /* Réduit marge */
+  /* 🎯 EFFET FLOTTANT POUR VOIR BACKGROUND */
+  box-shadow: 
+    0 0 60px rgba(0, 120, 255, 0.25),
+    0 10px 40px rgba(0, 0, 0, 0.1),
+    inset 0 0 60px rgba(255, 255, 255, 0.08);
+}
+
+/* 📊 GRILLE STATS AVEC MARGES */
+.stats-grid-revolutionary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0; /* Réduit marges */
+  max-width: 100%; /* Utilise toute la largeur disponible */
+  padding: 0; /* Supprime padding interne */
+}
+
+/* 📊 MÉTRIQUES PERFORMANCE AVEC MARGES */
+.performance-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0; /* Réduit marges */
+  padding: 1.5rem; /* Réduit padding */
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 1rem;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  backdrop-filter: blur(10px);
+  /* 🎯 EFFET FLOTTANT */
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* ===================================================================
+   📱 RESPONSIVE AVEC MARGES ADAPTATIVES
+   ================================================================= */
+
+/* 📱 TABLETTES */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .user-comprehensive-stats.tesla-enhanced {
+    max-width: 900px;
+    padding: 0 1.5rem; /* Marges réduites */
+    width: calc(100% - 3rem);
+  }
+  
+  .stats-header-revolutionary-tesla {
+    padding: 1.75rem 1.25rem;
+  }
+}
+
+/* 📱 MOBILES */
+@media (max-width: 767px) {
+  .user-comprehensive-stats.tesla-enhanced {
+    max-width: 100%;
+    padding: 0 1rem; /* Marges mobiles */
+    width: calc(100% - 2rem);
+    margin: 1.5rem auto;
+  }
+  
+  .stats-header-revolutionary-tesla {
+    padding: 1.5rem 1rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .performance-metrics {
+    padding: 1.25rem;
+    grid-template-columns: 1fr; /* Une colonne sur mobile */
+  }
+}
+
+/* 📱 TRÈS PETITS MOBILES */
+@media (max-width: 480px) {
+  .user-comprehensive-stats.tesla-enhanced {
+    padding: 0 0.75rem;
+    width: calc(100% - 1.5rem);
+  }
+  
+  .stats-header-revolutionary-tesla {
+    padding: 1.25rem 0.875rem;
+  }
+  
+  .performance-metrics {
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+}
+
+/* 🌙 MODE SOMBRE AVEC CONTRASTE BACKGROUND */
+.dark-mode .user-comprehensive-stats.tesla-enhanced {
+  /* Contraste renforcé pour voir background sombre */
+}
+
+.dark-mode .stats-header-revolutionary-tesla {
+  background: linear-gradient(135deg, 
+    rgba(0, 120, 255, 0.18) 0%,
+    rgba(100, 200, 255, 0.12) 25%,
+    rgba(255, 100, 150, 0.12) 50%,
+    rgba(150, 100, 255, 0.18) 75%,
+    rgba(0, 255, 200, 0.18) 100%
+  );
+  border-color: rgba(0, 120, 255, 0.4);
+  box-shadow: 
+    0 0 80px rgba(0, 120, 255, 0.35),
+    0 15px 50px rgba(0, 0, 0, 0.3),
+    inset 0 0 80px rgba(255, 255, 255, 0.12);
+}
+
+.dark-mode .performance-metrics {
+  background: rgba(31, 41, 55, 0.8);
+  border-color: rgba(156, 163, 175, 0.3);
+}
