@@ -1251,60 +1251,58 @@ ${prenomEleve}, nous reprenons la conversation équilibrée. Tu peux à nouveau 
         <p>Votre tuteur IA personnel avec mémoire et modes d'apprentissage adaptatifs !</p>
         
         {/* 🔧 HEADER AMÉLIORÉ AVEC COMPTEUR TOKENS CORRIGÉ */}
-        <div className="student-profile-header-enhanced">
-          <div className="student-avatar-section">
-            <div className="student-avatar">
-              <span className="avatar-emoji">👤</span>
-              <div className="status-indicator online"></div>
-            </div>
-            <div className="student-main-info">
-              <h3 className="student-name-enhanced">{prenomEleve}</h3>
-              <span className="student-class">🎓 {classeEleve}</span>
-            </div>
-          </div>
-
-          <div className="student-stats-row">
-            <div className="stat-badge documents">
-              <span className="stat-icon">📄</span>
-              <span className="stat-value">{allDocuments?.length || 0}</span>
-              <span className="stat-label">documents</span>
-            </div>
-            
-            <div className="stat-badge mode">
-              <span className="stat-icon">💬</span>
-              <span className="stat-value">{
-                chatMode === 'step_by_step' ? 'Étape par Étape' :
-                chatMode === 'direct_solution' ? 'Solution Directe' : 'Normal'
-              }</span>
-            </div>
-            
-            <div className="stat-badge connection">
-              <span className="connection-dot online"></span>
-              <span className="connection-text">En ligne</span>
-            </div>
-          </div>
-
-          <div className="tokens-display-enhanced">
-            <div className="tokens-counter">
-              <span className="tokens-label">Tokens:</span>
-              <span className="tokens-numbers">
-                <span className="tokens-used">{tokenUsage.used_today.toLocaleString('fr-FR')}</span>
-                <span className="tokens-separator">/</span>
-                <span className="tokens-total">95 000</span>
+        <div className="student-profile-header">
+          <div className="student-info">
+            <span className="student-name">👤 {prenomEleve} • 🎓 {classeEleve}</span>
+            {learningProfile && (
+              <span className="learning-style">
+                🧠 Style: {learningProfile.style || 'adaptatif'}
               </span>
+            )}
+            {(documentContext || allDocuments.length > 0) && (
+              <span className="document-badge">
+                📄 {allDocuments.length > 0 ? 
+                  `${allDocuments.length} document(s)` : 
+                  'Document analysé'}
+              </span>
+            )}
+          </div>
+          
+          <div className="status-section">
+            <div className="current-mode" style={{ color: getModeColor(chatMode) }}>
+              <span className="mode-indicator">
+                {chatMode === 'step_by_step' ? '🔁 Étape par Étape' :
+                 chatMode === 'direct_solution' ? '✅ Solution Directe' :
+                 chatMode === 'audio' ? '🎤 Audio' : '💬 Normal'}
+              </span>
+              {chatMode === 'step_by_step' && (
+                <span className="step-counter">📊 Étape {currentStep}/{totalSteps}</span>
+              )}
             </div>
-            <div className="tokens-bar-mini">
-              <div 
-                className="tokens-fill-mini" 
-                style={{ 
-                  width: `${Math.min(100, (tokenUsage.used_today / 95000) * 100)}%`,
-                  backgroundColor: tokenUsage.used_today > 85000 ? '#EF4444' : 
-                                  tokenUsage.used_today > 50000 ? '#F59E0B' : '#32CD32'
-                }}
-              ></div>
+            
+            <div className="tokens-display">
+              <div className="tokens-bar">
+                <div 
+                  className="tokens-fill" 
+                  style={{ 
+                    width: `${Math.min(100, (tokenUsage.used_today / 95000) * 100)}%`,
+                    backgroundColor: tokenUsage.used_today > 85000 ? '#EF4444' : 
+                                    tokenUsage.used_today > 50000 ? '#F59E0B' : '#32CD32'
+                  }}
+                ></div>
+              </div>
+              <span className="tokens-text">
+                Tokens: {tokenUsage.used_today.toLocaleString('fr-FR')}/{(95000).toLocaleString('fr-FR')}
+              </span>
+              <div className="connection-status">
+                <div className={`status-dot ${connectionStatus}`}></div>
+                <span>{connectionStatus === 'online' ? 'En ligne' : 
+                       connectionStatus === 'offline' ? 'Hors ligne' : 'Connexion...'}</span>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
       <div className="chat-container">
         {/* 🔧 HEADER CONTRÔLES AMÉLIORÉ */}
