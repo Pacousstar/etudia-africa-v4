@@ -8138,3 +8138,354 @@ body {
     font-size: clamp(0.8rem, 4vw, 1rem);
   }
 }
+
+/* 🎯 CARDS STATISTIQUES COMPACTES STYLE BOUTONS - AJOUTE DANS APP.CSS */
+
+/* ===================================================================
+   📊 GRILLE STATISTIQUES COMPACTE TESLA
+   ================================================================= */
+
+.stats-grid-revolutionary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Plus petites */
+  gap: 1rem; /* Réduit de 1.5rem à 1rem */
+  margin: 2rem 0;
+  max-width: 800px; /* Largeur max réduite */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.stat-card-revolutionary {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  border-radius: 1rem; /* Réduit de 1.5rem */
+  padding: 1.25rem; /* Réduit de 2rem */
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  cursor: pointer; /* Style bouton */
+  min-height: 120px; /* Hauteur fixe réduite */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card-revolutionary:hover {
+  transform: translateY(-3px) scale(1.02); /* Réduit l'effet */
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.stat-card-revolutionary:active {
+  transform: translateY(-1px) scale(1.01);
+  transition: all 0.1s ease;
+}
+
+/* 🎯 ICÔNE COMPACTE */
+.stat-icon-wrapper {
+  position: relative;
+  margin: 0 auto 0.75rem; /* Réduit margin */
+  width: 50px; /* Réduit de 60px */
+  height: 50px; /* Réduit de 60px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-icon {
+  font-size: 1.8rem; /* Réduit de 2.5rem */
+  z-index: 2;
+  position: relative;
+}
+
+.stat-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: statPulse 3s ease-in-out infinite;
+  z-index: 1;
+}
+
+/* 📊 CONTENU COMPACT */
+.stat-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem; /* Réduit spacing */
+}
+
+.stat-number-animated {
+  font-size: 1.5rem; /* Réduit de 2.5rem */
+  font-weight: 800;
+  color: #1F2937;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.85rem; /* Réduit de 1rem */
+  font-weight: 600;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.stat-trend, .stat-progress {
+  font-size: 0.75rem; /* Réduit de 0.85rem */
+  font-weight: 500;
+}
+
+.stat-trend.positive {
+  color: #059669;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.2rem 0.5rem; /* Réduit padding */
+  border-radius: 0.5rem;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.stat-trend.neutral {
+  color: #6366F1;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+/* 🔋 BARRE DE PROGRESSION COMPACTE */
+.progress-bar-revolutionary {
+  width: 100%;
+  height: 6px; /* Réduit de 8px */
+  background: rgba(107, 114, 128, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 0.25rem 0;
+}
+
+.progress-fill-revolutionary {
+  height: 100%;
+  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+  position: relative;
+}
+
+.progress-text {
+  font-size: 0.7rem; /* Très petit */
+  color: #6B7280;
+  font-weight: 600;
+}
+
+/* ⭐ ÉTOILES COMPACTES */
+.level-stars {
+  font-size: 0.9rem; /* Réduit de 1.2rem */
+  letter-spacing: 1px;
+  margin-top: 0.25rem;
+}
+
+/* 🎨 COULEURS SPÉCIFIQUES PAR CARTE */
+.stat-card-revolutionary.conversations {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.stat-card-revolutionary.conversations:hover {
+  border-color: rgba(34, 197, 94, 0.6);
+  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.25);
+}
+
+.stat-card-revolutionary.tokens {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.stat-card-revolutionary.tokens:hover {
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.25);
+}
+
+.stat-card-revolutionary.documents {
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.stat-card-revolutionary.documents:hover {
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.25);
+}
+
+.stat-card-revolutionary.level {
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.stat-card-revolutionary.level:hover {
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.25);
+}
+
+/* ===================================================================
+   📱 RESPONSIVE MOBILE POUR CARDS COMPACTES
+   ================================================================= */
+
+/* 📱 TABLETTES */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .stats-grid-revolutionary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.875rem;
+    max-width: 600px;
+  }
+  
+  .stat-card-revolutionary {
+    min-height: 110px;
+    padding: 1rem;
+  }
+  
+  .stat-number-animated {
+    font-size: 1.3rem;
+  }
+  
+  .stat-icon {
+    font-size: 1.6rem;
+  }
+}
+
+/* 📱 MOBILES */
+@media (max-width: 767px) {
+  .stats-grid-revolutionary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+  }
+  
+  .stat-card-revolutionary {
+    min-height: 100px;
+    padding: 0.875rem;
+    border-radius: 0.875rem;
+  }
+  
+  .stat-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-icon {
+    font-size: 1.4rem;
+  }
+  
+  .stat-number-animated {
+    font-size: 1.2rem;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .stat-trend, .stat-progress {
+    font-size: 0.7rem;
+  }
+  
+  .level-stars {
+    font-size: 0.8rem;
+  }
+}
+
+/* 📱 TRÈS PETITS MOBILES */
+@media (max-width: 480px) {
+  .stats-grid-revolutionary {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  
+  .stat-card-revolutionary {
+    min-height: 90px;
+    padding: 0.75rem;
+  }
+  
+  .stat-icon-wrapper {
+    width: 35px;
+    height: 35px;
+    margin-bottom: 0.4rem;
+  }
+  
+  .stat-icon {
+    font-size: 1.2rem;
+  }
+  
+  .stat-number-animated {
+    font-size: 1.1rem;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+  
+  .stat-trend, .stat-progress {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+  }
+  
+  .progress-text {
+    font-size: 0.65rem;
+  }
+  
+  .level-stars {
+    font-size: 0.75rem;
+  }
+}
+
+/* 🌙 MODE SOMBRE CARDS COMPACTES */
+.dark-mode .stat-card-revolutionary {
+  background: rgba(31, 41, 55, 0.95);
+  border-color: rgba(156, 163, 175, 0.3);
+}
+
+.dark-mode .stat-number-animated {
+  color: #F9FAFB;
+}
+
+.dark-mode .stat-label {
+  color: #D1D5DB;
+}
+
+.dark-mode .progress-bar-revolutionary {
+  background: rgba(75, 85, 99, 0.4);
+}
+
+.dark-mode .progress-text {
+  color: #9CA3AF;
+}
+
+/* ⚡ ANIMATIONS OPTIMISÉES */
+@keyframes statPulse {
+  0%, 100% { 
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+/* 🚀 PERFORMANCE CARDS */
+.stat-card-revolutionary {
+  will-change: transform, box-shadow;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-card-revolutionary,
+  .stat-pulse {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .stat-card-revolutionary:hover {
+    transform: none !important;
+  }
+}
