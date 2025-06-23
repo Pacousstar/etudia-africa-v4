@@ -364,21 +364,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
             </div>
           </div>
 
-          {/* 🔧 CORRECTION: Ajout de la 4ème carte manquante */}
-          <div className="tip-card performance">
-            <div className="tip-icon">⚡</div>
-            <div className="tip-content">
-              <h4>Performance OCR</h4>
-              <ul>
-                <li>✅ Documents scannés en 300+ DPI</li>
-                <li>✅ Fond blanc uniforme</li>
-                <li>❌ Éviter les filigranes</li>
-                <li>❌ Pas de texte sur images</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
+          
 
       {/* Aperçu texte extrait */}
       {extractedText && uploadStatus === 'success' && (
