@@ -9015,3 +9015,354 @@ body {
     transform: none !important;
   }
 }
+
+/* 🚀 FEATURES CARDS COMPACTES TESLA - AJOUTE DANS APP.CSS */
+
+/* ===================================================================
+   🎯 GRILLE FONCTIONNALITÉS COMPACTE TESLA
+   ================================================================= */
+
+.features-grid.revolutionary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Réduit de 350px */
+  gap: 1rem; /* Réduit de 2rem */
+  margin: 2rem auto;
+  max-width: 1000px; /* Réduit de 1200px */
+  padding: 0 1rem;
+}
+
+.feature-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  border-radius: 1rem; /* Réduit de 1.5rem */
+  padding: 1.25rem; /* Réduit de 2rem */
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(15px);
+  cursor: pointer; /* Style bouton */
+  min-height: 140px; /* Réduit de 180px */
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  /* 🔥 EFFET TESLA */
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(249, 250, 251, 0.95) 100%
+  );
+}
+
+.feature-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 12px 35px rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.feature-card:active {
+  transform: translateY(-2px) scale(1.01);
+  transition: all 0.1s ease;
+}
+
+/* 🎯 ICÔNES COMPACTES TESLA */
+.feature-icon {
+  font-size: 2rem; /* Réduit de 3rem */
+  margin-bottom: 0.75rem; /* Réduit de 1rem */
+  display: block;
+  text-align: center;
+  filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.3));
+  animation: featureIconFloat 3s ease-in-out infinite;
+}
+
+.feature-title {
+  font-size: 1.1rem; /* Réduit de 1.3rem */
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 0.5rem; /* Réduit de 0.75rem */
+  line-height: 1.3;
+}
+
+.feature-description {
+  font-size: 0.85rem; /* Réduit de 1rem */
+  color: #6B7280;
+  line-height: 1.4;
+  margin-bottom: 0.75rem; /* Réduit de 1rem */
+  flex: 1;
+}
+
+/* 🔥 STATUS BADGES TESLA COMPACTS */
+.feature-status {
+  font-size: 0.75rem; /* Réduit de 0.85rem */
+  font-weight: 700;
+  padding: 0.3rem 0.75rem; /* Réduit padding */
+  border-radius: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  margin-top: auto;
+}
+
+.status-active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+  animation: statusPulseGreen 2s ease-in-out infinite;
+}
+
+.status-special {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+  color: #D97706;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+  animation: statusPulseOrange 2s ease-in-out infinite;
+}
+
+/* 🎨 COULEURS SPÉCIFIQUES PAR CARTE TESLA */
+.feature-card.memory {
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.feature-card.memory:hover {
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 12px 35px rgba(139, 92, 246, 0.25);
+}
+
+.feature-card.memory .feature-icon {
+  color: #8B5CF6;
+}
+
+.feature-card.step-mode {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.feature-card.step-mode:hover {
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 12px 35px rgba(245, 158, 11, 0.25);
+}
+
+.feature-card.step-mode .feature-icon {
+  color: #F59E0B;
+}
+
+.feature-card.direct-mode {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.feature-card.direct-mode:hover {
+  border-color: rgba(34, 197, 94, 0.6);
+  box-shadow: 0 12px 35px rgba(34, 197, 94, 0.25);
+}
+
+.feature-card.direct-mode .feature-icon {
+  color: #22C55E;
+}
+
+.feature-card.ocr {
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.feature-card.ocr:hover {
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 12px 35px rgba(99, 102, 241, 0.25);
+}
+
+.feature-card.ocr .feature-icon {
+  color: #6366F1;
+}
+
+.feature-card.protection {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.feature-card.protection:hover {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 12px 35px rgba(239, 68, 68, 0.25);
+}
+
+.feature-card.protection .feature-icon {
+  color: #EF4444;
+}
+
+.feature-card.africa {
+  border-color: rgba(255, 140, 0, 0.3);
+}
+
+.feature-card.africa:hover {
+  border-color: rgba(255, 140, 0, 0.6);
+  box-shadow: 0 12px 35px rgba(255, 140, 0, 0.25);
+}
+
+.feature-card.africa .feature-icon {
+  color: #FF8C00;
+}
+
+/* ===================================================================
+   📱 RESPONSIVE FEATURES COMPACTES
+   ================================================================= */
+
+/* 📱 TABLETTES */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .features-grid.revolutionary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.875rem;
+    max-width: 700px;
+  }
+  
+  .feature-card {
+    min-height: 130px;
+    padding: 1rem;
+  }
+  
+  .feature-icon {
+    font-size: 1.75rem;
+  }
+  
+  .feature-title {
+    font-size: 1rem;
+  }
+  
+  .feature-description {
+    font-size: 0.8rem;
+  }
+}
+
+/* 📱 MOBILES */
+@media (max-width: 767px) {
+  .features-grid.revolutionary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin: 1.5rem auto;
+    padding: 0 0.75rem;
+  }
+  
+  .feature-card {
+    min-height: 120px;
+    padding: 0.875rem;
+    border-radius: 0.875rem;
+  }
+  
+  .feature-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .feature-title {
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .feature-description {
+    font-size: 0.75rem;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+  
+  .feature-status {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.6rem;
+  }
+}
+
+/* 📱 TRÈS PETITS MOBILES */
+@media (max-width: 480px) {
+  .features-grid.revolutionary {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    padding: 0 0.5rem;
+  }
+  
+  .feature-card {
+    min-height: 110px;
+    padding: 0.75rem;
+  }
+  
+  .feature-icon {
+    font-size: 1.3rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .feature-title {
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+  
+  .feature-description {
+    font-size: 0.7rem;
+    line-height: 1.25;
+  }
+  
+  .feature-status {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+  }
+}
+
+/* 🌙 MODE SOMBRE FEATURES */
+.dark-mode .feature-card {
+  background: linear-gradient(135deg, 
+    rgba(31, 41, 55, 0.95) 0%,
+    rgba(17, 24, 39, 0.95) 100%
+  );
+  border-color: rgba(156, 163, 175, 0.3);
+}
+
+.dark-mode .feature-title {
+  color: #F9FAFB;
+}
+
+.dark-mode .feature-description {
+  color: #D1D5DB;
+}
+
+/* ⚡ ANIMATIONS TESLA FEATURES */
+@keyframes featureIconFloat {
+  0%, 100% { 
+    transform: translateY(0);
+    filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.3));
+  }
+  50% { 
+    transform: translateY(-3px);
+    filter: drop-shadow(0 5px 15px rgba(99, 102, 241, 0.4));
+  }
+}
+
+@keyframes statusPulseGreen {
+  0%, 100% { 
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
+  }
+}
+
+@keyframes statusPulseOrange {
+  0%, 100% { 
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.5);
+  }
+}
+
+/* 🚀 PERFORMANCE FEATURES */
+.feature-card {
+  will-change: transform, box-shadow;
+}
+
+.feature-icon {
+  will-change: transform, filter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-card,
+  .feature-icon,
+  .feature-status {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .feature-card:hover {
+    transform: none !important;
+  }
+}
