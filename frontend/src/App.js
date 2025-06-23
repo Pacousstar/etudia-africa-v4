@@ -1161,7 +1161,7 @@ useEffect(() => {
       {student && (
         <div className="user-comprehensive-stats">
           <div className="stats-header-revolutionary">
-            <h2>📊 Tes Statistiques, {prenomEleve} !</h2>
+            <h2>📊 Tes Statistiques, {student?.nom?.split(' ')[0] || 'Élève'} !</h2>
             <p>Performance et progression avec ÉtudIA</p>
           </div>
 
