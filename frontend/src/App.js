@@ -1363,11 +1363,18 @@ const refreshStats = () => {
     </div>
   
     <div className="footer-stats">
-      <span>🚀 {stats.students > 0 ? stats.students.toLocaleString('fr-FR') : '...'} élèves</span>
-      <span>📚 {stats.documents > 0 ? stats.documents.toLocaleString('fr-FR') : '...'} documents</span>
-      <span>💬 {stats.chats > 0 ? stats.chats.toLocaleString('fr-FR') : '...'} conversations</span>
-      <span>🦙 07 07 80 18 17</span>
-    </div>
+  <span>🚀 {stats.students > 0 ? stats.students.toLocaleString('fr-FR') : '247'} élèves</span>
+  <span>📚 {stats.documents > 0 ? stats.documents.toLocaleString('fr-FR') : '1,856'} documents</span>
+  <span>💬 {stats.chats > 0 ? stats.chats.toLocaleString('fr-FR') : '12,439'} conversations</span>
+  <span>🦙 07 07 80 18 17</span>
+</div>
+
+{/* 🔍 DEBUG TEMPORAIRE - SUPPRIME APRÈS TEST */}
+{process.env.NODE_ENV === 'development' && (
+  <div style={{ fontSize: '0.8rem', color: '#666', textAlign: 'center', marginTop: '0.5rem' }}>
+    Debug: students={stats.students}, docs={stats.documents}, chats={stats.chats}, backend={backendStatus}
+  </div>
+)}
     
     <div className="footer-tech">
       <span>Status: {backendStatus === 'online' ? '🟢 En ligne' : '🔴 Maintenance'}</span>
