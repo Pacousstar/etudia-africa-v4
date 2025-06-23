@@ -334,8 +334,21 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
               </ul>
             </div>
           </div>
+         
+          <div className="tip-card format">
+            <div className="tip-icon">📄</div>
+            <div className="tip-content">
+              <h4>Format recommandé</h4>
+              <ul>
+                <li>🥇 PDF avec texte sélectionnable</li>
+                <li>🥈 PNG haute qualité</li>
+                <li>🥉 JPEG sans compression</li>
+                <li>⚠️ Éviter les captures d'écran</li>
+              </ul>
+            </div>
+          </div>
 
-{/* 🔧 CORRECTION: Ajout de la 4ème carte manquante */}
+          {/* 🔧 CORRECTION: Ajout de la 4ème carte manquante */}
           <div className="tip-card performance">
             <div className="tip-icon">⚡</div>
             <div className="tip-content">
@@ -350,21 +363,6 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
           </div>
         </div>
       </div>
-                                                    
-          <div className="tip-card format">
-            <div className="tip-icon">📄</div>
-            <div className="tip-content">
-              <h4>Format recommandé</h4>
-              <ul>
-                <li>🥇 PDF avec texte sélectionnable</li>
-                <li>🥈 PNG haute qualité</li>
-                <li>🥉 JPEG sans compression</li>
-                <li>⚠️ Éviter les captures d'écran</li>
-              </ul>
-            </div>
-          </div>
-
-          
 
       {/* Aperçu texte extrait */}
       {extractedText && uploadStatus === 'success' && (
@@ -413,7 +411,12 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
         </div>
       )}
 
-      
+      {/* Historique uploads récents */}
+      <div className="upload-history">
+        <h3>📚 Vos documents récents</h3>
+        <p>Les documents seront affichés ici après upload. ÉtudIA se souvient de tous vos documents ! 🧠</p>
+      </div>
+
       {/* STYLES CSS COMPLETS */}
       <style jsx>{`
         .upload-tab {
