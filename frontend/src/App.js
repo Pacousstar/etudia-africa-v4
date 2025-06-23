@@ -1343,9 +1343,7 @@ const refreshStats = () => {
 )}
 
             
-      // 📊 FOOTER AVEC STATS SUPABASE RÉELLES - REMPLACE TON FOOTER DANS APP.JS
-
-{/* 🔧 FOOTER CORRIGÉ SANS COMMENTAIRES */}
+{/* 📊 FOOTER AVEC STATS SUPABASE RÉELLES */}
 <footer className="app-footer">
   <div className="footer-content">
     <div className="footer-main">
