@@ -9366,3 +9366,407 @@ body {
     transform: none !important;
   }
 }
+
+/* 📊 SECTION AMÉLIORATIONS COMPACTE TESLA - AJOUTE DANS APP.CSS */
+
+/* ===================================================================
+   🦙 SECTION "POURQUOI ÉTUDIA CHANGE TOUT" COMPACTE
+   ================================================================= */
+
+.llama-improvements-section {
+  background: linear-gradient(135deg, 
+    rgba(245, 158, 11, 0.08) 0%,
+    rgba(99, 102, 241, 0.08) 50%,
+    rgba(139, 92, 246, 0.08) 100%
+  );
+  border: 2px solid rgba(245, 158, 11, 0.3);
+  border-radius: 1.25rem; /* Réduit de 2rem */
+  padding: 1.5rem; /* Réduit de 3rem */
+  margin: 2rem auto; /* Réduit de 4rem */
+  max-width: 900px; /* Réduit de 1200px */
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.llama-improvements-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    #F59E0B 0%,
+    #6366F1 50%,
+    #8B5CF6 100%
+  );
+  animation: improvementGlow 3s ease-in-out infinite;
+}
+
+.section-title {
+  text-align: center;
+  font-size: 1.4rem; /* Réduit de 2rem */
+  font-weight: 800;
+  margin-bottom: 1.5rem; /* Réduit de 2rem */
+  background: linear-gradient(135deg, #F59E0B, #6366F1, #8B5CF6);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: titleShimmer 4s ease-in-out infinite;
+  line-height: 1.3;
+}
+
+/* 📊 GRILLE AMÉLIORATIONS COMPACTE */
+.improvements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Réduit de 350px */
+  gap: 1rem; /* Réduit de 2rem */
+  margin-top: 1.5rem;
+}
+
+.improvement-item {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(245, 158, 11, 0.2);
+  border-radius: 1rem; /* Réduit de 1.5rem */
+  padding: 1.25rem; /* Réduit de 2rem */
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  min-height: 100px; /* Réduit de 140px */
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Réduit de 1.5rem */
+}
+
+.improvement-item:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.25);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.improvement-item:active {
+  transform: translateY(-1px) scale(1.01);
+  transition: all 0.1s ease;
+}
+
+/* 🎯 ICÔNES AMÉLIORATIONS COMPACTES */
+.improvement-icon {
+  font-size: 2rem; /* Réduit de 3rem */
+  flex-shrink: 0;
+  width: 50px; /* Réduit de 70px */
+  height: 50px; /* Réduit de 70px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: improvementIconPulse 3s ease-in-out infinite;
+}
+
+.improvement-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.improvement-content h4 {
+  font-size: 1rem; /* Réduit de 1.2rem */
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 0.5rem; /* Réduit de 0.75rem */
+  line-height: 1.3;
+}
+
+/* 📊 STATISTIQUES AMÉLIORATIONS COMPACTES */
+.improvement-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Réduit de 0.75rem */
+  flex-wrap: wrap;
+}
+
+.old-value {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(185, 28, 28, 0.1));
+  color: #DC2626;
+  padding: 0.2rem 0.5rem; /* Réduit padding */
+  border-radius: 0.5rem;
+  font-size: 0.8rem; /* Réduit de 0.9rem */
+  font-weight: 600;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.arrow {
+  color: #6366F1;
+  font-weight: 800;
+  font-size: 1rem; /* Réduit de 1.2rem */
+  animation: arrowPulse 2s ease-in-out infinite;
+}
+
+.new-value {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+  color: #059669;
+  padding: 0.2rem 0.5rem; /* Réduit padding */
+  border-radius: 0.5rem;
+  font-size: 0.8rem; /* Réduit de 0.9rem */
+  font-weight: 700;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  animation: newValueGlow 3s ease-in-out infinite;
+}
+
+/* 🎨 COULEURS SPÉCIFIQUES PAR AMÉLIORATION */
+.improvement-item:nth-child(1) {
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.improvement-item:nth-child(1):hover {
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.25);
+}
+
+.improvement-item:nth-child(1) .improvement-icon {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+  color: #6366F1;
+}
+
+.improvement-item:nth-child(2) {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.improvement-item:nth-child(2):hover {
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.25);
+}
+
+.improvement-item:nth-child(2) .improvement-icon {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+  color: #F59E0B;
+}
+
+.improvement-item:nth-child(3) {
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.improvement-item:nth-child(3):hover {
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.25);
+}
+
+.improvement-item:nth-child(3) .improvement-icon {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
+  color: #8B5CF6;
+}
+
+/* ===================================================================
+   📱 RESPONSIVE AMÉLIORATIONS COMPACTES
+   ================================================================= */
+
+/* 📱 TABLETTES */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .llama-improvements-section {
+    padding: 1.25rem;
+    max-width: 750px;
+  }
+  
+  .improvements-grid {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+  
+  .improvement-item {
+    min-height: 90px;
+    padding: 1rem;
+    gap: 0.875rem;
+  }
+  
+  .improvement-icon {
+    font-size: 1.75rem;
+    width: 45px;
+    height: 45px;
+  }
+  
+  .improvement-content h4 {
+    font-size: 0.95rem;
+  }
+  
+  .old-value, .new-value {
+    font-size: 0.75rem;
+  }
+}
+
+/* 📱 MOBILES */
+@media (max-width: 767px) {
+  .llama-improvements-section {
+    padding: 1rem;
+    margin: 1.5rem auto;
+    border-radius: 1rem;
+  }
+  
+  .section-title {
+    font-size: 1.2rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .improvements-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .improvement-item {
+    min-height: 85px;
+    padding: 0.875rem;
+    gap: 0.75rem;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .improvement-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .improvement-content h4 {
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .improvement-stats {
+    justify-content: center;
+    gap: 0.4rem;
+  }
+  
+  .old-value, .new-value {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+  }
+  
+  .arrow {
+    font-size: 0.9rem;
+  }
+}
+
+/* 📱 TRÈS PETITS MOBILES */
+@media (max-width: 480px) {
+  .llama-improvements-section {
+    padding: 0.875rem;
+    margin: 1rem auto;
+  }
+  
+  .section-title {
+    font-size: 1.1rem;
+    line-height: 1.2;
+  }
+  
+  .improvement-item {
+    min-height: 80px;
+    padding: 0.75rem;
+  }
+  
+  .improvement-icon {
+    font-size: 1.3rem;
+    width: 35px;
+    height: 35px;
+  }
+  
+  .improvement-content h4 {
+    font-size: 0.85rem;
+  }
+  
+  .improvement-stats {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  
+  .old-value, .new-value {
+    font-size: 0.65rem;
+  }
+  
+  .arrow {
+    font-size: 0.8rem;
+    transform: rotate(90deg);
+  }
+}
+
+/* 🌙 MODE SOMBRE AMÉLIORATIONS */
+.dark-mode .llama-improvements-section {
+  background: linear-gradient(135deg, 
+    rgba(245, 158, 11, 0.12) 0%,
+    rgba(99, 102, 241, 0.12) 50%,
+    rgba(139, 92, 246, 0.12) 100%
+  );
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.dark-mode .improvement-item {
+  background: rgba(31, 41, 55, 0.9);
+  border-color: rgba(156, 163, 175, 0.3);
+}
+
+.dark-mode .improvement-content h4 {
+  color: #F9FAFB;
+}
+
+/* ⚡ ANIMATIONS TESLA AMÉLIORATIONS */
+@keyframes improvementGlow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+@keyframes titleShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes improvementIconPulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes arrowPulse {
+  0%, 100% { 
+    transform: scale(1);
+    color: #6366F1;
+  }
+  50% { 
+    transform: scale(1.1);
+    color: #4F46E5;
+  }
+}
+
+@keyframes newValueGlow {
+  0%, 100% { 
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  }
+}
+
+/* 🚀 PERFORMANCE AMÉLIORATIONS */
+.improvement-item,
+.improvement-icon {
+  will-change: transform, box-shadow;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .llama-improvements-section *,
+  .llama-improvements-section::before {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .improvement-item:hover {
+    transform: none !important;
+  }
+}
