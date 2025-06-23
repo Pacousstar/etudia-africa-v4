@@ -815,25 +815,36 @@ const refreshStats = () => {
         </div>
       )}
 
-      {/* HEADER RÉVOLUTIONNAIRE */}
-      <header className="app-header revolutionary">
-        <div className="cosmic-background"></div>
-        
-        <div className="header-content">
-          <div className="logo-section">
-            <h1 className="app-title">
-              <span className="title-etud">Étud</span>
-              <span className="title-ia">IA</span>
-              <span className="title-version">4.0</span>
-            </h1>
-            <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
-            <div className="made-in-ci">
-              <span className="flag">🇨🇮</span>
-              <span>Made with ❤️ in Côte d'Ivoire by @Pacousstar</span>
-            </div>
+{/* 🇨🇮 HEADER AVEC DRAPEAU CÔTE D'IVOIRE TESLA */}
+<header className="app-header revolutionary">
+  <div className="cosmic-background"></div>
+  
+  <div className="header-content">
+    <div className="logo-section">
+      <h1 className="app-title">
+        <span className="title-etud">Étud</span>
+        <span className="title-ia">IA</span>
+        <span className="title-version">4.0</span>
+      </h1>
+      <p className="app-subtitle">L'Assistant IA Révolutionnaire pour l'Education Africaine !</p>
+      
+      {/* 🇨🇮 BADGE CÔTE D'IVOIRE TESLA STYLE */}
+      <div className="made-in-ci tesla-enhanced">
+        <div className="ci-flag-container">
+          <div className="ci-flag">
+            <div className="flag-stripe orange"></div>
+            <div className="flag-stripe white"></div>
+            <div className="flag-stripe green"></div>
           </div>
         </div>
-      </header>
+        <span className="ci-text">
+          Made with <span className="beating-heart">❤️</span> in Côte d'Ivoire by <strong>@Pacousstar</strong>
+        </span>
+        <div className="tesla-energy-glow"></div>
+      </div>
+    </div>
+  </div>
+</header>
 
       {/* 🏫 Défilement des écoles - Position optimale */}
       <SchoolsScrollBanner />
