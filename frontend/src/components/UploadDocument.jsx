@@ -334,7 +334,23 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
               </ul>
             </div>
           </div>
-         
+
+{/* 🔧 CORRECTION: Ajout de la 4ème carte manquante */}
+          <div className="tip-card performance">
+            <div className="tip-icon">⚡</div>
+            <div className="tip-content">
+              <h4>Performance OCR</h4>
+              <ul>
+                <li>✅ Documents scannés en 300+ DPI</li>
+                <li>✅ Fond blanc uniforme</li>
+                <li>❌ Éviter les filigranes</li>
+                <li>❌ Pas de texte sur images</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+                                                    
           <div className="tip-card format">
             <div className="tip-icon">📄</div>
             <div className="tip-content">
@@ -411,12 +427,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
         </div>
       )}
 
-      {/* Historique uploads récents */}
-      <div className="upload-history">
-        <h3>📚 Vos documents récents</h3>
-        <p>Les documents seront affichés ici après upload. ÉtudIA se souvient de tous vos documents ! 🧠</p>
-      </div>
-
+      
       {/* STYLES CSS COMPLETS */}
       <style jsx>{`
         .upload-tab {
