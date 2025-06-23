@@ -411,11 +411,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
         </div>
       )}
 
-      {/* Historique uploads récents */}
-      <div className="upload-history">
-        <h3>📚 Vos documents récents</h3>
-        <p>Les documents seront affichés ici après upload. ÉtudIA se souvient de tous vos documents ! 🧠</p>
-      </div>
+      
 
       {/* STYLES CSS COMPLETS */}
       <style jsx>{`
@@ -926,29 +922,7 @@ const UploadDocument = ({ student, apiUrl, onDocumentProcessed }) => {
           box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
         }
 
-        /* Historique uploads */
-        .upload-history {
-          background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(99, 102, 241, 0.02));
-          border: 2px solid rgba(99, 102, 241, 0.2);
-          border-radius: 1.5rem;
-          padding: 2rem;
-          margin: 3rem auto;
-          max-width: 1000px;
-          text-align: center;
-        }
-
-        .upload-history h3 {
-          color: #6366F1;
-          font-size: 1.3rem;
-          font-weight: 700;
-          margin-bottom: 1rem;
-        }
-
-        .upload-history p {
-          color: #6B7280;
-          font-size: 1rem;
-          line-height: 1.6;
-        }
+      
 
         /* 📱 RESPONSIVE MOBILE PARFAIT */
         @media (max-width: 1024px) {
