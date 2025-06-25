@@ -396,9 +396,21 @@ async function extractTextFromFile(filePath, mimeType, originalName) {
     
     return extractedText.replace(/\s+/g, ' ').trim();
   } catch (error) {
+    console.error('❌ Erreur OCR:', error.message);
     return `[ERREUR OCR: ${error.message}]`;
   }
 }
+
+console.log('🔍 Extraction OCR...');
+const extractedText = await extractTextFromFile(req.file.path, req.file.mimetype, nomOriginal);
+
+console.log('📊 Résultat OCR:', {
+  file_type: req.file.mimetype,
+  file_size: req.file.size,
+  text_length: extractedText.length,
+  text_preview: extractedText.substring(0, 100),
+  is_error: extractedText.startsWith('[ERREUR')
+});
 
 async function analyzeDocumentWithIA(extractedText, fileName) {
   try {
