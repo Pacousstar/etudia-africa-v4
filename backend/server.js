@@ -1096,17 +1096,18 @@ const ConversationContinuityManager = {
   }
 };
 
-// 🔧 AMÉLIORATION 1: GESTIONNAIRE DE MÉMOIRE CONVERSATION
+// 📊 GESTIONNAIRE DE MÉMOIRE CONVERSATION AMÉLIORÉ
 const ConversationMemoryManager = {
-  // 🧠 NOUVELLE FONCTION: Récupère le contexte des derniers échanges
+  // 🧠 RÉCUPÈRE LE CONTEXTE COMPLET DE CONVERSATION
   async getConversationContext(userId, currentMessage) {
     try {
+      // 🎯 RÉCUPÈRE LES 5 DERNIERS ÉCHANGES (au lieu de 3)
       const { data: recentExchanges } = await supabase
         .from('historique_conversations')
         .select('*')
         .eq('eleve_id', userId)
         .order('date_creation', { ascending: false })
-        .limit(3);
+        .limit(5); // Augmenté pour plus de mémoire
 
       if (!recentExchanges || recentExchanges.length === 0) {
         return { hasContext: false, lastResponse: null, wasIncomplete: false };
@@ -1115,31 +1116,41 @@ const ConversationMemoryManager = {
       const lastExchange = recentExchanges[0];
       const lastResponse = lastExchange.reponse_ia || '';
       
-      // 🔍 DÉTECTE SI LA DERNIÈRE RÉPONSE ÉTAIT INCOMPLÈTE
+      // 🔍 DÉTECTION RÉPONSE INCOMPLÈTE AMÉLIORÉE
       const wasIncomplete = 
-        lastResponse.includes('x(') ||  // Calcul interrompu
-        lastResponse.includes('x =') ||  // Équation non terminée
-        lastResponse.endsWith('x') ||   // Réponse coupée
-        lastResponse.includes('...') || // Points de suspension
-        (lastResponse.length > 200 && !lastResponse.includes('🎉')) || // Longue sans conclusion
-        lastResponse.includes('b) Pour résoudre') || // Section b) non terminée
-        lastResponse.includes('c)') ||  // Section c) non terminée
-        /exercice\s+\d+.*:/i.test(lastResponse); // Pattern exercice non fini
+        lastResponse.includes('[RÉPONSE CONTINUE...]') ||
+        lastResponse.includes('🔄') ||
+        lastResponse.includes('continue') ||
+        lastResponse.includes('suite') ||
+        lastResponse.includes('...') ||
+        lastResponse.length > 250 ||
+        /exercice\s+\d+.*:/i.test(lastResponse) ||
+        /\d+\)\s*[^.!?]*$/i.test(lastResponse) || // Se termine par "1) calcul"
+        /=\s*[^.!?]*$/i.test(lastResponse) || // Se termine par "= calcul"
+        lastResponse.endsWith(':') ||
+        lastResponse.endsWith(',');
 
-      // 🔍 EXTRAIT LE POINT D'ARRÊT
-      let stopPoint = null;
+      // 🎯 EXTRACTION DU POINT D'ARRÊT PRÉCIS
+      let stopPoint = 'au milieu de la résolution';
+      let lastTopic = 'exercice en cours';
+      
       if (wasIncomplete) {
-        // Trouve où l'IA s'est arrêtée
-        if (lastResponse.includes('b) Pour résoudre')) {
-          stopPoint = 'au milieu de la question b)';
-        } else if (lastResponse.includes('c)')) {
-          stopPoint = 'au début de la question c)';
+        // Analyse du contenu pour identifier où on s'est arrêté
+        if (lastResponse.includes('Exercice 1')) {
+          stopPoint = 'pendant l\'exercice 1';
+          lastTopic = 'exercice 1';
         } else if (lastResponse.includes('Exercice 2')) {
-          stopPoint = 'au début de l\'exercice 2';
-        } else if (/x\s*=?\s*$/.test(lastResponse)) {
+          stopPoint = 'pendant l\'exercice 2';  
+          lastTopic = 'exercice 2';
+        } else if (lastResponse.includes('b)')) {
+          stopPoint = 'à la question b)';
+          lastTopic = 'question b';
+        } else if (lastResponse.includes('c)')) {
+          stopPoint = 'à la question c)';
+          lastTopic = 'question c';
+        } else if (/=\s*[^.!?]*$/i.test(lastResponse)) {
           stopPoint = 'au milieu d\'un calcul';
-        } else {
-          stopPoint = 'au milieu de la résolution';
+          lastTopic = 'calcul en cours';
         }
       }
 
@@ -1148,8 +1159,10 @@ const ConversationMemoryManager = {
         lastResponse: lastResponse,
         wasIncomplete: wasIncomplete,
         stopPoint: stopPoint,
+        lastTopic: lastTopic,
         lastMode: lastExchange.mode_utilise,
-        conversationHistory: recentExchanges.slice(0, 2) // 2 derniers échanges
+        conversationHistory: recentExchanges.slice(0, 4), // 4 derniers échanges
+        fullLastResponse: lastResponse // NOUVEAUTÉ : Garde la réponse complète
       };
 
     } catch (error) {
@@ -1158,54 +1171,31 @@ const ConversationMemoryManager = {
     }
   },
 
-  // 🔍 NOUVELLE FONCTION: Détecte les demandes de continuation
+  // 🔍 DÉTECTION DEMANDE CONTINUATION AMÉLIORÉE
   isContinuationRequest(message) {
     const continuationKeywords = [
       'continue', 'suite', 'la suite', 'continuer', 'poursuis', 'va-y',
       'après', 'ensuite', 'next', 'suivant', 'reprends', 'finis',
-      'termine', 'complète', 'achève'
+      'termine', 'complète', 'achève', 'et puis', 'maintenant',
+      'continue le calcul', 'continue l\'exercice', 'suite du problème'
     ];
     
-    const messageLower = message.toLowerCase();
-    return continuationKeywords.some(keyword => messageLower.includes(keyword));
-  },
-
-  // 📊 NOUVELLE FONCTION: Gère la progression des étapes
-  calculateStepProgression(currentMode, stepInfo, conversationContext, currentMessage) {
-    if (currentMode !== 'step_by_step') {
-      return { current_step: 1, total_steps: 4 }; // Défaut pour autres modes
-    }
-
-    let currentStep = 1;
-    let totalSteps = 4;
-
-    // 🔍 Analyse du contexte pour déterminer l'étape actuelle
-    if (conversationContext?.hasContext && conversationContext?.lastResponse) {
-      const lastResponse = conversationContext.lastResponse;
-      
-      // Extrait l'étape de la dernière réponse
-      const stepMatch = lastResponse.match(/📊\s*Étape\s+(\d+)\/(\d+)/i);
-      if (stepMatch) {
-        currentStep = parseInt(stepMatch[1]);
-        totalSteps = parseInt(stepMatch[2]);
-        
-        // 🔄 Progression automatique si l'utilisateur confirme/continue
-        const isProgressing = /oui|ok|compris|continue|suite|d'accord|parfait|ça marche/i.test(currentMessage);
-        const isContinuation = this.isContinuationRequest(currentMessage);
-        
-        if (isProgressing || isContinuation) {
-          currentStep = Math.min(currentStep + 1, totalSteps);
-        }
-      }
-    }
-
-    // 🎯 Si stepInfo fourni par le client, on l'utilise
-    if (stepInfo?.current_step) {
-      currentStep = stepInfo.current_step;
-      totalSteps = stepInfo.total_steps || 4;
-    }
-
-    return { current_step: currentStep, total_steps: totalSteps };
+    const messageLower = message.toLowerCase().trim();
+    
+    // Détection directe
+    const directMatch = continuationKeywords.some(keyword => 
+      messageLower.includes(keyword.toLowerCase())
+    );
+    
+    // Détection contextuelle (messages très courts qui implicitement demandent suite)
+    const implicitContinuation = 
+      messageLower.length < 10 && 
+      (messageLower.includes('oui') || 
+       messageLower.includes('ok') || 
+       messageLower.includes('d\'accord') ||
+       messageLower.includes('vas-y'));
+    
+    return directMatch || implicitContinuation;
   }
 };
 
@@ -1366,45 +1356,48 @@ ${documentInfo}
     console.log('💬 Mode actuel:', mode);
     console.log('📄 Document:', documentName, `(${documentLength} chars)`);
 
-    // 🧠 NOUVEAUTÉ: Récupération contexte conversation
-    const conversationContext = await ConversationMemoryManager.getConversationContext(user_id, message);
-    console.log('🧠 Contexte conversation:', {
-      hasContext: conversationContext.hasContext,
-      wasIncomplete: conversationContext.wasIncomplete,
-      stopPoint: conversationContext.stopPoint
-    });
+   // 🧠 RÉCUPÉRATION CONTEXTE CONVERSATION AMÉLIORÉ  
+const conversationContext = await ConversationMemoryManager.getConversationContext(user_id, message);
+console.log('🧠 Contexte conversation détaillé:', {
+  hasContext: conversationContext.hasContext,
+  wasIncomplete: conversationContext.wasIncomplete,
+  stopPoint: conversationContext.stopPoint,
+  lastTopic: conversationContext.lastTopic,
+  historyLength: conversationContext.conversationHistory?.length || 0
+});
 
-    // 🔍 NOUVEAUTÉ: Détection demande continuation
-    const isContinuation = ConversationMemoryManager.isContinuationRequest(message);
-    console.log('🔄 Demande de continuation:', isContinuation);
+// 🔍 DÉTECTION DEMANDE CONTINUATION AMÉLIORÉE
+const isContinuation = ConversationMemoryManager.isContinuationRequest(message);
+console.log('🔄 Demande de continuation:', isContinuation);
 
-    // 📊 NOUVEAUTÉ: Calcul progression étapes
-    const stepProgression = ConversationMemoryManager.calculateStepProgression(
-      mode, 
-      step_info, 
-      conversationContext, 
-      message
-    );
-    console.log('📊 Progression étapes:', stepProgression);
+// 📊 CALCUL PROGRESSION ÉTAPES (garde ton code existant)
+const stepProgression = ConversationMemoryManager.calculateStepProgression(
+  mode, 
+  step_info, 
+  conversationContext, 
+  message
+);
+console.log('📊 Progression étapes:', stepProgression);
 
-    // 🎯 PROMPTS RÉVOLUTIONNAIRES AVEC MÉMOIRE
-    let systemPrompt = '';
-    let maxTokens = 250;
-    
-    if (mode === 'step_by_step') {
-      // 📊 MODE ÉTAPE PAR ÉTAPE AVEC MÉMOIRE
-      const currentStep = stepProgression.current_step;
-      const totalSteps = stepProgression.total_steps;
-      
-      let continuationInstruction = '';
-      if (isContinuation && conversationContext.wasIncomplete) {
-        continuationInstruction = `
+// 🎯 PROMPTS RÉVOLUTIONNAIRES AVEC MÉMOIRE (garde tes prompts existants)
+let systemPrompt = '';
+let maxTokens = 250;
+
+if (mode === 'step_by_step') {
+  // 📊 MODE ÉTAPE PAR ÉTAPE AVEC MÉMOIRE
+  const currentStep = stepProgression.current_step;
+  const totalSteps = stepProgression.total_steps;
+  
+  let continuationInstruction = '';
+  if (isContinuation && conversationContext.wasIncomplete) {
+    continuationInstruction = `
 ATTENTION CONTINUATION: L'élève demande la suite. Tu t'es arrêté ${conversationContext.stopPoint}.
+Reprends exactement le fil de "${conversationContext.lastTopic}".
 Continue EXACTEMENT où tu t'es arrêté sans répéter ce qui a déjà été fait.
 `;
-      }
-      
-      systemPrompt = `Tu es ÉtudIA en mode ÉTAPE PAR ÉTAPE pour ${prenomExact}.
+  }
+  
+  systemPrompt = `Tu es ÉtudIA en mode ÉTAPE PAR ÉTAPE pour ${prenomExact}.
 
 RÈGLES ABSOLUES:
 1. Commence TOUJOURS par "📊 Étape ${currentStep}/${totalSteps}"
@@ -1421,20 +1414,21 @@ Question élève: ${message}
 ${currentStep === 1 ? 'Commence par la première étape de résolution.' : 
   currentStep === totalSteps ? 'Dernière étape - donne la solution finale.' : 
   `Continue avec l'étape ${currentStep} de la résolution.`}`;
-      
-      maxTokens = 150;
-      
-    } else if (mode === 'direct_solution') {
-      // ✅ MODE SOLUTION DIRECTE AVEC CONTINUATION
-      let continuationInstruction = '';
-      if (isContinuation && conversationContext.wasIncomplete) {
-        continuationInstruction = `
+  
+  maxTokens = 150;
+  
+} else if (mode === 'direct_solution') {
+  // ✅ MODE SOLUTION DIRECTE AVEC CONTINUATION
+  let continuationInstruction = '';
+  if (isContinuation && conversationContext.wasIncomplete) {
+    continuationInstruction = `
 ATTENTION CONTINUATION: L'élève demande la suite. Tu t'es arrêté ${conversationContext.stopPoint}.
+Reprends exactement le fil de "${conversationContext.lastTopic}".
 Continue EXACTEMENT où tu t'es arrêté. Termine la résolution complète.
 `;
-      }
-      
-      systemPrompt = `Tu es ÉtudIA en mode SOLUTION DIRECTE pour ${prenomExact}.
+  }
+  
+  systemPrompt = `Tu es ÉtudIA en mode SOLUTION DIRECTE pour ${prenomExact}.
 
 RÈGLES ABSOLUES:
 1. Donne TOUTES les solutions complètes
@@ -1450,12 +1444,12 @@ Document: "${documentName}"
 Question élève: ${message}
 
 Résous complètement TOUT ce qui est demandé avec TOUS les calculs jusqu'au bout.`;
-      
-      maxTokens = 400;
-      
-    } else {
-      // 💬 MODE NORMAL LIBRE
-      systemPrompt = `Tu es ÉtudIA en mode NORMAL LIBRE pour ${prenomExact}.
+  
+  maxTokens = 400;
+  
+} else {
+  // 💬 MODE NORMAL LIBRE
+  systemPrompt = `Tu es ÉtudIA en mode NORMAL LIBRE pour ${prenomExact}.
 
 RÈGLES:
 1. Réponds à TOUTE question (maths, actualités, culture, devoirs)
@@ -1466,59 +1460,82 @@ RÈGLES:
 Question élève: ${message}
 
 Réponds avec précision et logique sans référence au document.`;
-      
-      maxTokens = 200;
+  
+  maxTokens = 200;
+}
+
+// 🚀 APPEL GROQ AVEC MÉMOIRE AMÉLIORÉE
+let completion;
+
+try {
+  const messages = [
+    {
+      role: 'system',
+      content: systemPrompt
     }
+  ];
 
-    // 🚀 APPEL GROQ AVEC MÉMOIRE
-    let completion;
+  // 🧠 AJOUTER CONTEXTE CONVERSATION COMPLET SI CONTINUATION
+  if (isContinuation && conversationContext.hasContext && conversationContext.wasIncomplete) {
+    // AJOUTER LE CONTEXTE COMPLET DE LA DERNIÈRE RÉPONSE
+    messages.push({
+      role: 'system',
+      content: `CONTEXTE CONTINUATION OBLIGATOIRE:
+L'élève demande la suite de ta réponse précédente qui était incomplète.
+
+TA DERNIÈRE RÉPONSE (à continuer) :
+"${conversationContext.fullLastResponse || conversationContext.lastResponse}"
+
+Tu t'es arrêté ${conversationContext.stopPoint}.
+Continue EXACTEMENT où tu t'es arrêté sans répéter ce qui a été fait.
+Reprends le fil de "${conversationContext.lastTopic}".`
+    });
     
-    try {
-      const messages = [
-        {
-          role: 'system',
-          content: systemPrompt
-        }
-      ];
-
-      // 🧠 AJOUTER CONTEXTE CONVERSATION SI NÉCESSAIRE
-      if (conversationContext.hasContext && conversationContext.conversationHistory) {
-        const recentHistory = conversationContext.conversationHistory.reverse(); // Plus ancien en premier
-        
-        for (const exchange of recentHistory) {
-          messages.push({ 
-            role: 'user', 
-            content: exchange.message_eleve?.substring(0, 100) || 'Question précédente'
-          });
-          messages.push({ 
-            role: 'assistant', 
-            content: exchange.reponse_ia?.substring(0, 200) || 'Réponse précédente'
-          });
-        }
-      }
-
-      // Message actuel
-      messages.push({
-        role: 'user',
-        content: mode !== 'normal' && finalDocumentContext ? 
-          `Contexte document: ${finalDocumentContext.substring(0, 1200)}\n\nQuestion: ${message}` :
-          message
+    console.log('🔄 Contexte continuation ajouté pour:', conversationContext.lastTopic);
+  } else if (conversationContext.hasContext && conversationContext.conversationHistory) {
+    // AJOUTER HISTORIQUE NORMAL (pas continuation)
+    const recentHistory = conversationContext.conversationHistory.reverse();
+    
+    for (const exchange of recentHistory.slice(0, 2)) { // Garde 2 échanges
+      messages.push({ 
+        role: 'user', 
+        content: exchange.message_eleve?.substring(0, 150) || 'Question précédente'
       });
-
-      completion = await groq.chat.completions.create({
-        messages: messages,
-        model: 'llama-3.3-70b-versatile',
-        temperature: mode === 'step_by_step' ? 0.05 : mode === 'normal' ? 0.15 : 0.1,
-        max_tokens: maxTokens,
-        top_p: 0.7
+      messages.push({ 
+        role: 'assistant', 
+        content: exchange.reponse_ia?.substring(0, 300) || 'Réponse précédente'
       });
-      
-      console.log('✅ Réponse Groq reçue avec mémoire');
-      
-    } catch (groqError) {
-      console.error('❌ Erreur Groq:', groqError.message);
-      
-      const fallbackResponse = `${prenomExact}, problème technique ! 😅
+    }
+  }
+
+  // Message actuel de l'utilisateur
+  messages.push({
+    role: 'user',
+    content: mode !== 'normal' && finalDocumentContext ? 
+      `Document: ${finalDocumentContext.substring(0, 1000)}\n\nQuestion: ${message}` :
+      message
+  });
+
+  console.log('📨 Messages construits:', {
+    total_messages: messages.length,
+    has_continuation_context: isContinuation && conversationContext.wasIncomplete,
+    context_type: isContinuation ? 'continuation' : 'normal'
+  });
+
+  completion = await groq.chat.completions.create({
+    messages: messages,
+    model: 'llama-3.3-70b-versatile',
+    temperature: mode === 'step_by_step' ? 0.05 : mode === 'normal' ? 0.15 : 0.1,
+    max_tokens: maxTokens,
+    top_p: 0.7
+  });
+  
+  console.log('✅ Réponse Groq reçue avec mémoire');
+  
+} catch (groqError) {
+  console.error('❌ Erreur Groq:', groqError.message);
+  
+  const fallbackResponse = `${prenomExact}, problème technique ! 😅
 
 🔧 Mon système IA redémarre...
 💡 Reformule ta question et je ferai de mon mieux !
@@ -1527,15 +1544,15 @@ ${finalDocumentContext ?
   `📄 J'ai ton document "${documentName}" (${documentLength.toLocaleString()} chars)` :
   '📄 Upload un document pour des réponses plus précises !'}`;
 
-      return res.json({
-        response: fallbackResponse,
-        timestamp: new Date().toISOString(),
-        model: 'etudia-fallback',
-        student_name: prenomExact,
-        is_fallback: true,
-        success: true
-      });
-    }
+  return res.json({
+    response: fallbackResponse,
+    timestamp: new Date().toISOString(),
+    model: 'etudia-fallback',
+    student_name: prenomExact,
+    is_fallback: true,
+    success: true
+  });
+}
 
     // ✅ TRAITEMENT RÉPONSE AVEC VALIDATION INTELLIGENTE
     let aiResponse = completion.choices[0]?.message?.content || `Désolé ${prenomExact}, erreur technique.`;
