@@ -1464,6 +1464,52 @@ Réponds avec précision et logique sans référence au document.`;
   maxTokens = 200;
 }
 
+// 🔍 DEBUG DOCUMENT - AJOUTE ÇA DANS /api/chat
+console.log('🔍 DEBUG DOCUMENT RÉCUPÉRATION:', {
+  user_id: user_id,
+  selected_document_id: selected_document_id,
+  allDocuments_count: allDocuments?.length || 0,
+  document_context_length: document_context?.length || 0,
+  finalDocumentContext_length: finalDocumentContext?.length || 0,
+  documentName: documentName,
+  documentLength: documentLength
+});
+
+// 🔍 DEBUG SUPABASE QUERY
+if (selected_document_id) {
+  console.log('🔍 Tentative récupération doc ID:', selected_document_id, 'pour user:', user_id);
+  
+  const { data: debugDoc, error: debugError } = await supabase
+    .from('documents')
+    .select('*')
+    .eq('id', selected_document_id)
+    .eq('eleve_id', user_id);
+    
+  console.log('🔍 Résultat debug Supabase:', {
+    doc_found: !!debugDoc,
+    doc_count: debugDoc?.length || 0,
+    error: debugError?.message || 'Aucune',
+    doc_preview: debugDoc?.[0] ? {
+      id: debugDoc[0].id,
+      nom: debugDoc[0].nom_original,
+      text_length: debugDoc[0].texte_extrait?.length || 0
+    } : 'Aucun'
+  });
+}
+
+// 🔍 DEBUG DOCUMENTS UTILISATEUR
+const { data: allUserDocs } = await supabase
+  .from('documents')
+  .select('id, nom_original, date_upload')
+  .eq('eleve_id', user_id)
+  .order('date_upload', { ascending: false });
+  
+console.log('🔍 Tous documents utilisateur:', allUserDocs?.map(doc => ({
+  id: doc.id,
+  nom: doc.nom_original,
+  date: doc.date_upload
+})));
+    
 // 🚀 APPEL GROQ AVEC MÉMOIRE AMÉLIORÉE
 let completion;
 
