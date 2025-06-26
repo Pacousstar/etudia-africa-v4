@@ -379,22 +379,30 @@ async function extractTextFromFile(filePath, mimeType, originalName) {
   try {
     let extractedText = '';
     
+    console.log('🔍 OCR - Type de fichier:', mimeType, 'Taille:', fs.statSync(filePath).size);
+    
     if (mimeType.startsWith('image/')) {
+      console.log('🖼️ Traitement image avec Tesseract...');
       const result = await Tesseract.recognize(filePath, 'fra+eng');
       extractedText = result.data.text;
     } else if (mimeType === 'application/pdf') {
+      console.log('📄 Traitement PDF...');
       const dataBuffer = fs.readFileSync(filePath);
       const data = await pdfParse(dataBuffer);
       extractedText = data.text;
     } else if (mimeType === 'text/plain') {
+      console.log('📝 Traitement TXT...');
       extractedText = fs.readFileSync(filePath, 'utf8');
     } else if (mimeType.includes('wordprocessingml') || mimeType.includes('msword')) {
+      console.log('📘 Traitement Word...');
       const dataBuffer = fs.readFileSync(filePath);
       const result = await mammoth.extractRawText({ buffer: dataBuffer });
       extractedText = result.value;
     }
     
+    console.log('✅ OCR terminé - Longueur:', extractedText.length);
     return extractedText.replace(/\s+/g, ' ').trim();
+    
   } catch (error) {
     console.error('❌ Erreur OCR:', error.message);
     return `[ERREUR OCR: ${error.message}]`;
