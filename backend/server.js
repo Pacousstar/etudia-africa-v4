@@ -409,17 +409,6 @@ async function extractTextFromFile(filePath, mimeType, originalName) {
   }
 }
 
-console.log('🔍 Extraction OCR...');
-const extractedText = await extractTextFromFile(req.file.path, req.file.mimetype, nomOriginal);
-
-console.log('📊 Résultat OCR:', {
-  file_type: req.file.mimetype,
-  file_size: req.file.size,
-  text_length: extractedText.length,
-  text_preview: extractedText.substring(0, 100),
-  is_error: extractedText.startsWith('[ERREUR')
-});
-
 async function analyzeDocumentWithIA(extractedText, fileName) {
   try {
     const completion = await groq.chat.completions.create({
@@ -436,7 +425,7 @@ JSON requis:
       temperature: 0.3,
       max_tokens: 300
     });
-
+    
     try {
       return JSON.parse(completion.choices[0].message.content.trim());
     } catch {
@@ -446,6 +435,7 @@ JSON requis:
     return { subject: "Document", summary: "Document uploadé", exercise_count: 1 };
   }
 }
+
 
 // ===================================================================
 // 🔧 MIDDLEWARES
@@ -829,8 +819,17 @@ app.post('/api/upload', upload.single('document'), async (req, res) => {
     const nomOriginal = req.file.originalname;
     const nomFichier = `doc_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
+    // 🔍 ICI C'EST BON - DANS LA FONCTION ASYNC !
     console.log('🔍 Extraction OCR...');
     const extractedText = await extractTextFromFile(req.file.path, req.file.mimetype, nomOriginal);
+    
+    console.log('📊 Résultat OCR:', {
+      file_type: req.file.mimetype,
+      file_size: req.file.size,
+      text_length: extractedText.length,
+      text_preview: extractedText.substring(0, 100),
+      is_error: extractedText.startsWith('[ERREUR')
+    });
 
     if (extractedText.startsWith('[ERREUR')) {
       return res.status(400).json({ success: false, error: 'Impossible d\'extraire le texte' });
